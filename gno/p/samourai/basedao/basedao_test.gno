@@ -46,12 +46,12 @@ func TestNewDAO(t *testing.T) {
 	}
 
 	for _, member := range initialMembers {
-		address := member.Address
-		if !dao.Members.IsMember(address) {
-			t.Errorf("Expected member %s to be a member", address)
+		addr := member.Address
+		if !dao.Members.IsMember(addr) {
+			t.Errorf("Expected member %s to be a member", addr)
 		}
-		if len(member.Roles) == 1 && !dao.Members.HasRole(address, member.Roles[0]) {
-			t.Errorf("Expected member %s to have role %s", address, member.Roles[0])
+		if len(member.Roles) == 1 && !dao.Members.HasRole(addr, member.Roles[0]) {
+			t.Errorf("Expected member %s to have role %s", addr, member.Roles[0])
 		}
 	}
 
@@ -123,7 +123,6 @@ func TestPropose(t *testing.T) {
 		},
 	}
 
-	realm := std.NewCodeRealm("gno.land/r/testing/daorealm")
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			if test.expected.panic {

@@ -42,16 +42,16 @@ const ActionRemoveMemberKind = "gno.land/p/samourai/basedao.RemoveMember"
 
 func NewRemoveMemberHandler(dao *DAOPrivate) daokit.ActionHandler {
 	return daokit.NewActionHandler(ActionRemoveMemberKind, func(ipayload interface{}) {
-		address, ok := ipayload.(std.Address)
+		addr, ok := ipayload.(std.Address)
 		if !ok {
 			panic(errors.New("invalid payload type"))
 		}
-		dao.Members.RemoveMember(address.String())
+		dao.Members.RemoveMember(addr.String())
 	})
 }
 
-func NewRemoveMemberAction(address std.Address) daokit.Action {
-	return daokit.NewAction(ActionRemoveMemberKind, address)
+func NewRemoveMemberAction(addr std.Address) daokit.Action {
+	return daokit.NewAction(ActionRemoveMemberKind, addr)
 }
 
 // ASSIGN ROLE
@@ -139,7 +139,7 @@ func NewEditProfileHandler(setter ProfileStringSetter, allowedFields []string) d
 			if len(allowedFields) > 0 && !stringSliceContains(allowedFields, k) {
 				panic(ufmt.Errorf("unauthorized field %q", k))
 			}
-			setter(k, v)
+			setter(cross, k, v)
 		}
 	})
 }
