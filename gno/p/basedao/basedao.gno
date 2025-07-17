@@ -47,7 +47,7 @@ type Config struct {
 	NoCreationEvent    bool
 }
 
-type ProfileStringSetter func(field string, value string) bool
+type ProfileStringSetter func(cur realm, field string, value string) bool
 type ProfileStringGetter func(addr std.Address, field string, def string) string
 
 const EventBaseDAOCreated = "BaseDAOCreated"
@@ -78,9 +78,9 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 	}
 
 	if conf.SetProfileString != nil {
-		cross(conf.SetProfileString)("DisplayName", conf.Name)
-		cross(conf.SetProfileString)("Bio", conf.Description)
-		cross(conf.SetProfileString)("Avatar", conf.ImageURI)
+		conf.SetProfileString(cross, "DisplayName", conf.Name)
+		conf.SetProfileString(cross, "Bio", conf.Description)
+		conf.SetProfileString(cross, "Avatar", conf.ImageURI)
 	}
 
 	if !conf.NoDefaultHandlers {
