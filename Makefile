@@ -5,8 +5,8 @@ clone-testing-gno:
 	rm -fr gnobuild
 	mkdir -p gnobuild
 	cd gnobuild && git clone https://github.com/gnolang/gno.git && cd gno && git checkout $(shell $(CAT) .gnoversion)
-	cp -r ./gno/p ./gnobuild/gno/examples/gno.land/p/zenao
-	cp -r ./gno/r ./gnobuild/gno/examples/gno.land/r/zenao
+	cp -r ./gno/p ./gnobuild/gno/examples/gno.land/p/samourai
+	cp -r ./gno/r ./gnobuild/gno/examples/gno.land/r/samourai
 
 .PHONY: clone-gno
 clone-gno:
