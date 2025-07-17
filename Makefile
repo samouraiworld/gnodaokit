@@ -24,7 +24,7 @@ build-gno:
 
 .PHONY: lint-gno
 lint-gno:
-	./gnobuild/gno/gnovm/build/gno tool lint ./gno/. -v
+	./gnobuild/gno/gnovm/build/gno lint ./gno/. -v
 
 .PHONY: test-gno
 test-gno:
