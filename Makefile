@@ -4,7 +4,7 @@ CAT := $(if $(filter $(OS),Windows_NT),type,cat)
 clone-testing-gno:
 	rm -fr gnobuild
 	mkdir -p gnobuild
-	cd gnobuild && git clone https://github.com/n0izn0iz/gno.git gno && cd gno && git checkout 7d23f1d9b8113572f4dcc1d0af01c8b1ab27ec9f
+	cd gnobuild && git clone https://github.com/n0izn0iz/gno.git gno && cd gno && git checkout 507796d2ed948a20db0846b5341bfd50bbe26550
 
 .PHONY: clone-gno
 clone-gno:
