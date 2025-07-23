@@ -1,5 +1,6 @@
 CAT := $(if $(filter $(OS),Windows_NT),type,cat)
 
+.PHONY: clone-testing-gno
 clone-testing-gno:
 	rm -fr gnobuild
 	mkdir -p gnobuild
