@@ -20,8 +20,11 @@ install-gno:
 build-gno:
 	cd gnobuild/gno/gnovm && make build
 
+# temporary copy waiting for package-loader to handle gno lint, delete it later
 .PHONY: lint-gno
 lint-gno:
+	cp -r ./gno/p ./gnobuild/gno/examples/gno.land/p/samourai
+	cp -r ./gno/r ./gnobuild/gno/examples/gno.land/r/samourai
 	./gnobuild/gno/gnovm/build/gno lint ./gno/. -v
 
 .PHONY: test-gno
