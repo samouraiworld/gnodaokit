@@ -24,7 +24,7 @@ func NoRole(memberStore basedao.MembersStore, count uint64) daocond.Condition {
 
 // Checks if a member has no assigned roles
 func hasNoRole(memberStore basedao.MembersStore, memberId string) bool {
-	return memberStore.GetMemberRoles(memberId) == nil
+	return len(memberStore.GetMemberRoles(memberId)) == 0
 }
 
 // Counts valid "yes" votes from roleless members
