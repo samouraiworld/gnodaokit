@@ -1,4 +1,4 @@
-package mydao
+package daodemo
 
 import (
 	"gno.land/p/samourai/basedao"
