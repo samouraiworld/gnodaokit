@@ -30,14 +30,15 @@ func hasNoRole(memberStore basedao.MembersStore, memberId string) bool {
 // Counts valid "yes" votes from roleless members
 func (c *noRoleCountCond) totalYes(ballot daocond.Ballot) uint64 {
 	totalYes := uint64(0)
-	ballot.Iterate(func(voter string, vote daocond.Vote) {
+	ballot.Iterate(func(voter string, vote daocond.Vote) bool {
 		if vote != daocond.VoteYes {
-			return
+			return false
 		}
 		if !hasNoRole(c.memberStore, voter) {
-			return
+			return false
 		}
 		totalYes += 1
+		return false
 	})
 	return totalYes
 }
