@@ -1,4 +1,4 @@
-package daodemo
+package custom_conditions
 
 import (
 	"gno.land/p/demo/ufmt"

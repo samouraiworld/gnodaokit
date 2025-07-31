@@ -1,2 +1,2 @@
-module = "gno.land/r/daodemo/basicdao"
+module = "gno.land/r/samourai/daodemo/basicdao"
 gno = "0.9"

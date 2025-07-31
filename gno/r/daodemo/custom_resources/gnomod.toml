@@ -1,2 +1,2 @@
-module = "gno.land/r/daodemo/custom_resources"
+module = "gno.land/r/samourai/daodemo/custom_resources"
 gno = "0.9"

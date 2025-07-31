@@ -1,4 +1,4 @@
-package daodemo
+package basicdao
 
 import "testing"
 

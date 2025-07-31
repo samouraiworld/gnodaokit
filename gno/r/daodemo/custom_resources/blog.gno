@@ -1,4 +1,4 @@
-package mydao
+package custom_resources
 
 type Post struct {
 	Title   string
