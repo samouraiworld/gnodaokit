@@ -285,6 +285,10 @@ func Execute(proposalID uint64) {
 	DAO.Execute(proposalID)
 }
 
+func Propose(cur realm, req daokit.ProposalRequest) {
+	DAO.Propose(req)
+}
+
 func Render(path string) string {
 	return daoPrivate.Render(path)
 }
