@@ -3,7 +3,7 @@ package main
 import (
 	"gno.land/p/samourai/basedao"
 	"gno.land/p/samourai/daokit"
-	"gno.land/r/demo/mydao"
+	"gno.land/r/samourai/daodemo/custom_conditions"
 )
 
 func main() {
@@ -19,6 +19,5 @@ func main() {
 		Action:      action,
 	}
 
-	mydao.Propose(proposal)
-
+	custom_conditions.Propose(proposal)
 }
