@@ -41,7 +41,7 @@ A **Decentralized Autonomous Organization (DAO)** is a self-governing entity tha
 
 DAOkit framework is composed of three packages:
 
-## 3.1 [daocond](../daocond/README.md)
+## 3.1 [daocond](./gno/p/daocond/)
 
 `daocond` provides a stateless condition engine used to evaluate if a proposal should be executed.
 
@@ -106,7 +106,7 @@ cond := daocond.And(
 
 Conditions are stateless for flexibility and scalability.
 
-## 3.2 daokit
+## 3.2 [daokit](./gno/p/daokit/)
 
 `daokit` provides the core mechanics:
 
@@ -148,7 +148,7 @@ Each proposal goes through the following states:
 - Final state — proposal can no longer be voted on or modified.
 
 
-## 3.3 [basedao](../basedao/README.md)
+## 3.3 [basedao](./gno/p/basedao/)
 
 `basedao` extends `daokit` to handle members and roles management.
 It handles who can participate in a DAO and what permissions they have.
