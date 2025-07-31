@@ -1,7 +1,7 @@
 package daodemo
 
 // This is the most basic example of a DAO using DAOKIT.
-// It is a simple DAO that has a single admin role and a single public-relationships role.
+// It is a simple DAO that has a single admin role, a public-relationships role and a finance-officer.
 // It is used to demonstrate the basic functionality of DAOKIT.
 
 import (
