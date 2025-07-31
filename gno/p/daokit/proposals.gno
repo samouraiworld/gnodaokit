@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/seqid"
-	"gno.land/p/samourai/daocond"
+	"gno.land/p/samcrew/daocond"
 )
 
 type ProposalStatus int

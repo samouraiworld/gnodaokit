@@ -1,8 +1,8 @@
 package main
 
 import (
-	"gno.land/p/samourai/daokit"
-	"gno.land/r/samourai/daodemo/custom_resources"
+	"gno.land/p/samcrew/daokit"
+	"gno.land/r/samcrew/daodemo/custom_resources"
 )
 
 func main() {

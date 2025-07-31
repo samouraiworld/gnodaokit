@@ -66,7 +66,7 @@ func (g *genericActionHandler) Type() string {
 	return g.kind
 }
 
-const ActionExecuteLambdaKind = "gno.land/p/samourai/daokit.ExecuteLambda"
+const ActionExecuteLambdaKind = "gno.land/p/samcrew/daokit.ExecuteLambda"
 
 func NewExecuteLambdaHandler() ActionHandler {
 	return NewActionHandler(ActionExecuteLambdaKind, func(i interface{}) {
@@ -82,7 +82,7 @@ func NewExecuteLambdaAction(cb func()) Action {
 	return NewAction(ActionExecuteLambdaKind, cb)
 }
 
-const ActionInstantExecuteKind = "gno.land/p/samourai/daokit.InstantExecute"
+const ActionInstantExecuteKind = "gno.land/p/samcrew/daokit.InstantExecute"
 
 type actionInstantExecute struct {
 	dao DAO

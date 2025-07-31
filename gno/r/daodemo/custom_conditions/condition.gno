@@ -2,8 +2,8 @@ package custom_conditions
 
 import (
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/samourai/basedao"
-	"gno.land/p/samourai/daocond"
+	"gno.land/p/samcrew/basedao"
+	"gno.land/p/samcrew/daocond"
 
 	"math"
 )

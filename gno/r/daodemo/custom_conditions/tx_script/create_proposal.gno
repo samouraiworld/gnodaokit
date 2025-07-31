@@ -1,9 +1,9 @@
 package main
 
 import (
-	"gno.land/p/samourai/basedao"
-	"gno.land/p/samourai/daokit"
-	"gno.land/r/samourai/daodemo/custom_conditions"
+	"gno.land/p/samcrew/basedao"
+	"gno.land/p/samcrew/daokit"
+	"gno.land/r/samcrew/daodemo/custom_conditions"
 )
 
 func main() {

@@ -5,9 +5,9 @@ package basicdao
 // It is used to demonstrate the basic functionality of DAOKIT.
 
 import (
-	"gno.land/p/samourai/basedao"
-	"gno.land/p/samourai/daocond"
-	"gno.land/p/samourai/daokit"
+	"gno.land/p/samcrew/basedao"
+	"gno.land/p/samcrew/daocond"
+	"gno.land/p/samcrew/daokit"
 	"gno.land/r/demo/profile"
 )
 

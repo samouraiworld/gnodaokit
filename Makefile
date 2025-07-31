@@ -23,8 +23,8 @@ build-gno:
 # temporary copy waiting for package-loader to handle gno lint, delete it later
 .PHONY: lint-gno
 lint-gno:
-	cp -r ./gno/p ./gnobuild/gno/examples/gno.land/p/samourai
-	cp -r ./gno/r ./gnobuild/gno/examples/gno.land/r/samourai
+	cp -r ./gno/p ./gnobuild/gno/examples/gno.land/p/samcrew
+	cp -r ./gno/r ./gnobuild/gno/examples/gno.land/r/samcrew
 	./gnobuild/gno/gnovm/build/gno lint ./gno/. -v
 
 .PHONY: test-gno

@@ -237,9 +237,9 @@ package daodemo
 // It is used to demonstrate the basic functionality of DAOKIT.
 
 import (
-	"gno.land/p/samourai/basedao"
-	"gno.land/p/samourai/daocond"
-	"gno.land/p/samourai/daokit"
+	"gno.land/p/samcrew/basedao"
+	"gno.land/p/samcrew/daocond"
+	"gno.land/p/samcrew/daokit"
 	"gno.land/r/demo/profile"
 )
 
@@ -314,12 +314,12 @@ To add new behavior to your DAO — or to enable others to integrate your packag
 
 ```go
 type Action interface {
-	Type() string // return the type of the action. e.g.: "gno.land/p/samourai/blog.NewPost"
+	Type() string // return the type of the action. e.g.: "gno.land/p/samcrew/blog.NewPost"
 	String() string // return stringify content of the action
 }
 
 type ActionHandler interface {
-	Type() string // return the type of the action. e.g.: "gno.land/p/samourai/blog"
+	Type() string // return the type of the action. e.g.: "gno.land/p/samcrew/blog"
 	Execute(action Action) // executes logic associated with the action
 }
 ```
@@ -328,8 +328,8 @@ This allows DAOs to execute arbitrary logic or interact with Gno packages throug
 ## Steps to Add a Custom Resource:
 1. Define the path of the action, it should be unique 
 ```go
-// XXX: pkg "/p/samourai/blog" - does not exist, it's just an example
-const ActionNewPostKind = "gno.land/p/samourai/blog.NewPost"
+// XXX: pkg "/p/samcrew/blog" - does not exist, it's just an example
+const ActionNewPostKind = "gno.land/p/samcrew/blog.NewPost"
 ```
 
 2. Create the structure type of the payload

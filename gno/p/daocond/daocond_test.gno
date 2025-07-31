@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/urequire"
-	"gno.land/p/samourai/daocond"
+	"gno.land/p/samcrew/daocond"
 )
 
 func TestCondition(t *testing.T) {

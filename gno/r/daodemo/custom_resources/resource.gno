@@ -4,11 +4,11 @@ import (
 	"errors"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/samourai/daokit"
+	"gno.land/p/samcrew/daokit"
 )
 
-// XXX: pkg "/p/samourai/blog" - does not exist, it's just an example
-const ActionNewPostKind = "gno.land/p/samourai/blog.NewPost"
+// XXX: pkg "/p/samcrew/blog" - does not exist, it's just an example
+const ActionNewPostKind = "gno.land/p/samcrew/blog.NewPost"
 
 type ActionNewPost struct {
 	Title   string
