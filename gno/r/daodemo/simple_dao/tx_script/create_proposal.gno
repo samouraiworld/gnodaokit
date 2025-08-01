@@ -3,7 +3,7 @@ package main
 import (
 	"gno.land/p/samcrew/basedao"
 	"gno.land/p/samcrew/daokit"
-	"gno.land/r/samcrew/daodemo/basic_dao"
+	"gno.land/r/samcrew/daodemo/simple_dao"
 )
 
 // Proposal to add a new member in the DAO
@@ -30,6 +30,6 @@ func main() {
 	println("Action String:", proposal.Action.String())
 
 	// Submit the proposal to our DAO
-	basic_dao.Propose(cross, proposal)
+	simple_dao.Propose(cross, proposal)
 
 }
