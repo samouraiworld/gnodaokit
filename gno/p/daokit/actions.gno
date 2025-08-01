@@ -22,8 +22,8 @@ func NewAction(kind string, payload interface{}) Action {
 }
 
 type genericAction struct {
-	kind    string
 	payload interface{}
+	kind    string
 }
 
 // String implements Action.
@@ -41,8 +41,8 @@ func NewActionHandler(kind string, executor func(interface{})) ActionHandler {
 }
 
 type genericActionHandler struct {
-	kind     string
 	executor func(payload interface{})
+	kind     string
 }
 
 // Execute implements ActionHandler.
