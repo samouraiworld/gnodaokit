@@ -370,3 +370,10 @@ resource := daokit.Resource{
 }
 daoPrivate.Core.Resources.Set(&resource)
 ```
+
+# 6. Interactive examples + Youtube Video
+
+Interactive examples of the dao above, custom condition and custom resource + unit test (With their source code!) are available in `/r/samcrew/daodemo`.
+As well we have a video of them on our [`Youtube Channel`](https://youtu.be/SphPgsjKQyQ).
+
+Have fun hacking! :)
