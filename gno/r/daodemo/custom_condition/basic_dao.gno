@@ -24,7 +24,7 @@ func init() {
 	memberStore := basedao.NewMembersStore(initialRoles, initialMembers)
 
 	// Define the "NoRole" condition
-	noRole := NoRole(*memberStore, 1)
+	noRole := NoRole(memberStore, 1)
 
 	DAO, daoPrivate = basedao.New(&basedao.Config{
 		Name:             "Demo DAOKIT DAO",

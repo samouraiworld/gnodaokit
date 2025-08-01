@@ -10,12 +10,12 @@ import (
 
 // Implements a custom DAO condition requiring votes from members with no assigned roles
 type noRoleCountCond struct {
-	memberStore basedao.MembersStore // Access to DAO membership data
-	count       uint64               // Required number of yes votes from roleless members
+	memberStore *basedao.MembersStore // Access to DAO membership data
+	count       uint64                // Required number of yes votes from roleless members
 }
 
 // NoRole creates a new condition requiring votes from members with no roles
-func NoRole(memberStore basedao.MembersStore, count uint64) daocond.Condition {
+func NoRole(memberStore *basedao.MembersStore, count uint64) daocond.Condition {
 	return &noRoleCountCond{
 		memberStore: memberStore,
 		count:       count,
@@ -23,8 +23,8 @@ func NoRole(memberStore basedao.MembersStore, count uint64) daocond.Condition {
 }
 
 // Checks if a member has no assigned roles
-func hasNoRole(memberStore basedao.MembersStore, memberId string) bool {
-	return len(memberStore.GetMemberRoles(memberId)) == 0
+func hasNoRole(memberStore *basedao.MembersStore, memberId string) bool {
+	return len((*memberStore).GetMemberRoles(memberId)) == 0
 }
 
 // Counts valid "yes" votes from roleless members
