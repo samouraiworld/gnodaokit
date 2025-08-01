@@ -18,6 +18,10 @@ func (m *ActionNewPost) String() string {
 	return ufmt.Sprintf("Add member %s with roles %v", m.Title, m.Content)
 }
 
+func (m *ActionNewPost) Type() string {
+	return ActionNewPostKind
+}
+
 func NewPostAction(title, content string) daokit.Action {
 	// def: daoKit.NewAction(kind: String, payload: interface{})
 	return daokit.NewAction(ActionNewPostKind, &ActionNewPost{

@@ -19,5 +19,5 @@ func main() {
 		Action:      action,
 	}
 
-	custom_condition.Propose(proposal)
+	custom_condition.Propose(cross, proposal)
 }

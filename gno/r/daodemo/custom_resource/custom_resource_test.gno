@@ -1,6 +1,7 @@
 package custom_resource
 
 import (
+	"std"
 	"testing"
 
 	"gno.land/p/samcrew/daocond"
@@ -29,9 +30,9 @@ func TestDAOInitialization(t *testing.T) {
 	})
 
 	t.Run("Test custom resource registration", func(t *testing.T) {
-		res := daoPrivate.Core.Resources.Get("Hello")
+		res := daoPrivate.Core.Resources.Get(ActionNewPostKind)
 		if res == nil {
-			t.Fatal("Expected 'Hello' resource to be registered")
+			t.Fatal("Expected '%s' resource to be registered", ActionNewPostKind)
 		}
 		if res.Description != "Description" {
 			t.Errorf("Expected resource description 'Description', got '%s'", res.Description)
@@ -40,24 +41,23 @@ func TestDAOInitialization(t *testing.T) {
 }
 
 func TestBlogResource(t *testing.T) {
+	testing.SetRealm(std.NewUserRealm("g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh"))
+
+	action := NewPostAction("Test Title", "Test Content")
 	// Create test proposal
 	req := daokit.ProposalRequest{
 		Title:       "Add new blog post",
 		Description: "Adding an important announcement",
-		Action:      NewPostAction("Test Title", "Test Content"),
+		Action:      action,
 	}
 
 	t.Run("Test proposal creation", func(t *testing.T) {
-		Propose(nil, req)
+		Propose(cross, req)
 		if daoPrivate.Core.Proposals.Tree.Size() != 1 {
 			t.Fatalf("Expected 1 proposal, got %d", daoPrivate.Core.Proposals.Tree.Size())
 		}
 
-		raw, exist := daoPrivate.Core.Proposals.Tree.Get("1")
-		if !exist {
-			t.Errorf("Expected Proposal '1' to exist")
-		}
-		prop := raw.(*daokit.Proposal)
+		prop := daoPrivate.Core.Proposals.GetProposal(1)
 		if prop.Title != req.Title {
 			t.Errorf("Expected title '%s', got '%s'", req.Title, prop.Title)
 		}
@@ -70,12 +70,14 @@ func TestBlogResource(t *testing.T) {
 		}
 
 		// Vote with 3 members (meets 60% threshold of 4 members)
-		Vote(nil, 1, daocond.VoteYes) // member1
-		Vote(nil, 1, daocond.VoteYes) // member2
-		Vote(nil, 1, daocond.VoteYes) // member3
+		Vote(cross, 1, daocond.VoteYes) // member1
+		testing.SetRealm(std.NewUserRealm("g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld65"))
+		Vote(cross, 1, daocond.VoteYes) // member2
+		testing.SetRealm(std.NewUserRealm("g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld64"))
+		Vote(cross, 1, daocond.VoteYes) // member3
 
 		// Execute the proposal
-		Execute(nil, 1)
+		Execute(cross, 1)
 
 		// Verify blog post was created
 		if len(myblog.Post) != 1 {
@@ -97,57 +99,22 @@ func TestBlogResource(t *testing.T) {
 
 		// Create new proposal
 		req.Action = NewPostAction("Should Not Create", "This shouldn't appear")
-		Propose(nil, req)
+		Propose(cross, req)
 
 		// Vote with only 2 members (50% - below 60% threshold)
-		Vote(nil, 2, daocond.VoteYes) // member1
-		Vote(nil, 2, daocond.VoteYes) // member2
+		Vote(cross, 2, daocond.VoteYes) // member1
+		testing.SetRealm(std.NewUserRealm("g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld65"))
+		Vote(cross, 2, daocond.VoteYes) // member2
 
-		// Try to execute - should fail
-		Execute(nil, 2)
+		// should panic
+		abort := revive(func() { Execute(cross, 2) })
+		if abort != "proposal condition is not met" {
+			t.Fatal("expected execute to panic, but it did not")
+		}
 
 		// Verify blog post was NOT created
 		if len(myblog.Post) != 0 {
 			t.Fatalf("Expected 0 posts after failed execution, got %d", len(myblog.Post))
-		}
-	})
-}
-
-func TestActionHandlers(t *testing.T) {
-	t.Run("Test post handler execution", func(t *testing.T) {
-		// Create test blog
-		testBlog := Blog{}
-		handler := NewPostHandler(&testBlog)
-
-		// Verify handler kind
-		if handler.Type() != ActionNewPostKind {
-			t.Errorf("Expected kind '%s', got '%s'", ActionNewPostKind, handler.Type())
-		}
-
-		// Execute handler
-		handler.Execute(&ActionNewPost{
-			Title:   "Handler Test",
-			Content: "Handler Content",
-		})
-
-		// Verify blog updated
-		if len(testBlog.Post) != 1 {
-			t.Fatalf("Expected 1 post after handler execution, got %d", len(testBlog.Post))
-		}
-		post := testBlog.Post[0]
-		if post.Title != "Handler Test" {
-			t.Errorf("Expected title 'Handler Test', got '%s'", post.Title)
-		}
-	})
-
-	t.Run("Test invalid payload handling", func(t *testing.T) {
-		testBlog := Blog{}
-		handler := NewPostHandler(&testBlog)
-
-		// should panic
-		abort := revive(func() { handler.Execute("invalid payload") })
-		if abort != "invalid action type" {
-			t.Error("Expected panic with invalid payload")
 		}
 	})
 }

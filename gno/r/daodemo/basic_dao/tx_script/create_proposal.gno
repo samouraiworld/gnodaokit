@@ -30,6 +30,6 @@ func main() {
 	println("Action String:", proposal.Action.String())
 
 	// Submit the proposal to our DAO
-	basic_dao.Propose(proposal)
+	basic_dao.Propose(cross, proposal)
 
 }

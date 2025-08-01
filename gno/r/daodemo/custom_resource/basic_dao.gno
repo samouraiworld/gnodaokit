@@ -18,10 +18,10 @@ func init() {
 		{Name: "Role", Description: "Has a role"},
 	}
 	initialMembers := []basedao.Member{
-		{Address: "g1j9zh3ce7a5tg2esjzherfrx7m3n842k2vmj395", Roles: []string{}},
-		{Address: "g1ld63jv", Roles: []string{}},
-		{Address: "g1r690tth", Roles: []string{}},
-		{Address: "g16jv6e0r", Roles: []string{}},
+		{Address: "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh", Roles: []string{}},
+		{Address: "g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld65", Roles: []string{}},
+		{Address: "g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld64", Roles: []string{}},
+		{Address: "g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld69", Roles: []string{}},
 	}
 	memberStore := basedao.NewMembersStore(initialRoles, initialMembers)
 	membersMajority := daocond.MembersThreshold(0.6, memberStore.IsMember, memberStore.MembersCount)

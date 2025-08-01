@@ -14,5 +14,5 @@ func main() {
 		Description: "This is a sample proposal using PrintAction.",
 		Action:      action,
 	}
-	custom_resource.Propose(proposal)
+	custom_resource.Propose(cross, proposal)
 }
