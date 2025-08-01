@@ -7,8 +7,7 @@ import (
 	"gno.land/p/samcrew/daokit"
 )
 
-// XXX: pkg "/p/samcrew/blog" - does not exist, it's just an example
-const ActionNewPostKind = "gno.land/p/samcrew/blog.NewPost"
+const ActionNewPostKind = "gno.land/r/daodemo/custom_resource/blog.NewPost"
 
 type ActionNewPost struct {
 	Title   string
@@ -18,6 +17,7 @@ type ActionNewPost struct {
 func (m *ActionNewPost) String() string {
 	return ufmt.Sprintf("Add member %s with roles %v", m.Title, m.Content)
 }
+
 func NewPostAction(title, content string) daokit.Action {
 	// def: daoKit.NewAction(kind: String, payload: interface{})
 	return daokit.NewAction(ActionNewPostKind, &ActionNewPost{

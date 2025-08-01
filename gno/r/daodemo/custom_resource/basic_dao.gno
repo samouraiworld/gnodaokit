@@ -10,7 +10,7 @@ import (
 var (
 	DAO        daokit.DAO
 	daoPrivate *basedao.DAOPrivate
-	blog       Blog
+	myblog     Blog
 )
 
 func init() {
@@ -37,7 +37,7 @@ func init() {
 
 	// Create a new custom resource
 	resource := daokit.Resource{
-		Handler:     NewPostHandler(&blog),
+		Handler:     NewPostHandler(&myblog),
 		Condition:   membersMajority,
 		DisplayName: "Hello",
 		Description: "Description",

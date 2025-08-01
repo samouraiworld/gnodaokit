@@ -2,6 +2,8 @@ package basic_dao
 
 import "testing"
 
+// `init()` function is executed by default from `basic_dao.gno`, hence the `membersCount != 4`.
+// Refers to `basic_dao.gno` to understand the outcome of this test.
 func TestInit(t *testing.T) {
 	membersCount := daoPrivate.Members.MembersCount()
 	if membersCount != 4 {
