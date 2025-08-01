@@ -1,4 +1,4 @@
-package custom_resources
+package custom_resource
 
 type Post struct {
 	Title   string

@@ -1,4 +1,4 @@
-package custom_conditions
+package custom_condition
 
 import (
 	"gno.land/p/demo/ufmt"

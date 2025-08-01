@@ -1,4 +1,4 @@
-package basicdao
+package custom_condition
 
 import "testing"
 

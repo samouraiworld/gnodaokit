@@ -1,4 +1,4 @@
-package basicdao
+package basic_dao
 
 // This is the most basic example of a DAO using DAOKIT.
 // It is a simple DAO that has a single admin role, a public-relationships role and a finance-officer.

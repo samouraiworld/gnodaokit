@@ -230,7 +230,7 @@ type Config struct {
 # 4. Code Example of a Basic DAO
 
 ```go
-package daodemo
+package basic_dao
 
 // This is the most basic example of a DAO using DAOKIT.
 // It is a simple DAO that has a single admin role and a single public-relationships role.

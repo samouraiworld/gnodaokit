@@ -1,4 +1,4 @@
-package custom_resources
+package custom_resource
 
 import (
 	"errors"

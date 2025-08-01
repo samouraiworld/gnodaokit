@@ -3,7 +3,7 @@ package main
 import (
 	"gno.land/p/samcrew/basedao"
 	"gno.land/p/samcrew/daokit"
-	"gno.land/r/samcrew/daodemo/custom_conditions"
+	"gno.land/r/samcrew/daodemo/custom_condition"
 )
 
 func main() {
@@ -19,5 +19,5 @@ func main() {
 		Action:      action,
 	}
 
-	custom_conditions.Propose(proposal)
+	custom_condition.Propose(proposal)
 }
