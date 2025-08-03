@@ -6,19 +6,26 @@ gnobuild: .gnoversion
 	git clone https://github.com/n0izn0iz/gno.git gnobuild --branch pkgloadlint
 	cd gnobuild && git checkout $(shell $(CAT) .gnoversion)
 
-gnobuild/gno/gnovm/build/gno: gnobuild
+gnobuild/gnovm/build/gno: gnobuild
 	cd gnobuild/gnovm && make build
+
+gnobuild/contribs/gnodev/build/gnodev: gnobuild
+	cd gnobuild/contribs/gnodev && make build
+
+.PHONY: dev
+dev: gnobuild/contribs/gnodev/build/gnodev
+	./gnobuild/contribs/gnodev/build/gnodev staging $$(find gno -name gnomod.toml -type f -exec dirname {} \;)
 
 .PHONY: install-gno
 install-gno: gnobuild
 	cd gnobuild/gno && make install
 
 .PHONY: lint-gno
-lint-gno: gnobuild/gno/gnovm/build/gno
+lint-gno: gnobuild/gnovm/build/gno
 	./gnobuild/gnovm/build/gno lint ./gno/... -v
 
 .PHONY: test-gno
-test-gno: gnobuild/gno/gnovm/build/gno
+test-gno: gnobuild/gnovm/build/gno
 	./gnobuild/gnovm/build/gno test ./gno/... -v
 
 .PHONY: gno-mod-tidy
