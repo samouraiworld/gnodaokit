@@ -1,10 +1,10 @@
 CAT := $(if $(filter $(OS),Windows_NT),type,cat)
 
-gnobuild:
+gnobuild: .gnoversion
 	rm -fr gnobuild
 	mkdir -p gnobuild
 	git clone https://github.com/n0izn0iz/gno.git gnobuild --branch pkgloadlint
-	cd gnobuild && git checkout 60adea95805153ccacb794a7d887241fd516a4b9
+	cd gnobuild && git checkout $(shell $(CAT) .gnoversion)
 
 gnobuild/gno/gnovm/build/gno: gnobuild
 	cd gnobuild/gnovm && make build
