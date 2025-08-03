@@ -671,13 +671,16 @@ func TestMigrate(t *testing.T) {
 		{bob.String(), []string{"admin"}},
 	}
 	tdao := newTestingDAO(t, 0.2, members)
+	initialDAO := tdao.dao
 
-	nextMembers := []Member{
-		{alice.String(), []string{"admin"}},
-		{bob.String(), []string{"admin"}},
-	}
-	nextdao := newTestingDAO(t, 0.2, nextMembers)
+	var nextMockHandlerCalled *bool // needed to not expose nextdao
 	migrateFn := func(prev *DAOPrivate) daokit.DAO {
+		nextMembers := []Member{
+			{alice.String(), []string{"admin"}},
+			{bob.String(), []string{"admin"}},
+		}
+		nextdao := newTestingDAO(t, 0.2, nextMembers)
+		nextMockHandlerCalled = nextdao.mockHandlerCalled
 		return nextdao.dao
 	}
 
@@ -687,13 +690,21 @@ func TestMigrate(t *testing.T) {
 		Action:      NewChangeDAOImplementationAction(migrateFn),
 	})
 
+	if tdao.dao == initialDAO {
+		t.Fatalf("Expected dao implementation to have changed")
+	}
+
+	if nextMockHandlerCalled == nil {
+		t.Fatalf("Expected next mock handler to not be nil")
+	}
+
 	daokit.InstantExecute(tdao.dao, tdao.mockProposalRequest)
 
 	if *tdao.mockHandlerCalled {
 		t.Errorf("Expected initial dao mock not to have been called")
 	}
 
-	if !*nextdao.mockHandlerCalled {
+	if !*nextMockHandlerCalled {
 		t.Errorf("Expected next dao mock to have been called")
 	}
 }
