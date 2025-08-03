@@ -25,6 +25,10 @@ func (d *daoPublic) Vote(id uint64, vote daocond.Vote) {
 	d.impl.Vote(id, vote)
 }
 
+func (d *daoPublic) Render(path string) string {
+	return d.impl.Render(path)
+}
+
 // DAO is meant for internal realm usage and should not be exposed
 type DAOPrivate struct {
 	Core             *daokit.Core
@@ -91,15 +95,19 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 
 		if conf.SetProfileString != nil {
 			dao.Core.Resources.Set(&daokit.Resource{
-				Handler:   NewEditProfileHandler(conf.SetProfileString, []string{"DisplayName", "Bio", "Avatar"}),
-				Condition: conf.InitialCondition,
+				Handler:     NewEditProfileHandler(conf.SetProfileString, []string{"DisplayName", "Bio", "Avatar"}),
+				Condition:   conf.InitialCondition,
+				DisplayName: "Edit Profile",
+				Description: "Edit the profile fields DisplayName, Bio and Avatar.",
 			})
 		}
 
 		if conf.SetImplem != nil {
 			dao.Core.Resources.Set(&daokit.Resource{
-				Handler:   NewChangeDAOImplementationHandler(dao, conf.SetImplem),
-				Condition: conf.InitialCondition,
+				Handler:     NewChangeDAOImplementationHandler(dao, conf.SetImplem),
+				Condition:   conf.InitialCondition,
+				DisplayName: "Change DAO Implementation",
+				Description: "Change the underlying DAO implementation.",
 			})
 		}
 

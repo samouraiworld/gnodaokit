@@ -130,5 +130,5 @@ func Execute(proposalID uint64) {
 }
 
 func Render(path string) string {
-	return daoPrivate.Render(path)
+	return DAO.Render(path)
 }
