@@ -16,6 +16,31 @@ var (
 	daoPrivate *basedao.DAOPrivate
 )
 
+/*
+Proxy research:
+
+once we hit mainnet, we need a way to upgrade daos implementations
+
+looking at this realm, we need to:
+
+1) allow to change the DAO variable, this will in turn change the exposed Vote and Execute func implems
+2) allow to change the Render function
+3) allow to "change" the daoPrivate variable, this is used only in external queries
+
+1) this is the easy part, since it's an interface, we can just create a new action that change the underlying implem
+this action should take a callback that pass the daoPrivate so we can import the data from the previous implem
+
+2) straigthforward, create an action that can update the Render func target callback
+
+3) more tricky, current idea:
+- add an extension system to daokit
+- specify a "basedao" extension and add it in this realm, it starts by pointing at the var in this realm
+- allow to update extensions with actions
+- the clients first query the extensions store to know where to do queries
+
+TODO: investigate zenao daos to see if this fits
+*/
+
 // TODO: add a little bit more complexity to show daocond initialization
 func init() {
 	initialRoles := []basedao.RoleInfo{

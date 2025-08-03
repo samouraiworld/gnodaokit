@@ -110,3 +110,61 @@ func NewInstantExecuteHandler() ActionHandler {
 func NewInstantExecuteAction(dao DAO, req ProposalRequest) Action {
 	return NewAction(ActionInstantExecuteKind, &actionInstantExecute{dao: dao, req: req})
 }
+
+const ActionSetExtensionKind = "gno.land/p/samourai/daokit.SetExtension"
+
+type actionSetExtension struct {
+	core      *Core
+	extension Extension
+}
+
+func (a *actionSetExtension) String() string {
+	// XXX: find a way to be explicit about the subdao
+	s := ""
+	s += md.Paragraph(md.Blockquote(a.req.Action.Type()))
+	s += md.Paragraph(a.req.Action.String())
+	return s
+}
+
+func NewSetExtensionHandler() ActionHandler {
+	return NewActionHandler(ActionSetExtensionKind, func(i interface{}) {
+		action, ok := i.(*actionSetExtension)
+		if !ok {
+			panic(errors.New("invalid action type"))
+		}
+		action.core.Extensions.Set(action.extension)
+	})
+}
+
+func NewSetExtensionAction(core *Core, extension Extension) Action {
+	return NewAction(ActionSetExtensionKind, &actionSetExtension{core: core, extension: extension})
+}
+
+const ActionChangeDAOImplementationKind = "gno.land/p/samourai/daokit.ChangeDAOImplementation"
+
+type actionChangeDAOImplementation struct {
+	dao DAO
+	req ProposalRequest
+}
+
+func (a *actionChangeDAOImplementation) String() string {
+	// XXX: find a way to be explicit about the subdao
+	s := ""
+	s += md.Paragraph(md.Blockquote(a.req.Action.Type()))
+	s += md.Paragraph(a.req.Action.String())
+	return s
+}
+
+func NewChangeDAOImplementationHandler() ActionHandler {
+	return NewActionHandler(ActionChangeDAOImplementationKind, func(i interface{}) {
+		action, ok := i.(*actionChangeDAOImplementation)
+		if !ok {
+			panic(errors.New("invalid action type"))
+		}
+		ChangeDAOImplementation(action.dao, action.req)
+	})
+}
+
+func NewChangeDAOImplementationAction(dao DAO, req ProposalRequest) Action {
+	return NewAction(ActionChangeDAOImplementationKind, &actionChangeDAOImplementation{dao: dao, req: req})
+}
