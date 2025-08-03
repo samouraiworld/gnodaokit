@@ -695,7 +695,7 @@ func TestMigrate(t *testing.T) {
 	}
 
 	if nextMockHandlerCalled == nil {
-		t.Fatalf("Expected next mock handler to not be nil")
+		t.Fatalf("Expected nextMockHandlerCalled ptr to not be nil")
 	}
 
 	daokit.InstantExecute(tdao.dao, tdao.mockProposalRequest)
