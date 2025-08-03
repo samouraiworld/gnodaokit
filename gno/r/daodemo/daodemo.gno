@@ -63,12 +63,13 @@ so
 - make the specific dao realms have their custom public functions upgradeable via actions
 	- pro: allow crossing funcs
 	- pro: no gas cost
-	- con: does not allow to extend the dao capabilities
+	- con: does not allow to extend the dao capabilities in itself. Can be combined with other methods but I think we should avoid that
 
 - use third party realms for extensions, like a memberstore realm used by multiple daos in the zenao case
 	- pro: allow to extend dao capabilities
 	- pro: contribute to commons, those third-party realms can be used by other kind of entities (think aeddi's treasury realm or payrolls realm)
 	- pro: allows crossing funcs
+	- con: prevents `maketx call`ing those funcs
 	- con: gas cost increase due to the lookup to find the dao
 
 - make the DAO interface have a new method to fetch the extension object and then cast it to the correct type
