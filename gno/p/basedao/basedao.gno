@@ -45,6 +45,7 @@ type Config struct {
 	SetProfileString   ProfileStringSetter
 	GetProfileString   ProfileStringGetter
 	NoCreationEvent    bool
+	SetImplem          daokit.SetImplemFn
 }
 
 type ProfileStringSetter func(cur realm, field string, value string) bool
@@ -91,6 +92,13 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 		if conf.SetProfileString != nil {
 			dao.Core.Resources.Set(&daokit.Resource{
 				Handler:   NewEditProfileHandler(conf.SetProfileString, []string{"DisplayName", "Bio", "Avatar"}),
+				Condition: conf.InitialCondition,
+			})
+		}
+
+		if conf.SetImplem != nil {
+			dao.Core.Resources.Set(&daokit.Resource{
+				Handler:   NewChangeDAOImplementationHandler(dao, conf.SetImplem),
 				Condition: conf.InitialCondition,
 			})
 		}

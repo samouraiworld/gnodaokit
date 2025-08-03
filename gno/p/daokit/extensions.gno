@@ -23,7 +23,7 @@ func NewExtensionsStore() *ExtensionsStore {
 }
 
 func (r *ExtensionsStore) Set(extension *Extension) {
-	r.Tree.Set(extension.Handler.Type(), extension)
+	r.Tree.Set(extension.Kind, extension)
 }
 
 func (r *ExtensionsStore) Get(name string) *Extension {

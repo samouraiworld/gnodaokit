@@ -45,6 +45,8 @@ it prevents having an upgradeable Render function that can be dynamically used i
 
 - use the public extension systems outlined in 4) RES (third party realms or extension objects)
 
+---
+
 TODO: investigate zenao daos to see if this fits
 
 zenao events and communities have an additional public func and it make sense to have a way to access dao extensions from gno code
@@ -56,6 +58,8 @@ func IsMember(memberId string) bool {
 }
 
 so
+
+---
 
 4) REQ: allow to upgrade public extensions meant to be imported from gno code or called by an EOA from `maketx call` or `maketx run`
 
@@ -74,9 +78,11 @@ so
 
 - make the DAO interface have a new method to fetch the extension object and then cast it to the correct type
 	- pro: allow to extend dao capabilities
+	- pro: ease of use
 	- con: less type-safety
 	- con: prevents `maketx call`ing those funcs
 	- con: small gas cost for cast, but probably negligible
+	- con: more complex dao interface
 */
 
 // TODO: add a little bit more complexity to show daocond initialization
@@ -111,6 +117,7 @@ func init() {
 		InitialCondition: adminCond,
 		GetProfileString: profile.GetStringField,
 		SetProfileString: profile.SetStringField,
+		SetImplem:        func(newImplem daokit.DAO) { DAO = newImplem },
 	})
 }
 

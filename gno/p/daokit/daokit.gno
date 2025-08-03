@@ -14,7 +14,7 @@ type DAO interface {
 	// XXX: should be here or in core?
 	// XXX: rename to interfaces?
 	// XXX: replace with read-only list?
-	Extensions() []Extension
+	// Extensions() []Extension
 }
 
 func InstantExecute(d DAO, req ProposalRequest) uint64 {
@@ -90,3 +90,5 @@ func (d *Core) Propose(proposerID string, req ProposalRequest) uint64 {
 func (d *Core) ResourcesCount() int {
 	return d.Resources.Tree.Size()
 }
+
+type SetImplemFn = func(implem DAO)
