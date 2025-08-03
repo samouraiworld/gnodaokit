@@ -47,7 +47,7 @@ it prevents having an upgradeable Render function that can be dynamically used i
 
 TODO: investigate zenao daos to see if this fits
 
-zenao events and communities have and additional public func and it make sense to have a way to access dao extensions from gno code
+zenao events and communities have an additional public func and it make sense to have a way to access dao extensions from gno code
 example from zenao:
 
 // Set public to be used as auth layer for external entities (e.g polls)
