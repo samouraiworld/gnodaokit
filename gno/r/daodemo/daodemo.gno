@@ -39,7 +39,7 @@ this action should take a callback that pass the daoPrivate so we can import the
 	- allow to update extensions with actions
 	- the clients first query the extensions store to know where to do queries
 
-- use the public extension systems outlined in 4) RES (third party realms or )
+- use the public extension systems outlined in 4) RES (third party realms or extension objects)
 
 TODO: investigate zenao daos to see if this fits
 
