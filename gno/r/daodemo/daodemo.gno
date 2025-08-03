@@ -37,7 +37,8 @@ it prevents having an upgradeable Render function that can be dynamically used i
 
 3) RES: more tricky, ideas:
 
-- add a private query extension system to daokit
+- add a private query extension system to daokit that map an extension kind to a path to start the query with
+	- example: kind: "gno.land/p/samcrew/basedao.MemberStore" -> path: "gno.land/r/samcrew/daodemo.daoPrivate.Members"
 	- specify a "basedao" extension and add it in basedao constructor, it starts by pointing at the var in the instantiating realm
 	- allow to update extensions with actions
 	- the clients first query the extensions store to know where to do queries
