@@ -70,7 +70,7 @@ so
 	- pro: allow to extend dao capabilities
 	- pro: contribute to commons, those third-party realms can be used by other kind of entities (think aeddi's treasury realm or payrolls realm)
 	- con: prevents `maketx call`ing those funcs
-	- con: gas cost increase due to the lookup to find the dao
+	- con: gas cost increase due to the lookup to find the dao-specific instance in the third-party realm
 
 - make the DAO interface have a new method to fetch the extension object and then cast it to the correct type
 	- pro: allow to extend dao capabilities
