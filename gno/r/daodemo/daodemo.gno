@@ -30,7 +30,10 @@ looking at this realm, we need to:
 1) RES: this is the easy part, since it's an interface, we can just create a new action that change the underlying implem
 this action should take a callback that pass the daoPrivate so we can import the data from the previous implem
 
-2) RES: straigthforward, create an action that can update the Render func target callback
+2) RES: straigthforward, move the Render func into DAO interface
+
+considered only allowing to upgrade a callback in the realm but
+it prevents having an upgradeable Render function that can be dynamically used in gno code
 
 3) RES: more tricky, ideas:
 
