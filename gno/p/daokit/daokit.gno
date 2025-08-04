@@ -12,10 +12,11 @@ type DAO interface {
 	Vote(id uint64, vote daocond.Vote)
 	Render(path string) string
 
-	// XXX: should be here or in core?
-	// XXX: rename to interfaces?
-	// XXX: replace with read-only list?
-	// Extensions() []Extension
+	QueryExtension(kind string) *QueryExtension
+	QueryExtensions() []*QueryExtension
+
+	ObjExtension(kind string) ObjExtension
+	ObjExtensions() []ObjExtension
 }
 
 func InstantExecute(d DAO, req ProposalRequest) uint64 {
@@ -28,7 +29,9 @@ func InstantExecute(d DAO, req ProposalRequest) uint64 {
 type Core struct {
 	Resources *ResourcesStore
 	Proposals *ProposalsStore
-	// Extensions *ExtensionsStore
+
+	QueryExtensions *QueryExtensionsStore
+	ObjExtensions   *ObjExtensionsStore
 }
 
 func NewCore() *Core {
@@ -36,7 +39,8 @@ func NewCore() *Core {
 		Resources: NewResourcesStore(),
 		Proposals: NewProposalsStore(),
 
-		// Extensions: NewExtensionsStore(),
+		QueryExtensions: NewQueryExtensionsStore(),
+		ObjExtensions:   NewObjExtensionsStore(),
 	}
 }
 

@@ -5,6 +5,8 @@ package daodemo
 // It is used to demonstrate the basic functionality of DAOKIT.
 
 import (
+	"std"
+
 	"gno.land/p/samourai/basedao"
 	"gno.land/p/samourai/daocond"
 	"gno.land/p/samourai/daokit"
@@ -118,7 +120,21 @@ func init() {
 		GetProfileString: profile.GetStringField,
 		SetProfileString: profile.SetStringField,
 		SetImplem:        func(newImplem daokit.DAO) { DAO = newImplem },
+
+		// QueryExtensions demo
+		QueryDAOPrivatePath: std.CurrentRealm().PkgPath() + ".daoPrivate",
 	})
+
+	// local upgradable behavior demo
+
+	daoPrivate.Core.Resources.Set(&daokit.Resource{
+		Handler:     NewChangeIsMemberFnActionHandler(func(newIsMemberFn func(memberId string) bool) { isMemberFn = newIsMemberFn }),
+		Condition:   adminCond,
+		DisplayName: "Change IsMember implementation",
+		Description: "Allows to change the underlying IsMember implementation.",
+	})
+
+	isMemberFn = daoPrivate.Members.IsMember
 }
 
 func Vote(proposalID uint64, vote daocond.Vote) {
@@ -131,4 +147,10 @@ func Execute(proposalID uint64) {
 
 func Render(path string) string {
 	return DAO.Render(path)
+}
+
+// Set public to be used as auth layer for external entities (e.g polls)
+// example with local upgrade action
+func IsMember(memberId string) bool {
+	return isMemberFn(memberId)
 }

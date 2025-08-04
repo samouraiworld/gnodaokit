@@ -29,6 +29,22 @@ func (d *daoPublic) Render(path string) string {
 	return d.impl.Render(path)
 }
 
+func (d *daoPublic) QueryExtension(kind string) *daokit.QueryExtension {
+	return d.impl.Core.QueryExtensions.Get(kind)
+}
+
+func (d *daoPublic) QueryExtensions() []*daokit.QueryExtension {
+	return d.impl.Core.QueryExtensions.All()
+}
+
+func (d *daoPublic) ObjExtension(kind string) daokit.ObjExtension {
+	return d.impl.Core.ObjExtensions.Get(kind)
+}
+
+func (d *daoPublic) ObjExtensions() []daokit.ObjExtension {
+	return d.impl.Core.ObjExtensions.All()
+}
+
 // DAO is meant for internal realm usage and should not be exposed
 type DAOPrivate struct {
 	Core             *daokit.Core
@@ -50,6 +66,9 @@ type Config struct {
 	GetProfileString   ProfileStringGetter
 	NoCreationEvent    bool
 	SetImplem          daokit.SetImplemFn
+
+	// QueryExtensions specific
+	QueryDAOPrivatePath string
 }
 
 type ProfileStringSetter func(cur realm, field string, value string) bool
@@ -148,8 +167,21 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 		std.Emit(EventBaseDAOCreated)
 	}
 
+	// query extension example
+	if conf.QueryDAOPrivatePath != "" {
+		dao.Core.QueryExtensions.Set(&daokit.QueryExtension{
+			Kind: DAOPrivateQueryExtensionV1Kind,
+			Path: conf.QueryDAOPrivatePath,
+		})
+	}
+
+	dao.Core.ObjExtensions.Set(dao.Members)
+
 	return &daoPublic{impl: dao}, dao
 }
+
+// query extension example
+const DAOPrivateQueryExtensionV1Kind = "gno.land/p/samourai/basedao.DAOPrivate@v1"
 
 func (d *DAOPrivate) Vote(proposalID uint64, vote daocond.Vote) {
 	if len(vote) > 16 {
