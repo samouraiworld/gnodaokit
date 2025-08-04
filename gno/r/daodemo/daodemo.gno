@@ -5,6 +5,8 @@ package daodemo
 // It is used to demonstrate the basic functionality of DAOKIT.
 
 import (
+	"std"
+
 	"gno.land/p/samourai/basedao"
 	"gno.land/p/samourai/daocond"
 	"gno.land/p/samourai/daokit"
@@ -15,6 +17,75 @@ var (
 	DAO        daokit.DAO
 	daoPrivate *basedao.DAOPrivate
 )
+
+/*
+Proxy research:
+
+once we hit mainnet, we need a way to upgrade daos implementations
+
+looking at this realm, we need to:
+
+1) REQ: allow to change the DAO variable, this will in turn change the exposed Vote and Execute func implems
+2) REQ: allow to change the Render function
+3) REQ: allow to "change" the daoPrivate variable, this is used only in external queries
+
+1) RES: this is the easy part, since it's an interface, we can just create a new action that change the underlying implem
+this action should take a callback that pass the daoPrivate so we can import the data from the previous implem
+
+2) RES: straigthforward, move the Render func into DAO interface
+
+considered only allowing to upgrade a callback in the realm but
+it prevents having an upgradeable Render function that can be dynamically used in gno code
+
+3) RES: more tricky, ideas:
+
+- add a private query extension system to daokit that map an extension kind to a path to start the query with
+	- example: kind: "gno.land/p/samcrew/basedao.MemberStore" -> path: "gno.land/r/samcrew/daodemo.daoPrivate.Members"
+	- specify a "basedao" extension and add it in basedao constructor, it starts by pointing at the var in the instantiating realm
+	- allow to update extensions with actions
+	- the clients first query the extensions store to know where to do queries
+
+- use the public extension systems outlined in 4) RES (third party realms or extension objects)
+
+---
+
+TODO: investigate zenao daos to see if this fits
+
+zenao events and communities have an additional public func and it make sense to have a way to access dao extensions from gno code
+example from zenao:
+
+// Set public to be used as auth layer for external entities (e.g polls)
+func IsMember(memberId string) bool {
+	return daoPrivate.Members.IsMember(memberId)
+}
+
+so
+
+---
+
+4) REQ: allow to upgrade public extensions meant to be imported from gno code or called by an EOA from `maketx call` or `maketx run`
+
+4) RES: tricky, ideas:
+
+- make the specific dao realms have their custom public functions upgradeable via actions
+	- pro: no gas cost
+	- pro: allow `maketx call`ing those funcs
+	- con: does not allow to extend the dao capabilities in itself. Can be combined with other methods but I think we should avoid that
+
+- use third party realms for extensions, like a memberstore realm used by multiple daos in the zenao case
+	- pro: allow to extend dao capabilities
+	- pro: contribute to commons, those third-party realms can be used by other kind of entities (think aeddi's treasury realm or payrolls realm)
+	- con: prevents `maketx call`ing those funcs
+	- con: gas cost increase due to the lookup to find the dao-specific instance in the third-party realm
+
+- make the DAO interface have a new method to fetch the extension object and then cast it to the correct type
+	- pro: allow to extend dao capabilities
+	- pro: ease of use
+	- con: less type-safety
+	- con: prevents `maketx call`ing those funcs
+	- con: small gas cost for cast, but probably negligible
+	- con: more complex dao interface
+*/
 
 // TODO: add a little bit more complexity to show daocond initialization
 func init() {
@@ -48,7 +119,22 @@ func init() {
 		InitialCondition: adminCond,
 		GetProfileString: profile.GetStringField,
 		SetProfileString: profile.SetStringField,
+		SetImplem:        func(newImplem daokit.DAO) { DAO = newImplem },
+
+		// QueryExtensions demo
+		QueryDAOPrivatePath: std.CurrentRealm().PkgPath() + ".daoPrivate",
 	})
+
+	// local upgradable behavior demo
+
+	daoPrivate.Core.Resources.Set(&daokit.Resource{
+		Handler:     NewChangeIsMemberFnActionHandler(func(newIsMemberFn func(memberId string) bool) { isMemberFn = newIsMemberFn }),
+		Condition:   adminCond,
+		DisplayName: "Change IsMember implementation",
+		Description: "Allows to change the underlying IsMember implementation.",
+	})
+
+	isMemberFn = daoPrivate.Members.IsMember
 }
 
 func Vote(proposalID uint64, vote daocond.Vote) {
@@ -60,5 +146,11 @@ func Execute(proposalID uint64) {
 }
 
 func Render(path string) string {
-	return daoPrivate.Render(path)
+	return DAO.Render(path)
+}
+
+// Set public to be used as auth layer for external entities (e.g polls)
+// example with local upgrade action
+func IsMember(memberId string) bool {
+	return isMemberFn(memberId)
 }
