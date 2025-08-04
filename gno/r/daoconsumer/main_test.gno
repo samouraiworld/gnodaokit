@@ -17,6 +17,7 @@ func TestQueryExtension(t *testing.T) {
 }
 
 func TestObjExtension(t *testing.T) {
+	// TODO: example of `gnokey query`
 	urequire.True(t, IsDemoMember("g1r69l0vhp7tqle3a0rk8m8fulr8sjvj4h7n0tth"))
 	urequire.False(t, IsDemoMember("not a member"))
 }
