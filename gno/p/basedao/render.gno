@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/mux"
 	"gno.land/p/demo/seqid"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/samourai/daokit"
+	"gno.land/p/samcrew/daokit"
 )
 
 // WELL KNOWN PATHS

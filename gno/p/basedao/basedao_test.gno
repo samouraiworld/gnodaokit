@@ -6,8 +6,8 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/urequire"
-	"gno.land/p/samourai/daocond"
-	"gno.land/p/samourai/daokit"
+	"gno.land/p/samcrew/daocond"
+	"gno.land/p/samcrew/daokit"
 )
 
 var (

@@ -5,8 +5,8 @@ import (
 	"std"
 
 	"gno.land/p/demo/mux"
-	"gno.land/p/samourai/daocond"
-	"gno.land/p/samourai/daokit"
+	"gno.land/p/samcrew/daocond"
+	"gno.land/p/samcrew/daokit"
 )
 
 type daoPublic struct {
