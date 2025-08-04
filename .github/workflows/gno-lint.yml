@@ -19,17 +19,8 @@ jobs:
           go-version-file: go.mod
           cache-key-suffix: gno
 
-      - name: Clean gno
-        run: make clean-gno
-
-      - name: Clone gno
-        run: make clone-testing-gno
-
-      - name: Build GnoVM
-        run: make build-gno
-
       - name: Lint gno
-        run: make lint-gno
+        run: make lint
 
       - name: gno mod tidy
         run: make gno-mod-tidy
