@@ -5,6 +5,13 @@ package basic_dao
 // It is used to demonstrate the basic functionality of DAOKIT.
 
 import (
+	"std"
+	"strings"
+	"unicode"
+
+	"gno.land/p/demo/ufmt"
+	"gno.land/p/moul/md"
+	"gno.land/p/moul/txlink"
 	"gno.land/p/samcrew/basedao"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
@@ -21,17 +28,18 @@ var (
 func init() {
 	// Define initial roles in the DAO
 	initialRoles := []basedao.RoleInfo{
-		{Name: "admin", Description: "Admin is the superuser"},
+		{Name: "ceo", Description: "CEO is the superuser"},
+		{Name: "admin", Description: "Administrator"},
 		{Name: "public-relationships", Description: "Responsible of communication with the public"},
 		{Name: "finance-officer", Description: "Responsible of funds management"},
+		{Name: "newguy"},
 	}
 
 	// Define initial members and their roles
 	initialMembers := []basedao.Member{
-		{Address: "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg", Roles: []string{"admin", "public-relationships"}},
-		{Address: "g1ld6uaykyugld4rnm63rcy7vju4zx23lufml3jv", Roles: []string{"public-relationships"}},
-		{Address: "g1r69l0vhp7tqle3a0rk8m8fulr8sjvj4h7n0tth", Roles: []string{"finance-officer"}},
-		{Address: "g16jv3rpz7mkt0gqulxas56se2js7v5vmc6n6e0r", Roles: []string{}},
+		{Address: "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg", Roles: []string{"admin"}},
+		{Address: "g16jv3rpz7mkt0gqulxas56se2js7v5vmc6n6e0r", Roles: []string{"public-relationships"}},
+		{Address: "g1tdjkvapz5jxap6zxf06dxp7g88kad72svpzcu9", Roles: []string{"ceo"}},
 	}
 
 	// create the member store now to be able to use it in the condition
@@ -39,11 +47,11 @@ func init() {
 
 	// Define governance conditions using daocond
 	membersMajority := daocond.MembersThreshold(0.6, memberStore.IsMember, memberStore.MembersCount)
-	publicRelationships := daocond.RoleCount(1, "public-relationships", memberStore.HasRole)
-	financeOfficer := daocond.RoleCount(1, "finance-officer", memberStore.HasRole)
+	membersMinority := daocond.MembersThreshold(0.3, memberStore.IsMember, memberStore.MembersCount)
+	ceo := daocond.RoleCount(1, "ceo", memberStore.HasRole)
 
 	// `and` and `or` use va_args so you can pass as many conditions as needed
-	adminCond := daocond.And(membersMajority, publicRelationships, financeOfficer)
+	adminCond := daocond.Or(membersMajority, daocond.And(membersMinority, ceo))
 
 	// Initialize DAO with configuration
 	DAO, daoPrivate = basedao.New(&basedao.Config{
@@ -57,12 +65,12 @@ func init() {
 }
 
 // Vote allows DAO members to cast their vote on a specific proposal
-func Vote(proposalID uint64, vote daocond.Vote) {
+func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
 	DAO.Vote(proposalID, vote)
 }
 
 // Execute triggers the implementation of a proposal's actions
-func Execute(proposalID uint64) {
+func Execute(cur realm, proposalID uint64) {
 	DAO.Execute(proposalID)
 }
 
@@ -73,5 +81,29 @@ func Propose(cur realm, req daokit.ProposalRequest) {
 
 // Render generates a UI representation of the DAO's state
 func Render(path string) string {
+	if path == "actions" {
+		return renderActions()
+	}
 	return daoPrivate.Render(path)
+}
+
+func ProposeAddMember(cur realm, address std.Address, roles string) {
+	rs := strings.Split(roles, ",")
+	for i, s := range rs {
+		rs[i] = strings.TrimFunc(s, unicode.IsSpace)
+	}
+	req := daokit.ProposalRequest{
+		Title: ufmt.Sprintf("Add member %s with roles %s", address, strings.Join(rs, ", ")),
+		Action: basedao.NewAddMemberAction(&basedao.ActionAddMember{
+			Address: address,
+			Roles:   rs,
+		}),
+	}
+	Propose(cur, req)
+}
+
+func renderActions() string {
+	s := ""
+	s += md.Link("Add member", txlink.Call("ProposeAddMember"))
+	return s
 }

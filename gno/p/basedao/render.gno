@@ -8,6 +8,9 @@ import (
 	"gno.land/p/demo/mux"
 	"gno.land/p/demo/seqid"
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/mason/md"
+	"gno.land/p/moul/txlink"
+	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
 )
 
@@ -287,8 +290,6 @@ func (d *DAOPrivate) ProposalDetailHeaderView() string {
 }
 
 func (d *DAOPrivate) ProposalDetailView(idu uint64) string {
-	pkgPath := d.Realm.PkgPath()
-	linkPath := getLinkPath(pkgPath)
 	id := seqid.ID(idu)
 	proposal := d.Core.Proposals.GetProposal(uint64(id))
 	s := ""
@@ -302,12 +303,13 @@ func (d *DAOPrivate) ProposalDetailView(idu uint64) string {
 	s += ("---\n\n")
 	s += proposal.Action.String() + "\n\n"
 	s += ("---\n\n")
+	proposal.UpdateStatus()
 	if proposal.Status == daokit.ProposalStatusOpen {
 		s += ufmt.Sprintf("## Status - Open 🟡\n\n")
-		s += ufmt.Sprintf("[Vote on this proposal 🗳️](%s$help)\n\n", linkPath)
+		s += md.Link("Approve this proposal 🗳️", txlink.Call("Vote", "proposalID", strconv.FormatUint(idu, 10), "vote", daocond.VoteYes)) + "\n\n"
 	} else if proposal.Status == daokit.ProposalStatusPassed {
 		s += ufmt.Sprintf("## Status - Passed 🟢\n\n")
-		s += ufmt.Sprintf("[Execute this proposal 🗳️](%s$help)\n\n", linkPath)
+		s += md.Link("Execute this proposal 🗳️", txlink.Call("Execute", "proposalID", strconv.FormatUint(idu, 10))) + "\n\n"
 	} else if proposal.Status == daokit.ProposalStatusExecuted {
 		s += ufmt.Sprintf("## Status - Executed ✅\n\n")
 	} else {
