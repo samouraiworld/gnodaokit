@@ -41,7 +41,7 @@ A **Decentralized Autonomous Organization (DAO)** is a self-governing entity tha
 
 DAOkit framework is composed of three packages:
 
-## 3.1 [daocond](../daocond/README.md)
+## 3.1 [daocond](./gno/p/daocond/)
 
 `daocond` provides a stateless condition engine used to evaluate if a proposal should be executed.
 
@@ -106,7 +106,7 @@ cond := daocond.And(
 
 Conditions are stateless for flexibility and scalability.
 
-## 3.2 daokit
+## 3.2 [daokit](./gno/p/daokit/)
 
 `daokit` provides the core mechanics:
 
@@ -148,7 +148,7 @@ Each proposal goes through the following states:
 - Final state — proposal can no longer be voted on or modified.
 
 
-## 3.3 [basedao](../basedao/README.md)
+## 3.3 [basedao](./gno/p/basedao/)
 
 `basedao` extends `daokit` to handle members and roles management.
 It handles who can participate in a DAO and what permissions they have.
@@ -230,36 +230,45 @@ type Config struct {
 # 4. Code Example of a Basic DAO
 
 ```go
-package daokit_demo
+package basic_dao
+
+// This is the most basic example of a DAO using DAOKIT.
+// It is a simple DAO that has a single admin role and a single public-relationships role.
+// It is used to demonstrate the basic functionality of DAOKIT.
 
 import (
-	"gno.land/p/samourai/basedao"
-	"gno.land/p/samourai/daocond"
-	"gno.land/p/samourai/daokit"
+	"gno.land/p/samcrew/basedao"
+	"gno.land/p/samcrew/daocond"
+	"gno.land/p/samcrew/daokit"
 	"gno.land/r/demo/profile"
 )
 
 var (
-	DAO        daokit.DAO // External interface for DAO interaction
+	DAO        daokit.DAO          // External interface for DAO interaction
 	daoPrivate *basedao.DAOPrivate // Full access to internal DAO state
 )
 
+// Initializes the DAO with predefined roles, members, and governance rules.
 func init() {
+	// Define initial roles in the DAO
 	initialRoles := []basedao.RoleInfo{
 		{Name: "admin", Description: "Admin is the superuser"},
 		{Name: "public-relationships", Description: "Responsible of communication with the public"},
 		{Name: "finance-officer", Description: "Responsible of funds management"},
 	}
 
+	// Define initial members and their roles
 	initialMembers := []basedao.Member{
-		{Address: "g126...zlg", Roles: []string{"admin", "public-relationships"}},
-		{Address: "g1ld6...3jv", Roles: []string{"public-relationships"}},
-		{Address: "g1r69...0tth", Roles: []string{"finance-officer"}},
-		{Address: "g16jv...6e0r", Roles: []string{}},
+		{Address: "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg", Roles: []string{"admin", "public-relationships"}},
+		{Address: "g1ld6uaykyugld4rnm63rcy7vju4zx23lufml3jv", Roles: []string{"public-relationships"}},
+		{Address: "g1r69l0vhp7tqle3a0rk8m8fulr8sjvj4h7n0tth", Roles: []string{"finance-officer"}},
+		{Address: "g16jv3rpz7mkt0gqulxas56se2js7v5vmc6n6e0r", Roles: []string{}},
 	}
 
+	// create the member store now to be able to use it in the condition
 	memberStore := basedao.NewMembersStore(initialRoles, initialMembers)
 
+	// Define governance conditions using daocond
 	membersMajority := daocond.MembersThreshold(0.6, memberStore.IsMember, memberStore.MembersCount)
 	publicRelationships := daocond.RoleCount(1, "public-relationships", memberStore.HasRole)
 	financeOfficer := daocond.RoleCount(1, "finance-officer", memberStore.HasRole)
@@ -267,6 +276,7 @@ func init() {
 	// `and` and `or` use va_args so you can pass as many conditions as needed
 	adminCond := daocond.And(membersMajority, publicRelationships, financeOfficer)
 
+	// Initialize DAO with configuration
 	DAO, daoPrivate = basedao.New(&basedao.Config{
 		Name:             "Demo DAOKIT DAO",
 		Description:      "This is a demo DAO built with DAOKIT",
@@ -277,14 +287,22 @@ func init() {
 	})
 }
 
+// Vote allows DAO members to cast their vote on a specific proposal
 func Vote(proposalID uint64, vote daocond.Vote) {
 	DAO.Vote(proposalID, vote)
 }
 
+// Execute triggers the implementation of a proposal's actions
 func Execute(proposalID uint64) {
 	DAO.Execute(proposalID)
 }
 
+// Execute triggers the implementation of a proposal's actions
+func Propose(cur realm, req daokit.ProposalRequest) {
+	DAO.Propose(req)
+}
+
+// Render generates a UI representation of the DAO's state
 func Render(path string) string {
 	return daoPrivate.Render(path)
 }
@@ -296,12 +314,12 @@ To add new behavior to your DAO — or to enable others to integrate your packag
 
 ```go
 type Action interface {
-	Type() string // return the type of the action. e.g.: "gno.land/p/samourai/blog.NewPost"
+	Type() string // return the type of the action. e.g.: "gno.land/p/samcrew/blog.NewPost"
 	String() string // return stringify content of the action
 }
 
 type ActionHandler interface {
-	Type() string // return the type of the action. e.g.: "gno.land/p/samourai/blog"
+	Type() string // return the type of the action. e.g.: "gno.land/p/samcrew/blog"
 	Execute(action Action) // executes logic associated with the action
 }
 ```
@@ -310,8 +328,8 @@ This allows DAOs to execute arbitrary logic or interact with Gno packages throug
 ## Steps to Add a Custom Resource:
 1. Define the path of the action, it should be unique 
 ```go
-// XXX: pkg "/p/samourai/blog" - does not exist, it's just an example
-const ActionNewPostKind = "gno.land/p/samourai/blog.NewPost"
+// XXX: pkg "/p/samcrew/blog" - does not exist, it's just an example
+const ActionNewPostKind = "gno.land/p/samcrew/blog.NewPost"
 ```
 
 2. Create the structure type of the payload
@@ -352,3 +370,10 @@ resource := daokit.Resource{
 }
 daoPrivate.Core.Resources.Set(&resource)
 ```
+
+# 6. Interactive examples + Youtube Video
+
+Interactive examples of the dao above, custom condition and custom resource + unit test (With their source code!) are available in `/r/samcrew/daodemo`.
+As well we have a video of them on our [`Youtube Channel`](https://youtu.be/SphPgsjKQyQ).
+
+Have fun hacking! :)

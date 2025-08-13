@@ -6,12 +6,12 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/moul/md"
-	"gno.land/p/samourai/daokit"
+	"gno.land/p/samcrew/daokit"
 )
 
 // ADD MEMBER
 
-const ActionAddMemberKind = "gno.land/p/samourai/basedao.AddMember"
+const ActionAddMemberKind = "gno.land/p/samcrew/basedao.AddMember"
 
 type ActionAddMember struct {
 	Address std.Address
@@ -38,7 +38,7 @@ func NewAddMemberAction(payload *ActionAddMember) daokit.Action {
 
 // REMOVE MEMBER
 
-const ActionRemoveMemberKind = "gno.land/p/samourai/basedao.RemoveMember"
+const ActionRemoveMemberKind = "gno.land/p/samcrew/basedao.RemoveMember"
 
 func NewRemoveMemberHandler(dao *DAOPrivate) daokit.ActionHandler {
 	return daokit.NewActionHandler(ActionRemoveMemberKind, func(ipayload interface{}) {
@@ -56,7 +56,7 @@ func NewRemoveMemberAction(addr std.Address) daokit.Action {
 
 // ASSIGN ROLE
 
-const ActionAssignRoleKind = "gno.land/p/samourai/basedao.AssignRole"
+const ActionAssignRoleKind = "gno.land/p/samcrew/basedao.AssignRole"
 
 type ActionAssignRole struct {
 	Address std.Address
@@ -83,7 +83,7 @@ func NewAssignRoleAction(payload *ActionAssignRole) daokit.Action {
 
 // UNASSIGN ROLE
 
-const ActionUnassignRoleKind = "gno.land/p/samourai/basedao.UnassignRole"
+const ActionUnassignRoleKind = "gno.land/p/samcrew/basedao.UnassignRole"
 
 type ActionUnassignRole struct {
 	Address std.Address
@@ -110,7 +110,7 @@ func NewUnassignRoleAction(payload *ActionUnassignRole) daokit.Action {
 
 // EDIT PROFILE
 
-const ActionEditProfileKind = "gno.land/p/samourai/basedao.EditProfile"
+const ActionEditProfileKind = "gno.land/p/samcrew/basedao.EditProfile"
 
 type ActionEditProfile struct {
 	kv [][2]string

@@ -1,6 +1,6 @@
 package basedao
 
-import "gno.land/p/samourai/daokit"
+import "gno.land/p/samcrew/daokit"
 
 type MemberStoreExtension interface {
 	IsMember(memberId string) bool

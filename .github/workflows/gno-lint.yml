@@ -20,7 +20,7 @@ jobs:
           cache-key-suffix: gno
 
       - name: Lint gno
-        run: make lint-gno
+        run: make lint
 
       - name: gno mod tidy
         run: make gno-mod-tidy

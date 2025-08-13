@@ -2,7 +2,7 @@ package daokit
 
 import (
 	"gno.land/p/demo/avl"
-	"gno.land/p/samourai/daocond"
+	"gno.land/p/samcrew/daocond"
 )
 
 type ResourcesStore struct {

@@ -20,12 +20,12 @@ dev: gnobuild/contribs/gnodev/build/gnodev
 install-gno: gnobuild
 	cd gnobuild/gno && make install
 
-.PHONY: lint-gno
-lint-gno: gnobuild/gnovm/build/gno
+.PHONY: lint
+lint: gnobuild/gnovm/build/gno
 	./gnobuild/gnovm/build/gno lint ./gno/... -v
 
-.PHONY: test-gno
-test-gno: gnobuild/gnovm/build/gno
+.PHONY: test
+test: gnobuild/gnovm/build/gno
 	./gnobuild/gnovm/build/gno test ./gno/... -v
 
 .PHONY: gno-mod-tidy

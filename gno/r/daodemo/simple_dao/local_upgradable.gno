@@ -1,7 +1,7 @@
-package daodemo
+package simple_dao
 
 import (
-	"gno.land/p/samourai/daokit"
+	"gno.land/p/samcrew/daokit"
 )
 
 // example of dao-specific upgradable custom behavior
@@ -18,7 +18,7 @@ func (p *changeIsMemberFnPayload) String() string {
 	return "Change IsMember implementation.\nWARNING: check the new function implementation!"
 }
 
-const ActionKindChangeIsMemberFn = "gno.land/r/daodemo.ChangeIsMemberFn"
+const ActionKindChangeIsMemberFn = "gno.land/r/simple_dao.ChangeIsMemberFn"
 
 func NewChangeIsMemberFnAction(newIsMemberFn func(memberId string) bool) daokit.Action {
 	if newIsMemberFn == nil {

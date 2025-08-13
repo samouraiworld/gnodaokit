@@ -5,8 +5,8 @@ import (
 	"std"
 
 	"gno.land/p/demo/mux"
-	"gno.land/p/samourai/daocond"
-	"gno.land/p/samourai/daokit"
+	"gno.land/p/samcrew/daocond"
+	"gno.land/p/samcrew/daokit"
 )
 
 type daoPublic struct {
@@ -181,7 +181,7 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 }
 
 // query extension example
-const DAOPrivateQueryExtensionV1Kind = "gno.land/p/samourai/basedao.DAOPrivate@v1"
+const DAOPrivateQueryExtensionV1Kind = "gno.land/p/samcrew/basedao.DAOPrivate@v1"
 
 func (d *DAOPrivate) Vote(proposalID uint64, vote daocond.Vote) {
 	if len(vote) > 16 {

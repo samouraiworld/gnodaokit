@@ -20,4 +20,4 @@ jobs:
           cache-key-suffix: gno
 
       - name: Test gno
-        run: make test-gno
+        run: make test

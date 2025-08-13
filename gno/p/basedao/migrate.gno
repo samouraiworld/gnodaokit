@@ -3,11 +3,11 @@ package basedao
 import (
 	"errors"
 
-	"gno.land/p/samourai/daokit"
+	"gno.land/p/samcrew/daokit"
 )
 
 // making this action name extra explicit
-const ActionChangeDAOImplementationKind = "gno.land/p/samourai/basedao.ChangeDAOImplementation"
+const ActionChangeDAOImplementationKind = "gno.land/p/samcrew/basedao.ChangeDAOImplementation"
 
 type MigrateFn = func(prev *DAOPrivate) daokit.DAO
 
