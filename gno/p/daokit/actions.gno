@@ -43,7 +43,6 @@ func NewActionHandler(kind string, executor func(interface{})) ActionHandler {
 type genericActionHandler struct {
 	executor func(payload interface{})
 	kind     string
-	form     func() string
 }
 
 // Execute implements ActionHandler.
