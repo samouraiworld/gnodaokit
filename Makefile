@@ -1,5 +1,9 @@
 CAT := $(if $(filter $(OS),Windows_NT),type,cat)
 
+.PHONY: dev
+dev: gnobuild/contribs/gnodev/build/gnodev
+	./gnobuild/contribs/gnodev/build/gnodev staging $$(find gno -name gnomod.toml -type f -exec dirname {} \;)
+
 gnobuild: .gnoversion
 	rm -fr gnobuild
 	mkdir -p gnobuild
@@ -11,10 +15,6 @@ gnobuild/gnovm/build/gno: gnobuild
 
 gnobuild/contribs/gnodev/build/gnodev: gnobuild
 	cd gnobuild/contribs/gnodev && make build
-
-.PHONY: dev
-dev: gnobuild/contribs/gnodev/build/gnodev
-	./gnobuild/contribs/gnodev/build/gnodev staging $$(find gno -name gnomod.toml -type f -exec dirname {} \;)
 
 .PHONY: install-gno
 install-gno: gnobuild
