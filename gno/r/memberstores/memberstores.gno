@@ -32,16 +32,6 @@ func GetPrivate() basedao.IMembersStorePrivate {
 	return getPrivateInternal(owner)
 }
 
-func Transfer(cur realm, to std.Address) {
-	owner := std.PreviousRealm().Address().String()
-	store := getPrivateInternal(owner)
-	if store == nil {
-		panic(owner + " has no store")
-	}
-	stores.Remove(owner)
-	stores.Set(to.String(), store)
-}
-
 func getPrivateInternal(owner string) basedao.IMembersStorePrivate {
 	i, ok := stores.Get(owner)
 	if !ok {
