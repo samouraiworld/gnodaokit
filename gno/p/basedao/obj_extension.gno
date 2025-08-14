@@ -8,11 +8,6 @@ type MemberStoreExtension interface {
 
 const MemberStoreExtensionV1Kind = "gno.land/p/demo/basedao.MemberStore@v1"
 
-// implements daokit.ObjExtension
-func (m *MembersStore) Kind() string {
-	return MemberStoreExtensionV1Kind
-}
-
 func MustGetMemberStoreExtension(dao daokit.DAO) MemberStoreExtension {
 	ext := dao.ObjExtension(MemberStoreExtensionV1Kind)
 	if ext == nil {

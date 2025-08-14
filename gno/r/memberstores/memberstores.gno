@@ -13,7 +13,7 @@ var (
 	stores avl.Tree
 )
 
-func Set(store basedao.IMembersStorePrivate) {
+func Set(cur realm, store basedao.IMembersStorePrivate) {
 	owner := std.PreviousRealm().Address().String()
 	if store == nil {
 		stores.Remove(owner)
@@ -24,15 +24,15 @@ func Set(store basedao.IMembersStorePrivate) {
 
 func Get(owner std.Address) basedao.IMembersStore {
 	store := getPrivateInternal(owner.String())
-	return basedao.ReadOnlyMembersStore(store)
+	return basedao.NewReadOnlyMembersStore(store)
 }
 
 func GetPrivate() basedao.IMembersStorePrivate {
-	owner := std.PreviousRealm().Address().String()
+	owner := std.CurrentRealm().Address().String()
 	return getPrivateInternal(owner)
 }
 
-func Transfer(to std.Address) {
+func Transfer(cur realm, to std.Address) {
 	owner := std.PreviousRealm().Address().String()
 	store := getPrivateInternal(owner)
 	if store == nil {

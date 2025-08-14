@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
+	"gno.land/p/samcrew/daokit"
 )
 
 type IMembersStore interface {
@@ -369,62 +370,68 @@ func (m *MembersStore) GetMembersJSON() string {
 	return string(bz)
 }
 
-func ReadOnlyMembersStore(store IMembersStorePrivate) IMembersStore {
-	return &roStore{store: store}
+func NewReadOnlyMembersStore(store IMembersStorePrivate) *ReadOnlyMembersStore {
+	return &ReadOnlyMembersStore{store: store}
 }
 
-type roStore struct {
+type ReadOnlyMembersStore struct {
 	store IMembersStorePrivate
 }
 
+// Kind implements daokit.ObjExtension.
+func (r *ReadOnlyMembersStore) Kind() string {
+	return MemberStoreExtensionV1Kind
+}
+
+var _ IMembersStore = (*ReadOnlyMembersStore)(nil)
+var _ daokit.ObjExtension = (*ReadOnlyMembersStore)(nil)
+
 // CountMemberRoles implements IMembersStore.
-func (r *roStore) CountMemberRoles(member string) int {
+func (r *ReadOnlyMembersStore) CountMemberRoles(member string) int {
 	return r.store.CountMemberRoles(member)
 }
 
 // CountMembersWithRole implements IMembersStore.
-func (r *roStore) CountMembersWithRole(role string) uint32 {
+func (r *ReadOnlyMembersStore) CountMembersWithRole(role string) uint32 {
 	return r.store.CountMembersWithRole(role)
 }
 
 // GetMemberRoles implements IMembersStore.
-func (r *roStore) GetMemberRoles(member string) []string {
+func (r *ReadOnlyMembersStore) GetMemberRoles(member string) []string {
 	return r.store.GetMemberRoles(member)
 }
 
 // GetMembers implements IMembersStore.
-func (r *roStore) GetMembers() []string {
+func (r *ReadOnlyMembersStore) GetMembers() []string {
 	return r.store.GetMembers()
 }
 
 // GetMembersWithRole implements IMembersStore.
-func (r *roStore) GetMembersWithRole(role string) []string {
+func (r *ReadOnlyMembersStore) GetMembersWithRole(role string) []string {
 	return r.store.GetMembersWithRole(role)
 }
 
 // GetRoles implements IMembersStore.
-func (r *roStore) GetRoles() []string {
+func (r *ReadOnlyMembersStore) GetRoles() []string {
 	return r.store.GetRoles()
 }
 
 // HasRole implements IMembersStore.
-func (r *roStore) HasRole(member string, role string) bool {
+func (r *ReadOnlyMembersStore) HasRole(member string, role string) bool {
 	return r.store.HasRole(member, role)
 }
 
 // IsMember implements IMembersStore.
-func (r *roStore) IsMember(member string) bool {
+func (r *ReadOnlyMembersStore) IsMember(member string) bool {
 	return r.store.IsMember(member)
 }
 
 // MembersCount implements IMembersStore.
-func (r *roStore) MembersCount() uint64 {
+func (r *ReadOnlyMembersStore) MembersCount() uint64 {
 	return r.store.MembersCount()
 }
 
 // RoleInfo implements IMembersStore.
-func (r *roStore) RoleInfo(role string) RoleInfo {
+func (r *ReadOnlyMembersStore) RoleInfo(role string) RoleInfo {
 	return r.store.RoleInfo(role)
 }
-
-var _ IMembersStore = (*roStore)(nil)

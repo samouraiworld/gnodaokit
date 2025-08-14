@@ -175,8 +175,8 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 		})
 	}
 
-	if iMembers, ok := dao.Members.(*MembersStore); ok {
-		dao.Core.ObjExtensions.Set(iMembers)
+	if dao.Members != nil {
+		dao.Core.ObjExtensions.Set(NewReadOnlyMembersStore(dao.Members))
 	}
 
 	return &daoPublic{impl: dao}, dao

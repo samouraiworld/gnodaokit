@@ -17,7 +17,7 @@ var (
 	daoPrivate *basedao.DAOPrivate // Full access to internal DAO state
 )
 
-// exemple of simple dao with external members
+// Proxy research: example of simple dao with external members
 
 // TODO: add a little bit more complexity to show daocond initialization
 // Initializes the DAO with predefined roles, members, and governance rules.
@@ -39,7 +39,7 @@ func init() {
 
 	// create the member store now to be able to use it in the condition
 	memberStore := basedao.NewMembersStore(initialRoles, initialMembers)
-	memberstores.Set(memberStore)
+	memberstores.Set(cross, memberStore)
 
 	// Define governance conditions using daocond
 	membersMajority := daocond.MembersThreshold(0.6, memberStore.IsMember, memberStore.MembersCount)
