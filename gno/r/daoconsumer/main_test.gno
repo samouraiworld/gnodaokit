@@ -32,3 +32,8 @@ func TestThirdPartyMemberStore(t *testing.T) {
 	urequire.True(t, IsDemoMemberViaThirdParty("g1r69l0vhp7tqle3a0rk8m8fulr8sjvj4h7n0tth"))
 	urequire.False(t, IsDemoMemberViaThirdParty("not a member"))
 }
+
+func TestExtensionProtection(t *testing.T) {
+	_, ok := basedao.MustGetMemberStoreExtension(simple_dao.DAO).(basedao.IMembersStorePrivate)
+	urequire.False(t, ok)
+}
