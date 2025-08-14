@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/samcrew/basedao"
 	"gno.land/r/samcrew/daodemo/simple_dao"
-	_ "gno.land/r/samcrew/daodemo/simple_dao_external" // WARNING: this is needed to ensure this realm is loaded and it's memberstore is registered
 	"gno.land/r/samcrew/memberstores"
 )
 
