@@ -2,6 +2,10 @@ package basedao
 
 import "gno.land/p/samcrew/daokit"
 
+// XXX: do we need to split ObjExtension and PrivateObjExtension ?
+// due to object borrowing we can't expose unsafe object via ObjExtension on daokit.DAO
+// but we might want mutable extensions, thus have also PrivateObjExtension maybe that is only available on DAOPrivate
+
 type MemberStoreExtension interface {
 	IsMember(memberId string) bool
 }

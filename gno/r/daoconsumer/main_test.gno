@@ -14,12 +14,12 @@ func TestQueryExtension(t *testing.T) {
 		t.Fatalf("expected to get an extension, got nil")
 	}
 	urequire.Equal(t, "gno.land/r/samcrew/daodemo/simple_dao.daoPrivate", ext.Path)
+	// NOTE: this string is meant to be used outside of gno code by client that use the query rpc
 }
 
 func TestObjExtension(t *testing.T) {
-	// TODO: example of `gnokey query`
-	urequire.True(t, IsDemoMember("g1r69l0vhp7tqle3a0rk8m8fulr8sjvj4h7n0tth"))
-	urequire.False(t, IsDemoMember("not a member"))
+	urequire.True(t, IsDemoMemberViaExtension("g1r69l0vhp7tqle3a0rk8m8fulr8sjvj4h7n0tth"))
+	urequire.False(t, IsDemoMemberViaExtension("not a member"))
 }
 
 func TestLocalExtenstion(t *testing.T) {
@@ -27,4 +27,7 @@ func TestLocalExtenstion(t *testing.T) {
 	urequire.False(t, simple_dao.IsMember("not a member"))
 }
 
-// TODO: multy-party realm extension example
+func TestThirdPartyMemberStore(t *testing.T) {
+	urequire.True(t, IsDemoMemberViaThirdParty("g1r69l0vhp7tqle3a0rk8m8fulr8sjvj4h7n0tth"))
+	urequire.False(t, IsDemoMemberViaThirdParty("not a member"))
+}
