@@ -7,10 +7,39 @@ import (
 	"gno.land/p/demo/json"
 )
 
+type IMembersStore interface {
+	// read
+	HasRole(member string, role string) bool
+	IsMember(member string) bool
+	RoleInfo(role string) RoleInfo
+	MembersCount() uint64
+	GetMembers() []string
+	GetRoles() []string
+	GetMemberRoles(member string) []string
+	CountMemberRoles(member string) int
+	GetMembersWithRole(role string) []string
+	CountMembersWithRole(role string) uint32
+}
+
+type IMembersStorePrivate interface {
+	// read
+	IMembersStore
+
+	// write
+	AddMember(member string, roles []string)
+	RemoveMember(member string)
+	AddRole(role RoleInfo)
+	RemoveRole(role string)
+	AddRoleToMember(member string, role string)
+	RemoveRoleFromMember(member string, role string)
+}
+
 type MembersStore struct {
 	Roles   *avl.Tree // role name -> *Role
 	Members *avl.Tree // string -> *avl.Tree [roles -> struct{}]
 }
+
+var _ IMembersStorePrivate = (*MembersStore)(nil)
 
 type Member struct {
 	Address string
@@ -339,3 +368,63 @@ func (m *MembersStore) GetMembersJSON() string {
 	}
 	return string(bz)
 }
+
+func ReadOnlyMembersStore(store IMembersStorePrivate) IMembersStore {
+	return &roStore{store: store}
+}
+
+type roStore struct {
+	store IMembersStorePrivate
+}
+
+// CountMemberRoles implements IMembersStore.
+func (r *roStore) CountMemberRoles(member string) int {
+	return r.store.CountMemberRoles(member)
+}
+
+// CountMembersWithRole implements IMembersStore.
+func (r *roStore) CountMembersWithRole(role string) uint32 {
+	return r.store.CountMembersWithRole(role)
+}
+
+// GetMemberRoles implements IMembersStore.
+func (r *roStore) GetMemberRoles(member string) []string {
+	return r.store.GetMemberRoles(member)
+}
+
+// GetMembers implements IMembersStore.
+func (r *roStore) GetMembers() []string {
+	return r.store.GetMembers()
+}
+
+// GetMembersWithRole implements IMembersStore.
+func (r *roStore) GetMembersWithRole(role string) []string {
+	return r.store.GetMembersWithRole(role)
+}
+
+// GetRoles implements IMembersStore.
+func (r *roStore) GetRoles() []string {
+	return r.store.GetRoles()
+}
+
+// HasRole implements IMembersStore.
+func (r *roStore) HasRole(member string, role string) bool {
+	return r.store.HasRole(member, role)
+}
+
+// IsMember implements IMembersStore.
+func (r *roStore) IsMember(member string) bool {
+	return r.store.IsMember(member)
+}
+
+// MembersCount implements IMembersStore.
+func (r *roStore) MembersCount() uint64 {
+	return r.store.MembersCount()
+}
+
+// RoleInfo implements IMembersStore.
+func (r *roStore) RoleInfo(role string) RoleInfo {
+	return r.store.RoleInfo(role)
+}
+
+var _ IMembersStore = (*roStore)(nil)

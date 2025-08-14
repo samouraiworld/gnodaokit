@@ -48,7 +48,7 @@ func (d *daoPublic) ObjExtensions() []daokit.ObjExtension {
 // DAO is meant for internal realm usage and should not be exposed
 type DAOPrivate struct {
 	Core             *daokit.Core
-	Members          *MembersStore
+	Members          IMembersStorePrivate
 	RenderRouter     *mux.Router
 	GetProfileString ProfileStringGetter
 	Realm            std.Realm
@@ -58,7 +58,7 @@ type Config struct {
 	Name               string
 	Description        string
 	ImageURI           string
-	Members            *MembersStore
+	Members            IMembersStorePrivate
 	NoDefaultHandlers  bool
 	NoDefaultRendering bool
 	InitialCondition   daocond.Condition
@@ -175,7 +175,9 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 		})
 	}
 
-	dao.Core.ObjExtensions.Set(dao.Members)
+	if iMembers, ok := dao.Members.(*MembersStore); ok {
+		dao.Core.ObjExtensions.Set(iMembers)
+	}
 
 	return &daoPublic{impl: dao}, dao
 }

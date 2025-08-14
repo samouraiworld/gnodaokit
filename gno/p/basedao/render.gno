@@ -129,13 +129,12 @@ func (d *DAOPrivate) HomeMembersView() string {
 	s := ""
 	s += ufmt.Sprintf("## Members 👤 \n\n")
 	i := 1
-	d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
+	for _, key := range d.Members.GetMembers() {
 		s += ufmt.Sprintf("- **Member %d: [%s](%s:%s/%s)**\n\n", i, key, linkPath, "member", key)
 		s += ufmt.Sprintf("	- **Profile:** %s\n", d.GetProfileString(std.Address(key), "DisplayName", FALLBACK_DISPLAY_NAME))
 		s += ufmt.Sprintf(" 	- **Roles:** %s\n\n", strings.Join(d.Members.GetMemberRoles(key), ", "))
 		i += 1
-		return false
-	})
+	}
 	s += ufmt.Sprintf("> You can find more information about a member by clicking on their address\n\n")
 	s += ufmt.Sprintf("\n--------------------------------\n")
 	return s
