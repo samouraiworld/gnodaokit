@@ -3,6 +3,7 @@ package basedao
 import (
 	"errors"
 	"std"
+	"strings"
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/moul/md"
@@ -19,7 +20,11 @@ type ActionAddMember struct {
 }
 
 func (a *ActionAddMember) String() string {
-	return ufmt.Sprintf("Add member %s with roles %v", a.Address, a.Roles)
+	s := "Add member " + a.Address.String()
+	if len(a.Roles) != 0 {
+		s += " with roles " + strings.Join(a.Roles, ", ")
+	}
+	return s
 }
 
 func NewAddMemberHandler(dao *DAOPrivate) daokit.ActionHandler {
