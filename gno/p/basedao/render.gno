@@ -142,7 +142,7 @@ func (d *DAOPrivate) HomeMembersView() string {
 		if rolesStr == "" {
 			rolesStr = "*No role assigned*"
 		}
-		s += ufmt.Sprintf("| %s | `%s` | %s | [View](%s:%s/%s) |\n",
+		s += ufmt.Sprintf("| %s | %s | %s | [View](%s:%s/%s) |\n",
 			displayName,
 			key,
 			rolesStr,
