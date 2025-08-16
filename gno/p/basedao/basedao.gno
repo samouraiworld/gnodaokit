@@ -25,10 +25,30 @@ func (d *daoPublic) Vote(id uint64, vote daocond.Vote) {
 	d.impl.Vote(id, vote)
 }
 
+func (d *daoPublic) Render(path string) string {
+	return d.impl.Render(path)
+}
+
+func (d *daoPublic) QueryExtension(kind string) *daokit.QueryExtension {
+	return d.impl.Core.QueryExtensions.Get(kind)
+}
+
+func (d *daoPublic) QueryExtensions() []*daokit.QueryExtension {
+	return d.impl.Core.QueryExtensions.All()
+}
+
+func (d *daoPublic) ObjExtension(kind string) daokit.ObjExtension {
+	return d.impl.Core.ObjExtensions.Get(kind)
+}
+
+func (d *daoPublic) ObjExtensions() []daokit.ObjExtension {
+	return d.impl.Core.ObjExtensions.All()
+}
+
 // DAO is meant for internal realm usage and should not be exposed
 type DAOPrivate struct {
 	Core             *daokit.Core
-	Members          *MembersStore
+	Members          IMembersStorePrivate
 	RenderRouter     *mux.Router
 	GetProfileString ProfileStringGetter
 	Realm            std.Realm
@@ -38,13 +58,17 @@ type Config struct {
 	Name               string
 	Description        string
 	ImageURI           string
-	Members            *MembersStore
+	Members            IMembersStorePrivate
 	NoDefaultHandlers  bool
 	NoDefaultRendering bool
 	InitialCondition   daocond.Condition
 	SetProfileString   ProfileStringSetter
 	GetProfileString   ProfileStringGetter
 	NoCreationEvent    bool
+	SetImplem          daokit.SetImplemFn
+
+	// QueryExtensions specific
+	QueryDAOPrivatePath string
 }
 
 type ProfileStringSetter func(cur realm, field string, value string) bool
@@ -90,8 +114,19 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 
 		if conf.SetProfileString != nil {
 			dao.Core.Resources.Set(&daokit.Resource{
-				Handler:   NewEditProfileHandler(conf.SetProfileString, []string{"DisplayName", "Bio", "Avatar"}),
-				Condition: conf.InitialCondition,
+				Handler:     NewEditProfileHandler(conf.SetProfileString, []string{"DisplayName", "Bio", "Avatar"}),
+				Condition:   conf.InitialCondition,
+				DisplayName: "Edit Profile",
+				Description: "Edit the profile fields DisplayName, Bio and Avatar.",
+			})
+		}
+
+		if conf.SetImplem != nil {
+			dao.Core.Resources.Set(&daokit.Resource{
+				Handler:     NewChangeDAOImplementationHandler(dao, conf.SetImplem),
+				Condition:   conf.InitialCondition,
+				DisplayName: "Change DAO Implementation",
+				Description: "Change the underlying DAO implementation.",
 			})
 		}
 
@@ -132,8 +167,23 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 		std.Emit(EventBaseDAOCreated)
 	}
 
+	// query extension example
+	if conf.QueryDAOPrivatePath != "" {
+		dao.Core.QueryExtensions.Set(&daokit.QueryExtension{
+			Kind: DAOPrivateQueryExtensionV1Kind,
+			Path: conf.QueryDAOPrivatePath,
+		})
+	}
+
+	if dao.Members != nil {
+		dao.Core.ObjExtensions.Set(NewReadOnlyMembersStore(dao.Members))
+	}
+
 	return &daoPublic{impl: dao}, dao
 }
+
+// query extension example
+const DAOPrivateQueryExtensionV1Kind = "gno.land/p/samcrew/basedao.DAOPrivate@v1"
 
 func (d *DAOPrivate) Vote(proposalID uint64, vote daocond.Vote) {
 	if len(vote) > 16 {

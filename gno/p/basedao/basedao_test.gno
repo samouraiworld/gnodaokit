@@ -665,6 +665,50 @@ func TestRemoveRoleFromUserProposal(t *testing.T) {
 	daokit.InstantExecute(tdao.dao, proposalWithNonRole)
 }
 
+func TestMigrate(t *testing.T) {
+	members := []Member{
+		{alice.String(), []string{"admin"}},
+		{bob.String(), []string{"admin"}},
+	}
+	tdao := newTestingDAO(t, 0.2, members)
+	initialDAO := tdao.dao
+
+	var nextMockHandlerCalled *bool // needed to not expose nextdao
+	migrateFn := func(prev *DAOPrivate) daokit.DAO {
+		nextMembers := []Member{
+			{alice.String(), []string{"admin"}},
+			{bob.String(), []string{"admin"}},
+		}
+		nextdao := newTestingDAO(t, 0.2, nextMembers)
+		nextMockHandlerCalled = nextdao.mockHandlerCalled
+		return nextdao.dao
+	}
+
+	daokit.InstantExecute(tdao.dao, daokit.ProposalRequest{
+		Title:       "Migrate DAO",
+		Description: "Migrate the DAO",
+		Action:      NewChangeDAOImplementationAction(migrateFn),
+	})
+
+	if tdao.dao == initialDAO {
+		t.Fatalf("Expected dao implementation to have changed")
+	}
+
+	if nextMockHandlerCalled == nil {
+		t.Fatalf("Expected nextMockHandlerCalled ptr to not be nil")
+	}
+
+	daokit.InstantExecute(tdao.dao, tdao.mockProposalRequest)
+
+	if *tdao.mockHandlerCalled {
+		t.Errorf("Expected initial dao mock not to have been called")
+	}
+
+	if !*nextMockHandlerCalled {
+		t.Errorf("Expected next dao mock to have been called")
+	}
+}
+
 type testingDAOContext struct {
 	dao                    daokit.DAO
 	privdao                *DAOPrivate
@@ -679,12 +723,15 @@ func newTestingDAO(t *testing.T, threshold float64, members []Member) *testingDA
 	membersStore := NewMembersStore(roles, members)
 	initialCondition := daocond.MembersThreshold(threshold, membersStore.IsMember, membersStore.MembersCount)
 
+	tctx := &testingDAOContext{}
+
 	conf := &Config{
 		Name:             "My DAO",
 		Description:      "My DAO Description",
 		Members:          membersStore,
 		InitialCondition: initialCondition,
 		GetProfileString: func(addr std.Address, field, def string) string { return "" },
+		SetImplem:        func(newImplem daokit.DAO) { tctx.dao = newImplem },
 	}
 
 	daoRealm := std.NewCodeRealm("gno.land/r/testing/daorealm")
@@ -711,12 +758,12 @@ func newTestingDAO(t *testing.T, threshold float64, members []Member) *testingDA
 		Action:      daokit.NewAction("unknown", nil),
 	}
 
-	return &testingDAOContext{
-		dao:                    pubdao,
-		privdao:                dao,
-		mockHandlerCalled:      &mockHandlerCalled,
-		mockHandler:            mockHandler,
-		mockProposalRequest:    mockProposalRequest,
-		unknownProposalRequest: unknownProposalRequest,
-	}
+	tctx.dao = pubdao
+	tctx.privdao = dao
+	tctx.mockHandlerCalled = &mockHandlerCalled
+	tctx.mockHandler = mockHandler
+	tctx.mockProposalRequest = mockProposalRequest
+	tctx.unknownProposalRequest = unknownProposalRequest
+
+	return tctx
 }

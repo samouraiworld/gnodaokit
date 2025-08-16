@@ -10,6 +10,13 @@ type DAO interface {
 	Propose(req ProposalRequest) uint64
 	Execute(id uint64)
 	Vote(id uint64, vote daocond.Vote)
+	Render(path string) string
+
+	QueryExtension(kind string) *QueryExtension
+	QueryExtensions() []*QueryExtension
+
+	ObjExtension(kind string) ObjExtension
+	ObjExtensions() []ObjExtension
 }
 
 func InstantExecute(d DAO, req ProposalRequest) uint64 {
@@ -22,12 +29,18 @@ func InstantExecute(d DAO, req ProposalRequest) uint64 {
 type Core struct {
 	Resources *ResourcesStore
 	Proposals *ProposalsStore
+
+	QueryExtensions *QueryExtensionsStore
+	ObjExtensions   *ObjExtensionsStore
 }
 
 func NewCore() *Core {
 	return &Core{
 		Resources: NewResourcesStore(),
 		Proposals: NewProposalsStore(),
+
+		QueryExtensions: NewQueryExtensionsStore(),
+		ObjExtensions:   NewObjExtensionsStore(),
 	}
 }
 
@@ -83,3 +96,5 @@ func (d *Core) Propose(proposerID string, req ProposalRequest) uint64 {
 func (d *Core) ResourcesCount() int {
 	return d.Resources.Tree.Size()
 }
+
+type SetImplemFn = func(implem DAO)
