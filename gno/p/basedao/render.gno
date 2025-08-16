@@ -127,16 +127,29 @@ func (d *DAOPrivate) HomeMembersView() string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
 	s := ""
-	s += ufmt.Sprintf("## Members 👤 \n\n")
-	i := 1
+	memberCount := 0
 	d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
-		s += ufmt.Sprintf("- **Member %d: [%s](%s:%s/%s)**\n\n", i, key, linkPath, "member", key)
-		s += ufmt.Sprintf("	- **Profile:** %s\n", d.GetProfileString(std.Address(key), "DisplayName", FALLBACK_DISPLAY_NAME))
-		s += ufmt.Sprintf(" 	- **Roles:** %s\n\n", strings.Join(d.Members.GetMemberRoles(key), ", "))
-		i += 1
+		memberCount++
+		return false
+	})	
+	s += ufmt.Sprintf("## Members 👥 (%d)\n\n", memberCount)
+	s += ufmt.Sprintf("| **Name** | **Address 🔗** | **Roles 🎭** | **Profile** |\n")
+	s += ufmt.Sprintf("|----------|-------------|-----------|-------------|\n")	
+	d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
+		displayName := d.GetProfileString(std.Address(key), "DisplayName", FALLBACK_DISPLAY_NAME)
+		roles := d.Members.GetMemberRoles(key)		
+		rolesStr := strings.Join(roles, ", ")
+		if rolesStr == "" {
+			rolesStr = "*No role assigned*"
+		}
+		s += ufmt.Sprintf("| %s | %s | %s | [View](%s:%s/%s) |\n",
+			displayName,
+			key,
+			rolesStr,
+			linkPath, "member", key)
+		
 		return false
 	})
-	s += ufmt.Sprintf("> You can find more information about a member by clicking on their address\n\n")
 	s += ufmt.Sprintf("\n--------------------------------\n")
 	return s
 }
