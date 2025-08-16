@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"gno.land/p/demo/avl/pager"
 	"gno.land/p/demo/mux"
 	"gno.land/p/demo/seqid"
 	"gno.land/p/demo/ufmt"
@@ -44,7 +45,7 @@ func (d *DAOPrivate) Render(path string) string {
 // DEFAULT_HANDLERS
 
 func (d *DAOPrivate) MuxHomePage(res *mux.ResponseWriter, req *mux.Request) {
-	res.Write(d.HomePageView())
+	res.Write(d.HomePageView(req.RawPath))
 }
 
 func (d *DAOPrivate) MuxConfigPage(res *mux.ResponseWriter, req *mux.Request) {
@@ -69,9 +70,9 @@ func (d *DAOPrivate) MuxProposalDetailPage(res *mux.ResponseWriter, req *mux.Req
 
 // PUBLIC PAGES
 
-func (d *DAOPrivate) HomePageView() string {
+func (d *DAOPrivate) HomePageView(path string) string {
 	return d.HomeProfileHeaderView(false) +
-		d.HomeMembersView() +
+		d.HomeMembersView(path) +
 		d.HomeProposalsView()
 }
 
@@ -123,7 +124,7 @@ func (d *DAOPrivate) HomeProfileHeaderView(noprofile bool) string {
 	return s
 }
 
-func (d *DAOPrivate) HomeMembersView() string {
+func (d *DAOPrivate) HomeMembersView(path string) string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
 	s := ""
@@ -131,26 +132,33 @@ func (d *DAOPrivate) HomeMembersView() string {
 	d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
 		memberCount++
 		return false
-	})	
+	})
+
+	const pageSize = 10
+	pager := pager.NewPager(d.Members.Members, pageSize, false)
+	page := pager.MustGetPageByPath(path)
+
 	s += ufmt.Sprintf("## Members 👥 (%d)\n\n", memberCount)
 	s += ufmt.Sprintf("| **Name** | **Address 🔗** | **Roles 🎭** | **Profile** |\n")
-	s += ufmt.Sprintf("|----------|-------------|-----------|-------------|\n")	
-	d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
-		displayName := d.GetProfileString(std.Address(key), "DisplayName", FALLBACK_DISPLAY_NAME)
-		roles := d.Members.GetMemberRoles(key)		
+	s += ufmt.Sprintf("|----------|-------------|-----------|-------------|\n")
+
+	for _, item := range page.Items {
+		displayName := d.GetProfileString(std.Address(item.Key), "DisplayName", FALLBACK_DISPLAY_NAME)
+		roles := d.Members.GetMemberRoles(item.Key)
 		rolesStr := strings.Join(roles, ", ")
 		if rolesStr == "" {
 			rolesStr = "*No role assigned*"
 		}
 		s += ufmt.Sprintf("| %s | %s | %s | [View](%s:%s/%s) |\n",
 			displayName,
-			key,
+			item.Key,
 			rolesStr,
-			linkPath, "member", key)
-		
-		return false
-	})
+			linkPath, "member", item.Key)
+	}
+
+	s += "\n" + page.Picker(path) + "\n"
 	s += ufmt.Sprintf("\n--------------------------------\n")
+
 	return s
 }
 
