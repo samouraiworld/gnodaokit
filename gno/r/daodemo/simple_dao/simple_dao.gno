@@ -5,13 +5,6 @@ package simple_dao
 // It is used to demonstrate the basic functionality of DAOKIT.
 
 import (
-	"std"
-	"strings"
-	"unicode"
-
-	"gno.land/p/demo/ufmt"
-	"gno.land/p/moul/md"
-	"gno.land/p/moul/txlink"
 	"gno.land/p/samcrew/basedao"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
@@ -84,25 +77,4 @@ func Render(path string) string {
 		return renderActions()
 	}
 	return daoPrivate.Render(path)
-}
-
-func ProposeAddMember(cur realm, address std.Address, roles string) {
-	rs := strings.Split(roles, ",")
-	for i, s := range rs {
-		rs[i] = strings.TrimFunc(s, unicode.IsSpace)
-	}
-	req := daokit.ProposalRequest{
-		Title: ufmt.Sprintf("Add member %s with roles %s", address, strings.Join(rs, ", ")),
-		Action: basedao.NewAddMemberAction(&basedao.ActionAddMember{
-			Address: address,
-			Roles:   rs,
-		}),
-	}
-	Propose(cur, req)
-}
-
-func renderActions() string {
-	s := ""
-	s += md.Link("Add member", txlink.Call("ProposeAddMember"))
-	return s
 }
