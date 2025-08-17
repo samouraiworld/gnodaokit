@@ -6,7 +6,7 @@ import (
 	"gno.land/p/samcrew/daokit"
 )
 
-func (d *DAOPrivate) ProposalsPageView(path string) string {
+func (d *DAOPrivate) ProposalsPageView() string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
 	s := ""
