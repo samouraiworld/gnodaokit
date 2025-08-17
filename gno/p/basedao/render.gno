@@ -155,8 +155,8 @@ func (d *DAOPrivate) HomeMembersView() string {
     })
     s += ufmt.Sprintf("## Members 👥 (%d)\n\n", memberCount)
 	// TODO: improve field resizing
-    s += "| **Avatar** | **Name** | **Address 🔗** | **Roles 🎭** | **Profil** |\n"
-    s += "|------------|----------|----------------|--------------|------------|\n"
+    s += "| **Avatar** | **Address 🔗** | **Roles 🎭** | **Profil** |\n"
+    s += "|------------|----------------|--------------|------------|\n"
     d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
         displayName := d.GetProfileString(std.Address(key), "DisplayName", FALLBACK_DISPLAY_NAME)
         avatarURI := d.GetProfileString(std.Address(key), "Avatar", "")
@@ -166,10 +166,10 @@ func (d *DAOPrivate) HomeMembersView() string {
             rolesStr = "*No role assigned*"
         }
         avatarMD := avatarMarkdown(avatarURI)
+		avatarAndName := ufmt.Sprintf("%s %s", avatarMD, displayName)
         profileLink := ufmt.Sprintf("[View](%s:member/%s)", linkPath, key)
-        s += ufmt.Sprintf("| %s | %s | %s | %s | %s |\n",
-            avatarMD,
-            displayName,
+        s += ufmt.Sprintf("| %s | %s | %s | %s |\n",
+            avatarAndName,
             key,
             rolesStr,
             profileLink,
