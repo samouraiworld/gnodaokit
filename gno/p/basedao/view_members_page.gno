@@ -12,11 +12,7 @@ func (d *DAOPrivate) MembersPageView(path string) string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
 	s := ""
-	memberCount := 0
-	d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
-		memberCount++
-		return false
-	})
+	memberCount := d.Members.Members.Size()
 
 	const pageSize = 10
 	pager := pager.NewPager(d.Members.Members, pageSize, false)
