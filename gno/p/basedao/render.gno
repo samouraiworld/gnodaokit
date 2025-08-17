@@ -127,7 +127,8 @@ func (d *DAOPrivate) HomeProfileHeaderView(noprofile bool) string {
 }
 
 func convertIPFSToGatewayURI(uri string) string {
-    const fallbackIPFS = "ipfs://bafkreie63lsunbgxbjcwdc3sywfojdoboogot6pgxfoaqszjyzi7rzs3sm"// test
+	// TODO: replace with a better default image
+    const fallbackIPFS = "ipfs://bafkreie63lsunbgxbjcwdc3sywfojdoboogot6pgxfoaqszjyzi7rzs3sm" 
     if uri == "" {
         uri = fallbackIPFS
     }
@@ -140,7 +141,7 @@ func convertIPFSToGatewayURI(uri string) string {
 
 func avatarMarkdown(uri string) string {
     imgURL := convertIPFSToGatewayURI(uri)
-    return ufmt.Sprintf("![](%s)", imgURL)
+    return ufmt.Sprintf("![](%s)", imgURL) 	// TODO: Image (e.g. from moul/md)
 }
 
 func (d *DAOPrivate) HomeMembersView() string {
@@ -153,6 +154,7 @@ func (d *DAOPrivate) HomeMembersView() string {
         return false
     })
     s += ufmt.Sprintf("## Members 👥 (%d)\n\n", memberCount)
+	// TODO: improve field resizing
     s += "| **Avatar** | **Name** | **Address 🔗** | **Roles 🎭** | **Profil** |\n"
     s += "|------------|----------|----------------|--------------|------------|\n"
     d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
@@ -174,7 +176,7 @@ func (d *DAOPrivate) HomeMembersView() string {
         )
         return false
     })
-    s += "\n--------------------------------\n"
+	s += ufmt.Sprintf("\n--------------------------------\n")
     return s
 }
 
