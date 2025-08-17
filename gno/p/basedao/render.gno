@@ -126,35 +126,56 @@ func (d *DAOPrivate) HomeProfileHeaderView(noprofile bool) string {
 	return s
 }
 
+func convertIPFSToGatewayURI(uri string) string {
+    const fallbackIPFS = "ipfs://bafkreie63lsunbgxbjcwdc3sywfojdoboogot6pgxfoaqszjyzi7rzs3sm"// test
+    if uri == "" {
+        uri = fallbackIPFS
+    }
+    if strings.HasPrefix(uri, "ipfs://") {
+        cid := strings.TrimPrefix(uri, "ipfs://")
+        return "https://ipfs.io/ipfs/" + cid
+    }
+    return uri
+}
+
+func avatarMarkdown(uri string) string {
+    imgURL := convertIPFSToGatewayURI(uri)
+    return ufmt.Sprintf("![](%s)", imgURL)
+}
+
 func (d *DAOPrivate) HomeMembersView() string {
-	pkgPath := d.Realm.PkgPath()
-	linkPath := getLinkPath(pkgPath)
-	s := ""
-	memberCount := 0
-	d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
-		memberCount++
-		return false
-	})	
-	s += ufmt.Sprintf("## Members 👥 (%d)\n\n", memberCount)
-	s += ufmt.Sprintf("| **Name** | **Address 🔗** | **Roles 🎭** | **Profile** |\n")
-	s += ufmt.Sprintf("|----------|-------------|-----------|-------------|\n")	
-	d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
-		displayName := d.GetProfileString(std.Address(key), "DisplayName", FALLBACK_DISPLAY_NAME)
-		roles := d.Members.GetMemberRoles(key)		
-		rolesStr := strings.Join(roles, ", ")
-		if rolesStr == "" {
-			rolesStr = "*No role assigned*"
-		}
-		s += ufmt.Sprintf("| %s | %s | %s | [View](%s:%s/%s) |\n",
-			displayName,
-			key,
-			rolesStr,
-			linkPath, "member", key)
-		
-		return false
-	})
-	s += ufmt.Sprintf("\n--------------------------------\n")
-	return s
+    pkgPath := d.Realm.PkgPath()
+    linkPath := getLinkPath(pkgPath)
+    s := ""
+    memberCount := 0
+    d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
+        memberCount++
+        return false
+    })
+    s += ufmt.Sprintf("## Members 👥 (%d)\n\n", memberCount)
+    s += "| **Avatar** | **Name** | **Address 🔗** | **Roles 🎭** | **Profil** |\n"
+    s += "|------------|----------|----------------|--------------|------------|\n"
+    d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
+        displayName := d.GetProfileString(std.Address(key), "DisplayName", FALLBACK_DISPLAY_NAME)
+        avatarURI := d.GetProfileString(std.Address(key), "Avatar", "")
+        roles := d.Members.GetMemberRoles(key)
+        rolesStr := strings.Join(roles, ", ")
+        if rolesStr == "" {
+            rolesStr = "*No role assigned*"
+        }
+        avatarMD := avatarMarkdown(avatarURI)
+        profileLink := ufmt.Sprintf("[View](%s:member/%s)", linkPath, key)
+        s += ufmt.Sprintf("| %s | %s | %s | %s | %s |\n",
+            avatarMD,
+            displayName,
+            key,
+            rolesStr,
+            profileLink,
+        )
+        return false
+    })
+    s += "\n--------------------------------\n"
+    return s
 }
 
 func (d *DAOPrivate) HomeProposalsView() string {
