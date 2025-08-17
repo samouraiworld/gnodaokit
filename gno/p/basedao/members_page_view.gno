@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-func (d *DAOPrivate) MembersPageView(path string) string {
+func (d *DAOPrivate) MembersPageView() string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
 	s := ""
