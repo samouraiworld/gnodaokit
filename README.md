@@ -1,5 +1,16 @@
 # daokit
 
+**Note for Contributors**: Currently, building and testing requires using the Makefile. Direct use of `gnodev` wont work. 
+
+```bash
+# For `gnodev`
+make dev
+# For `gnodev test`
+make test
+```
+
+---
+
 # 1. Introduction
 
 A **Decentralized Autonomous Organization (DAO)** is a self-governing entity that operates through smart contracts, enabling transparent decision-making without centralized control.
