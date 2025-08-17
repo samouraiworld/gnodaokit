@@ -64,7 +64,7 @@ func init() {
 
 	// Create initial proposals (25 * "Add member" by to differrent proposers)
 	for i := 1; i <= 25; i++ {
-		addr := ufmt.Sprintf("g1member%02dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", i)
+		addr := ufmt.Sprintf("g1member%02d...", i)
 		req := daokit.ProposalRequest{
 			Title: ufmt.Sprintf("Add member %s with no role", addr),
 			Action: basedao.NewAddMemberAction(&basedao.ActionAddMember{
