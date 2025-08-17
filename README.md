@@ -1,6 +1,6 @@
 # daokit
 
-**Note for Contributors**: Currently, building and testing requires using the Makefile. Direct use of `gnodev` wont work. 
+**Note for Contributors**: Currently, building and testing require using the Makefile. Direct use of `gnodev` won't work. 
 
 ```bash
 # For `gnodev`
