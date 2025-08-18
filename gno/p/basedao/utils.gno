@@ -1,5 +1,11 @@
 package basedao
 
+import (
+	"gno.land/p/demo/ufmt"
+	"gno.land/p/mason/md"
+)
+
+// truncateMiddle truncates a string to a maximum length, adding "..." in the middle if it exceeds the limit.
 func truncateMiddle(s string, max int) string {
 	runes := []rune(s)
 	if len(runes) <= max {
@@ -9,9 +15,10 @@ func truncateMiddle(s string, max int) string {
 		return string(runes[:max])
 	}
 	half := (max - 3) / 2
-	return string(runes[:half]) + "..." + string(runes[len(runes)-half:])
+	return ufmt.Sprintf("%s...%s", string(runes[:half]), string(runes[len(runes)-half:]))
 }
 
-func displayAddressMD(addr string) string {
-	return "[" + truncateMiddle(addr, 16) + "](/u/" + addr + ")"
+// renderAddressLink formats an address as a clickable link in Markdown.
+func renderAddressLink(addr string) string {
+	return md.Link(truncateMiddle(addr, 16), ufmt.Sprintf("/u/%s", addr))
 }

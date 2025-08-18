@@ -19,7 +19,7 @@ func (d *DAOPrivate) ProposalsPageView(path string) string {
 
 	s += ufmt.Sprintf("## Proposals 🗳️ (%d)\n\n", proposalsCount)
 	s += ufmt.Sprintf("| **ID** | **Title** | **Action** | **Proposer** | **CreatedAt** | **Status** |\n")
-	s += ufmt.Sprintf("|-----|-------------|---------|--------------|-------------|--------|\n")
+	s += ufmt.Sprintf("|--------|-----------|------------|--------------|---------------|------------|\n")
 
 	if proposalsCount == 0 {
 		s += ufmt.Sprintf("\t⚠️ There are no running proposals at the moment\n\n")
@@ -40,7 +40,7 @@ func (d *DAOPrivate) ProposalsPageView(path string) string {
 			uint64(id),
 			proposal.Title, linkPath, "proposal", uint64(id),
 			proposal.Action.Type(),
-			displayAddressMD(proposal.ProposerID),
+			renderAddressLink(proposal.ProposerID),
 			proposal.CreatedAt.Format("2006-01-02 15:04:05"),
 			proposal.Status.String())
 	}
