@@ -12,7 +12,7 @@ func (d *DAOPrivate) MembersPageView(path string) string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
 	s := ""
-	memberCount := d.Members.Members.Size()
+	memberCount := d.Members.MembersCount()
 
 	const pageSize = 10
 	pager := pager.NewPager(d.Members.Members, pageSize, false)
@@ -20,7 +20,7 @@ func (d *DAOPrivate) MembersPageView(path string) string {
 
 	s += ufmt.Sprintf("## Members 👥 (%d)\n\n", memberCount)
 	s += ufmt.Sprintf("| **Name** | **Address 🔗** | **Roles 🎭** | **Profile** |\n")
-	s += ufmt.Sprintf("|----------|-------------|-----------|-------------|\n")
+	s += ufmt.Sprintf("|----------|----------------|--------------|-------------|\n")
 
 	for _, item := range page.Items {
 		displayName := d.GetProfileString(std.Address(item.Key), "DisplayName", FALLBACK_DISPLAY_NAME)
