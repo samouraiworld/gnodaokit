@@ -18,8 +18,8 @@ func (d *DAOPrivate) ProposalsPageView(path string) string {
 	page := pager.MustGetPageByPath(path)
 
 	s += ufmt.Sprintf("## Proposals 🗳️ (%d)\n\n", proposalsCount)
-	s += ufmt.Sprintf("| **ID** | **Title** | **Action** | **Proposer** | **CreatedAt** | **Status** |\n")
-	s += ufmt.Sprintf("|--------|-----------|------------|--------------|---------------|------------|\n")
+	s += ufmt.Sprintf("| **ID** | **Title** | **Resource** | **Proposer** | **CreatedAt** | **Status** |\n")
+	s += ufmt.Sprintf("|--------|-----------|--------------|--------------|---------------|------------|\n")
 
 	if proposalsCount == 0 {
 		s += ufmt.Sprintf("\t⚠️ There are no running proposals at the moment\n\n")
@@ -36,10 +36,11 @@ func (d *DAOPrivate) ProposalsPageView(path string) string {
 		if err != nil {
 			panic(err)
 		}
+		resource := d.Core.Resources.Get(proposal.Action.Type())
 		s += ufmt.Sprintf("| %d | [%s](%s:%s/%d) | %s | %s | %s | %s |\n",
 			uint64(id),
 			proposal.Title, linkPath, "proposal", uint64(id),
-			proposal.Action.Type(),
+			resource.DisplayName,
 			RenderAddressLink(proposal.ProposerID),
 			proposal.CreatedAt.Format("2006-01-02 15:04:05"),
 			proposal.Status.String())
