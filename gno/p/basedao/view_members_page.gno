@@ -28,8 +28,8 @@ func (d *DAOPrivate) MembersPageView() string {
         if rolesStr == "" {
             rolesStr = "*No role assigned*"
         }
-        avatarMD := avatarMarkdown(avatarURI)
-		avatarAndName := ufmt.Sprintf("%s %s", avatarMD, displayName)
+		avatarMD := avatarMarkdown(avatarURI, 100, 100)
+        avatarAndName := ufmt.Sprintf("%s %s", avatarMD, displayName)
         profileLink := ufmt.Sprintf("[View](%s:member/%s)", linkPath, key)
         s += ufmt.Sprintf("| %s | %s | %s | %s |\n",
             avatarAndName,
@@ -45,20 +45,22 @@ func (d *DAOPrivate) MembersPageView() string {
 
 // UTILITIES
 
-func convertIPFSToGatewayURI(uri string) string {
+func convertIPFSToGatewayURI(uri string, width, height int) string {
 	// TODO: replace with a better default image
-    const fallbackIPFS = "ipfs://bafkreie63lsunbgxbjcwdc3sywfojdoboogot6pgxfoaqszjyzi7rzs3sm" 
+    const fallbackIPFS = "ipfs://bafkreie63lsunbgxbjcwdc3sywfojdoboogot6pgxfoaqszjyzi7rzs3sm"
+    const pinataGatewayBase = "https://gold-personal-grasshopper-424.mypinata.cloud/ipfs/"
+
     if uri == "" {
         uri = fallbackIPFS
     }
     if strings.HasPrefix(uri, "ipfs://") {
         cid := strings.TrimPrefix(uri, "ipfs://")
-        return "https://ipfs.io/ipfs/" + cid
+        return ufmt.Sprintf("%s%s?img-width=%d&img-height=%d", pinataGatewayBase, cid, width, height)
     }
     return uri
 }
 
-func avatarMarkdown(uri string) string {
-    imgURL := convertIPFSToGatewayURI(uri)
-    return ufmt.Sprintf("![](%s)", imgURL) 	// TODO: Image (e.g. from moul/md)
+func avatarMarkdown(uri string, width, height int) string {
+    imgURL := convertIPFSToGatewayURI(uri, width, height)
+    return ufmt.Sprintf("![](%s)", imgURL)
 }
