@@ -2,7 +2,7 @@ package basedao
 
 import (
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/mason/md"
+	"gno.land/p/moul/md"
 )
 
 // TruncateMiddle truncates a string to a maximum length, adding "..." in the middle if it exceeds the limit.

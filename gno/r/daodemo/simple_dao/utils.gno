@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/samcrew/basedao"
+	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
 )
 
@@ -25,6 +26,7 @@ func initProposals() {
 		} else {
 			proposer = "g1ld6uaykyugld4rnm63rcy7vju4zx23lufml3jv"
 		}
-		daoPrivate.Core.Propose(proposer, req)
+		id := daoPrivate.Core.Propose(proposer, req)
+		daoPrivate.Core.Vote(proposer, id, daocond.VoteYes)
 	}
 }
