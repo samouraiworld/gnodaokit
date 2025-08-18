@@ -12,8 +12,6 @@ const (
 	HOME_PATH             = ""
 	MEMBERS_PATH          = "members"
 	PROPOSALS_PATH        = "proposals"
-	MEMBERS_PATH          = "members"
-	PROPOSALS_PATH        = "proposals"
 	HOME_NO_PROFILE_PATH  = "noprofile"
 	CONFIG_PATH           = "config"
 	PROPOSAL_HISTORY_PATH = "history"
@@ -30,8 +28,6 @@ func (d *DAOPrivate) initRenderingRouter() {
 
 func (d *DAOPrivate) InitDefaultRendering() {
 	d.RenderRouter.HandleFunc(HOME_PATH, d.MuxHomePage)
-	d.RenderRouter.HandleFunc(MEMBERS_PATH, d.MuxMembersPage)
-	d.RenderRouter.HandleFunc(PROPOSALS_PATH, d.MuxProposalsPage)
 	d.RenderRouter.HandleFunc(MEMBERS_PATH, d.MuxMembersPage)
 	d.RenderRouter.HandleFunc(PROPOSALS_PATH, d.MuxProposalsPage)
 	d.RenderRouter.HandleFunc(HOME_NO_PROFILE_PATH, d.MuxHomePage)
