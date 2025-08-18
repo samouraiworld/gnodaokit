@@ -19,7 +19,7 @@ func (d *DAOPrivate) MembersPageView() string {
     s += ufmt.Sprintf("## Members 👥 (%d)\n\n", memberCount)
 	// TODO: improve field resizing
     s += "| **Name** | **Address 🔗** | **Roles 🎭** | **Profil** |\n"
-    s += "|------------|----------------|--------------|------------|\n"
+    s += "|:------------:|----------------|--------------|------------|\n"
     d.Members.Members.Iterate("", "", func(key string, value interface{}) bool {
         displayName := d.GetProfileString(std.Address(key), "DisplayName", FALLBACK_DISPLAY_NAME)
         avatarURI := d.GetProfileString(std.Address(key), "Avatar", "")
