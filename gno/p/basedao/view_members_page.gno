@@ -6,8 +6,6 @@ import (
 
 	"gno.land/p/demo/avl/pager"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/sunspirit/md"
-	"gno.land/p/sunspirit/table"
 )
 
 func (d *DAOPrivate) MembersPageView(path string) string {
@@ -21,9 +19,8 @@ func (d *DAOPrivate) MembersPageView(path string) string {
 	page := pager.MustGetPageByPath(path)
 
 	s += ufmt.Sprintf("## Members 👥 (%d)\n\n", memberCount)
-
-	mdBuilder := md.NewBuilder()
-	tb, _ := table.New([]string{"Name", "Address 🔗", "Roles 🎭", "Profile"}, [][]string{})
+	s += ufmt.Sprintf("| **Name** | **Address 🔗** | **Roles 🎭** | **Profile** |\n")
+	s += ufmt.Sprintf("|----------|----------------|--------------|-------------|\n")
 
 	for _, item := range page.Items {
 		displayName := d.GetProfileString(std.Address(item.Key), "DisplayName", FALLBACK_DISPLAY_NAME)
@@ -32,16 +29,13 @@ func (d *DAOPrivate) MembersPageView(path string) string {
 		if rolesStr == "" {
 			rolesStr = "*No role assigned*"
 		}
-		tb.AddRow([]string{
+		s += ufmt.Sprintf("| %s | %s | %s | [View](%s:%s/%s) |\n",
 			displayName,
 			item.Key,
 			rolesStr,
-			md.Link("View", ufmt.Sprintf("%s:%s/%s", linkPath, "member", item.Key)),
-		})
+			linkPath, "member", item.Key)
 	}
 
-	mdBuilder.Add(md.Table(tb))
-	s += mdBuilder.Render("\n")
 	s += "\n" + page.Picker(path) + "\n"
 	s += ufmt.Sprintf("\n--------------------------------\n")
 

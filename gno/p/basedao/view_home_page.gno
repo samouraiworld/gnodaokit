@@ -2,14 +2,14 @@ package basedao
 
 import (
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/sunspirit/md"
+	"gno.land/p/moul/md"
 )
 
 func (d *DAOPrivate) HomePageView() string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
 	return d.HomeProfileHeaderView(false) +
-		md.Link("> Go to Members", linkPath+":"+MEMBERS_PATH) + md.LineBreak(1) +
+		md.Link("> Go to Members", linkPath+":"+MEMBERS_PATH) + "\n\n" +
 		md.Link("> Go to Proposals", linkPath+":"+PROPOSALS_PATH)
 }
 
