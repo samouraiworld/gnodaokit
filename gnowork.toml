@@ -1,1 +1,1 @@
-ignores = ["gnobuild"]
+ignore = ["gnobuild"]
