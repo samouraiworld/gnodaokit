@@ -83,3 +83,7 @@ func (d *Core) Propose(proposerID string, req ProposalRequest) uint64 {
 func (d *Core) ResourcesCount() int {
 	return d.Resources.Tree.Size()
 }
+
+func (d *Core) ProposalsCount() int {
+	return d.Proposals.Tree.Size()
+}

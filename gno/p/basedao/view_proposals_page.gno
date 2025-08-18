@@ -11,7 +11,7 @@ func (d *DAOPrivate) ProposalsPageView(path string) string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
 	s := ""
-	proposalsCount := d.Core.Proposals.Tree.Size()
+	proposalsCount := d.Core.ProposalsCount()
 
 	const pageSize = 10
 	pager := pager.NewPager(d.Core.Proposals.Tree, pageSize, false)
