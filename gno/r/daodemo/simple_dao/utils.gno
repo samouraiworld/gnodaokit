@@ -11,10 +11,9 @@ import (
 // initProposals creates initial proposals (25 * "Add member" by two different proposers)
 func initProposals() {
 	for i := 1; i <= 25; i++ {
-		addr := ufmt.Sprintf("g1member%02dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", i)
-		truncatedAddr := ufmt.Sprintf("g1member%02d...", i)
+		addr := ufmt.Sprintf("g1memberxxxxxxxxxxxxxxxxxxxxxxxxxxxx%02d", i)
 		req := daokit.ProposalRequest{
-			Title: ufmt.Sprintf("Add member %s with no role", truncatedAddr),
+			Title: ufmt.Sprintf("Add member %s with no role", basedao.TruncateMiddle(addr)),
 			Action: basedao.NewAddMemberAction(&basedao.ActionAddMember{
 				Address: std.Address(addr),
 				Roles:   []string{},

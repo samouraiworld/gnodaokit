@@ -5,20 +5,24 @@ import (
 	"gno.land/p/mason/md"
 )
 
-// truncateMiddle truncates a string to a maximum length, adding "..." in the middle if it exceeds the limit.
-func truncateMiddle(s string, max int) string {
+// TruncateMiddle truncates a string to a maximum length, adding "..." in the middle if it exceeds the limit.
+func TruncateMiddle(s string, max ...int) string {
+	defMax := 12
+	if len(max) > 0 {
+		defMax = max[0]
+	}
 	runes := []rune(s)
-	if len(runes) <= max {
+	if len(runes) <= defMax {
 		return s
 	}
-	if max <= 3 {
-		return string(runes[:max])
+	if defMax <= 3 {
+		return string(runes[:defMax])
 	}
-	half := (max - 3) / 2
+	half := (defMax - 3) / 2
 	return ufmt.Sprintf("%s...%s", string(runes[:half]), string(runes[len(runes)-half:]))
 }
 
-// renderAddressLink formats an address as a clickable link in Markdown.
-func renderAddressLink(addr string) string {
-	return md.Link(truncateMiddle(addr, 16), ufmt.Sprintf("/u/%s", addr))
+// RenderAddressLink formats an address as a clickable link in Markdown.
+func RenderAddressLink(addr string) string {
+	return md.Link(TruncateMiddle(addr), ufmt.Sprintf("/u/%s", addr))
 }

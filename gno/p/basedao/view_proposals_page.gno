@@ -40,7 +40,7 @@ func (d *DAOPrivate) ProposalsPageView(path string) string {
 			uint64(id),
 			proposal.Title, linkPath, "proposal", uint64(id),
 			proposal.Action.Type(),
-			renderAddressLink(proposal.ProposerID),
+			RenderAddressLink(proposal.ProposerID),
 			proposal.CreatedAt.Format("2006-01-02 15:04:05"),
 			proposal.Status.String())
 	}
