@@ -5,9 +5,9 @@ import (
 	"strings"
 	"unicode"
 
-	"gno.land/p/demo/ufmt"
 	"gno.land/p/mason/md"
 	"gno.land/p/moul/txlink"
+	"gno.land/p/demo/ufmt"
 	"gno.land/p/samcrew/basedao"
 	"gno.land/p/samcrew/daokit"
 )
@@ -59,4 +59,26 @@ func renderActions() string {
 	s += "- " + md.Link("🔗 Propose Add Member", txlink.Call("ProposeAddMember")) + " - Create a proposal to add a new member with specific roles\n\n"
 	s += "*This is a demonstration DAO built with gno.land and daokit*"
 	return s
+
+
+// initProposals creates initial proposals (25 * "Add member" by two different proposers)
+func initProposals() {
+	for i := 1; i <= 25; i++ {
+		addr := ufmt.Sprintf("g1member%02dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", i)
+		truncatedAddr := ufmt.Sprintf("g1member%02d...", i)
+		req := daokit.ProposalRequest{
+			Title: ufmt.Sprintf("Add member %s with no role", truncatedAddr),
+			Action: basedao.NewAddMemberAction(&basedao.ActionAddMember{
+				Address: std.Address(addr),
+				Roles:   []string{},
+			}),
+		}
+		var proposer string
+		if i <= 12 {
+			proposer = "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg"
+		} else {
+			proposer = "g1ld6uaykyugld4rnm63rcy7vju4zx23lufml3jv"
+		}
+		daoPrivate.Core.Propose(proposer, req)
+	}
 }
