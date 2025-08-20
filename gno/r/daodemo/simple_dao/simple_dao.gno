@@ -21,29 +21,24 @@ var (
 func init() {
 	// Define initial roles in the DAO
 	initialRoles := []basedao.RoleInfo{
-		{Name: "admin", Description: "Admin is the superuser"},
 		{Name: "public-relationships", Description: "Responsible of communication with the public"},
 		{Name: "finance-officer", Description: "Responsible of funds management"},
 	}
 
 	// Define initial members and their roles
 	initialMembers := []basedao.Member{
-		{Address: "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg", Roles: []string{"admin", "public-relationships"}},
-		{Address: "g1ld6uaykyugld4rnm63rcy7vju4zx23lufml3jv", Roles: []string{"public-relationships"}},
-		{Address: "g1r69l0vhp7tqle3a0rk8m8fulr8sjvj4h7n0tth", Roles: []string{"finance-officer"}},
-		{Address: "g16jv3rpz7mkt0gqulxas56se2js7v5vmc6n6e0r", Roles: []string{}},
+		{Address: "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg", Roles: []string{"finance-officer", "public-relationships"}},
 	}
 
 	// create the member store now to be able to use it in the condition
 	memberStore := basedao.NewMembersStore(initialRoles, initialMembers)
 
 	// Define governance conditions using daocond
-	membersMajority := daocond.MembersThreshold(0.6, memberStore.IsMember, memberStore.MembersCount)
-	publicRelationships := daocond.RoleCount(1, "public-relationships", memberStore.HasRole)
+	membersMajority := daocond.MembersThreshold(0.4, memberStore.IsMember, memberStore.MembersCount)
 	financeOfficer := daocond.RoleCount(1, "finance-officer", memberStore.HasRole)
 
 	// `and` and `or` use va_args so you can pass as many conditions as needed
-	adminCond := daocond.And(membersMajority, publicRelationships, financeOfficer)
+	adminCond := daocond.And(membersMajority, financeOfficer)
 
 	// Initialize DAO with configuration
 	DAO, daoPrivate = basedao.New(&basedao.Config{
