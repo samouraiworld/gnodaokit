@@ -2,7 +2,7 @@ package simple_dao
 
 import "testing"
 
-// `init()` function is executed by default from `simple_dao.gno`, hence the `membersCount != 4`.
+// `init()` function is executed by default from `simple_dao.gno`, hence the `membersCount != 1`.
 // Refers to `simple_dao.gno` to understand the outcome of this test.
 func TestInit(t *testing.T) {
 	membersCount := daoPrivate.Members.MembersCount()
