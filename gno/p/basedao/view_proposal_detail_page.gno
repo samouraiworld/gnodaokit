@@ -5,7 +5,7 @@ import (
 
 	"gno.land/p/demo/seqid"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/mason/md"
+	"gno.land/p/moul/md"
 	"gno.land/p/moul/txlink"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
