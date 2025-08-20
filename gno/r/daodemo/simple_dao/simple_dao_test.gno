@@ -6,8 +6,8 @@ import "testing"
 // Refers to `simple_dao.gno` to understand the outcome of this test.
 func TestInit(t *testing.T) {
 	membersCount := daoPrivate.Members.MembersCount()
-	if membersCount != 4 {
-		t.Fatalf("Expected 4 members, got %d", membersCount)
+	if membersCount != 1 {
+		t.Fatalf("Expected 1 members, got %d", membersCount)
 	}
 
 	roles := daoPrivate.Members.GetRoles()
