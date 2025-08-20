@@ -10,7 +10,7 @@ func (d *DAOPrivate) HomePageView() string {
 	linkPath := getLinkPath(pkgPath)
 	return d.HomeProfileHeaderView(false) +
 		md.Link("> Go to Members", linkPath+":"+MEMBERS_PATH) + "\n\n" +
-		md.Link("> Go to Proposals", linkPath+":"+PROPOSALS_PATH)
+		md.Link("> Go to Proposals", linkPath+":"+PROPOSALS_PATH) + "\n"
 }
 
 func (d *DAOPrivate) HomeProfileHeaderView(noprofile bool) string {

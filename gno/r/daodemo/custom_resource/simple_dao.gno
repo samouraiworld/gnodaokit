@@ -24,7 +24,7 @@ func init() {
 		{Address: "g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld69", Roles: []string{}},
 	}
 	memberStore := basedao.NewMembersStore(initialRoles, initialMembers)
-	membersMajority := daocond.MembersThreshold(0.6, memberStore.IsMember, memberStore.MembersCount)
+	membersMajority := daocond.MembersThreshold(0.1, memberStore.IsMember, memberStore.MembersCount)
 
 	DAO, daoPrivate = basedao.New(&basedao.Config{
 		Name:             "Demo DAOKIT DAO",
@@ -65,5 +65,8 @@ func Render(path string) string {
 	if path == "demo" {
 		return renderDemo()
 	}
-	return daoPrivate.Render(path)
+	s := daoPrivate.Render(path)
+	s += "# My blog\n"
+	s += myblog.Render()
+	return s
 }
