@@ -1,4 +1,4 @@
-package simple_dao
+package custom_condition
 
 import (
 	"std"
@@ -11,25 +11,6 @@ import (
 	"gno.land/p/samcrew/basedao"
 	"gno.land/p/samcrew/daokit"
 )
-
-// initProposals creates initial proposals ("Add member").
-// Takes the number of proposals to create and uses the last created address as proposer.
-func initProposals(nb int) {
-	var lastAddr string
-	for i := 1; i <= nb; i++ {
-		addr := ufmt.Sprintf("g1memberxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%02d", i)
-		truncatedAddr := ufmt.Sprintf("g1member...%02d", i)
-		req := daokit.ProposalRequest{
-			Title: ufmt.Sprintf("Add member %s with no role", truncatedAddr),
-			Action: basedao.NewAddMemberAction(&basedao.ActionAddMember{
-				Address: std.Address(addr),
-				Roles:   []string{},
-			}),
-		}
-		lastAddr = addr
-		daoPrivate.Core.Propose(lastAddr, req)
-	}
-}
 
 // Bypass limitation by adding yourself to the DAO.
 // It is necessary to be part of the DAO to create a Proposal.
@@ -49,34 +30,44 @@ func ProposeAddMember(cur realm, address std.Address, roles string) {
 	for i, s := range rs {
 		rs[i] = strings.TrimFunc(s, unicode.IsSpace)
 	}
-	req := daokit.ProposalRequest{
-		Title: ufmt.Sprintf("Add member %s with roles %s", address, strings.Join(rs, ", ")),
-		Action: basedao.NewAddMemberAction(&basedao.ActionAddMember{
-			Address: address,
-			Roles:   rs,
-		}),
+
+	payload := basedao.ActionAddMember{
+		Address: address,
+		Roles:   rs,
 	}
-	Propose(cur, req)
+	action := basedao.NewAddMemberAction(&payload)
+
+	proposal := daokit.ProposalRequest{
+		Title:       ufmt.Sprintf("Add member %s with roles %s", address, strings.Join(rs, ", ")),
+		Description: ufmt.Sprintf("This proposal will add %s as a member with roles: %s", address, strings.Join(rs, ", ")),
+		Action:      action,
+	}
+
+	Propose(cur, proposal)
 }
 
 func renderDemo() string {
 	s := ""
-	s += "# 🏛️ Simple DAO Actions\n\n"
-	s += "Welcome to Simple DAO! This is a demonstration of basic DAO functionality.\n\n"
+	s += "# ⚙️ Custom Condition Demo\n\n"
+	s += "This showcases how to create custom governance rules.\n\n"
 	s += "## ℹ️ How it Works\n\n"
 	s += "1. **Join the DAO** using the " + md.Link("AddMember", txlink.Call("AddMember")) + " function.\n\n"
-	s += "2. **Create a pre-made Proposal** using " + md.Link("ProposeAddMember", txlink.Call("")) + "  function using this parameters:\n\n"
+	s += "2. **Create a Proposal** using " + md.Link("ProposeAddMember", txlink.Call("ProposeAddMember")) + " function with these parameters:\n\n"
 	s += "- `address`: The std.Address of the member to add\n"
 	s += "- `roles`: Comma-separated roles (e.g., \"admin,moderator\" or \"voter\")\n\n"
 	s += "3. " + md.Link("Vote", txlink.Call("Vote")) + " on proposals using their ID.\n\n"
+	s += "## 🎯 Custom Condition: NoRole\n\n"
+	s += "This DAO uses a custom condition called **NoRole** that requires:\n"
+	s += "- At least **1 vote** from members who have **no assigned roles**\n"
+	s += "- Only votes from roleless members count toward approval\n"
+	s += "- Members with roles cannot approve proposals\n\n"
 	s += "## 📋 Available Actions\n\n"
 	s += "### Member Management\n"
 	s += "- " + md.Link("🔗 Add Yourself as Member", txlink.Call("AddMember")) + " - Join the DAO to participate in governance\n"
 	s += "- " + md.Link("🔗 Propose Add Member", txlink.Call("ProposeAddMember")) + " - Create a proposal to add a new member with specific roles\n\n"
-	s += "## 🛠️ Custom Resource & Condition Demo\n\n"
-	s += "Explore how to extend your DAO with custom resources and conditions:\n\n"
-	s += "- " + md.Link("🔗 Custom Resource Example", "/r/samcrew/daodemo/custom_resource:demo") + " - See a demo of custom resource implementation\n"
-	s += "- " + md.Link("🔗 Custom Condition Example", "/r/samcrew/daodemo/custom_condition:demo") + " - See a demo of custom condition implementation\n\n"
+	s += "### Other Demos\n"
+	s += "- " + md.Link("🔗 Simple DAO Demo", "/r/samcrew/daodemo/simple_dao:demo") + " - Basic DAO functionality\n"
+	s += "- " + md.Link("🔗 Custom Resource Demo", "/r/samcrew/daodemo/custom_resource:demo") + " - Custom DAO actions\n\n"
 	s += "*This is a demonstration DAO built with gno.land and daokit*"
 	return s
 }

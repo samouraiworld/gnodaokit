@@ -44,6 +44,9 @@ func init() {
 	}
 	// Add it to our DAO
 	daoPrivate.Core.Resources.Set(&resource)
+
+	// Add some demo blog post proposals to showcase custom resource
+	initBlogProposals()
 }
 
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
@@ -59,5 +62,8 @@ func Propose(cur realm, req daokit.ProposalRequest) {
 }
 
 func Render(path string) string {
+	if path == "demo" {
+		return renderDemo()
+	}
 	return daoPrivate.Render(path)
 }

@@ -49,5 +49,8 @@ func Propose(cur realm, req daokit.ProposalRequest) {
 }
 
 func Render(path string) string {
+	if path == "demo" {
+		return renderDemo()
+	}
 	return daoPrivate.Render(path)
 }

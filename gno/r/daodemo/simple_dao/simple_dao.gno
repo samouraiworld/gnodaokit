@@ -55,7 +55,7 @@ func init() {
 		SetProfileString: profile.SetStringField,
 	})
 
-	initProposals()
+	initProposals(25)
 }
 
 // Vote allows DAO members to cast their vote on a specific proposal
