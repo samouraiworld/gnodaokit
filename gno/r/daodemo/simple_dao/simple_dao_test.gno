@@ -11,7 +11,7 @@ func TestInit(t *testing.T) {
 	}
 
 	roles := daoPrivate.Members.GetRoles()
-	expectedRoles := []string{"admin", "public-relationships", "finance-officer"}
+	expectedRoles := []string{"public-relationships", "finance-officer"}
 	if len(roles) != len(expectedRoles) {
 		t.Fatalf("Expected %d roles, got %d", len(expectedRoles), len(roles))
 	}
