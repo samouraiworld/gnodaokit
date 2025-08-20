@@ -25,6 +25,7 @@ func initProposals() {
 			}),
 		}
 		var proposer string
+		// Split proposals between two different proposers to demonstrate variety
 		if i <= 12 {
 			proposer = "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg"
 		} else {
