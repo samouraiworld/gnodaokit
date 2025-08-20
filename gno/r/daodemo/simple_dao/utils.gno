@@ -76,8 +76,8 @@ func renderDemo() string {
 	s += "- " + md.Link("🔗 Propose Add Member", txlink.Call("ProposeAddMember")) + " - Create a proposal to add a new member with specific roles\n\n"
 	s += "## 🛠️ Custom Resource & Condition Demo\n\n"
 	s += "Explore how to extend your DAO with custom resources and conditions:\n\n"
-	s += "- " + md.Link("🔗 Custom Resource Example", "/r/samcrew/daodemo/custom_resource:demo") + " - See a demo of custom resource implementation\n"
-	s += "- " + md.Link("🔗 Custom Condition Example", "/r/samcrew/daodemo/custom_condition:demo") + " - See a demo of custom condition implementation\n\n"
+	s += "- " + md.Link("🔗 Custom Resource Example", "/r/samcrew/daodemo/custom_resource") + " - See a demo of custom resource implementation\n"
+	s += "- " + md.Link("🔗 Custom Condition Example", "/r/samcrew/daodemo/custom_condition") + " - See a demo of custom condition implementation\n\n"
 	s += "*This is a demonstration DAO built with gno.land and daokit*"
 	return s
 }

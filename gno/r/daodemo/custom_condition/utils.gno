@@ -66,8 +66,8 @@ func renderDemo() string {
 	s += "- " + md.Link("🔗 Add Yourself as Member", txlink.Call("AddMember")) + " - Join the DAO to participate in governance\n"
 	s += "- " + md.Link("🔗 Propose Add Member", txlink.Call("ProposeAddMember")) + " - Create a proposal to add a new member with specific roles\n\n"
 	s += "### Other Demos\n"
-	s += "- " + md.Link("🔗 Simple DAO Demo", "/r/samcrew/daodemo/simple_dao:demo") + " - Basic DAO functionality\n"
-	s += "- " + md.Link("🔗 Custom Resource Demo", "/r/samcrew/daodemo/custom_resource:demo") + " - Custom DAO actions\n\n"
+	s += "- " + md.Link("🔗 Simple DAO Demo", "/r/samcrew/daodemo/simple_dao") + " - Basic DAO functionality\n"
+	s += "- " + md.Link("🔗 Custom Resource Demo", "/r/samcrew/daodemo/custom_resource") + " - Custom DAO actions\n\n"
 	s += "*This is a demonstration DAO built with gno.land and daokit*"
 	return s
 }

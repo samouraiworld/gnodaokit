@@ -75,8 +75,8 @@ func renderDemo() string {
 	s += "### Custom Resource Actions\n"
 	s += "- " + md.Link("🔗 Propose New Blog Post", txlink.Call("ProposeNewPost")) + " - Create a proposal to publish a new blog post (demonstrates custom resource)\n\n"
 	s += "### Other Demos\n"
-	s += "- " + md.Link("🔗 Simple DAO Demo", "/r/samcrew/daodemo/simple_dao:demo") + " - Basic DAO functionality\n"
-	s += "- " + md.Link("🔗 Custom Condition Demo", "/r/samcrew/daodemo/custom_condition:demo") + " - Custom governance conditions\n\n"
+	s += "- " + md.Link("🔗 Simple DAO Demo", "/r/samcrew/daodemo/simple_dao") + " - Basic DAO functionality\n"
+	s += "- " + md.Link("🔗 Custom Condition Demo", "/r/samcrew/daodemo/custom_condition") + " - Custom governance conditions\n\n"
 	s += "*This is a demonstration DAO built with gno.land and daokit*"
 	return s
 }
