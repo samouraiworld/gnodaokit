@@ -15,9 +15,10 @@ import (
 // initProposals creates initial proposals ("Add member").
 // Takes the number of proposals to create and uses the last created address as proposer.
 func initProposals(nb int) {
-	var lastAddr string
+	var lastAddr string = "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg"
+	var addr string
 	for i := 1; i <= nb; i++ {
-		addr := ufmt.Sprintf("g1memberxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%02d", i)
+		addr = ufmt.Sprintf("g1memberxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%02d", i)
 		truncatedAddr := ufmt.Sprintf("g1member...%02d", i)
 		req := daokit.ProposalRequest{
 			Title: ufmt.Sprintf("Add member %s with no role", truncatedAddr),
@@ -26,8 +27,8 @@ func initProposals(nb int) {
 				Roles:   []string{},
 			}),
 		}
-		lastAddr = addr
 		daoPrivate.Core.Propose(lastAddr, req)
+		lastAddr = addr
 	}
 }
 
