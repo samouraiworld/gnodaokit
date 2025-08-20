@@ -75,8 +75,9 @@ func Propose(cur realm, req daokit.ProposalRequest) {
 
 // Render generates a UI representation of the DAO's state
 func Render(path string) string {
+	// Demo path to showcase the possibility of this realm
 	if path == "demo" {
-		return renderActions()
+		return renderDemo()
 	}
 	return daoPrivate.Render(path)
 }

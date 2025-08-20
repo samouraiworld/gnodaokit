@@ -12,6 +12,28 @@ import (
 	"gno.land/p/samcrew/daokit"
 )
 
+// initProposals creates initial proposals (25 * "Add member" by two different proposers)
+func initProposals() {
+	for i := 1; i <= 25; i++ {
+		addr := ufmt.Sprintf("g1member%02dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", i)
+		truncatedAddr := ufmt.Sprintf("g1member%02d...", i)
+		req := daokit.ProposalRequest{
+			Title: ufmt.Sprintf("Add member %s with no role", truncatedAddr),
+			Action: basedao.NewAddMemberAction(&basedao.ActionAddMember{
+				Address: std.Address(addr),
+				Roles:   []string{},
+			}),
+		}
+		var proposer string
+		if i <= 12 {
+			proposer = "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg"
+		} else {
+			proposer = "g1ld6uaykyugld4rnm63rcy7vju4zx23lufml3jv"
+		}
+		daoPrivate.Core.Propose(proposer, req)
+	}
+}
+
 // Bypass limitation by adding yourself to the DAO.
 // It is necessary to be part of the DAO to create a Proposal.
 func AddMember(cur realm) {
@@ -40,7 +62,7 @@ func ProposeAddMember(cur realm, address std.Address, roles string) {
 	Propose(cur, req)
 }
 
-func renderActions() string {
+func renderDemo() string {
 	s := ""
 	s += "# 🏛️ Simple DAO Actions\n\n"
 	s += "Welcome to the Simple DAO! This is a demonstration of basic DAO functionality using the **gno.land** ecosystem.\n\n"
@@ -54,28 +76,10 @@ func renderActions() string {
 	s += "### Member Management\n"
 	s += "- " + md.Link("🔗 Add Yourself as Member", txlink.Call("AddMember")) + " - Join the DAO to participate in governance\n"
 	s += "- " + md.Link("🔗 Propose Add Member", txlink.Call("ProposeAddMember")) + " - Create a proposal to add a new member with specific roles\n\n"
+	s += "## 🛠️ Custom Resource & Condition Demo\n\n"
+	s += "Explore how to extend your DAO with custom resources and conditions:\n\n"
+	s += "- " + md.Link("🔗 Custom Resource Example", "/r/samcrew/daodemo/custom_resource") + " - See a demo of custom resource implementation\n"
+	s += "- " + md.Link("🔗 Custom Condition Example", "/r/samcrew/daodemo/custom_condition") + " - See a demo of custom condition implementation\n\n"
 	s += "*This is a demonstration DAO built with gno.land and daokit*"
 	return s
-}
-
-// initProposals creates initial proposals (25 * "Add member" by two different proposers)
-func initProposals() {
-	for i := 1; i <= 25; i++ {
-		addr := ufmt.Sprintf("g1member%02dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", i)
-		truncatedAddr := ufmt.Sprintf("g1member%02d...", i)
-		req := daokit.ProposalRequest{
-			Title: ufmt.Sprintf("Add member %s with no role", truncatedAddr),
-			Action: basedao.NewAddMemberAction(&basedao.ActionAddMember{
-				Address: std.Address(addr),
-				Roles:   []string{},
-			}),
-		}
-		var proposer string
-		if i <= 12 {
-			proposer = "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg"
-		} else {
-			proposer = "g1ld6uaykyugld4rnm63rcy7vju4zx23lufml3jv"
-		}
-		daoPrivate.Core.Propose(proposer, req)
-	}
 }
