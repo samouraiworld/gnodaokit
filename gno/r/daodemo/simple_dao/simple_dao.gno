@@ -64,6 +64,8 @@ func Execute(cur realm, proposalID uint64) {
 }
 
 // Execute triggers the implementation of a proposal's actions
+// To execute this function, you must use a MsgRun (maketx run)
+// See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
 	DAO.Propose(req)
 }

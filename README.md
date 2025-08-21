@@ -1,4 +1,5 @@
-# daokit
+# DAOkit: A Framework for Building Decentralized Autonomous Organizations (DAOs) in Gnolang
+✨ *Introducing flexible conditional proposal execution*
 
 **Note for Contributors**: Currently, building and testing require using the Makefile. Direct use of `gnodev` won't work. 
 
@@ -8,7 +9,6 @@ make dev
 # For `gnodev test`
 make test
 ```
-
 ---
 
 # 1. Introduction
@@ -309,6 +309,8 @@ func Execute(proposalID uint64) {
 }
 
 // Execute triggers the implementation of a proposal's actions
+// To execute this function, you must use a MsgRun (maketx run)
+// See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
 	DAO.Propose(req)
 }
@@ -319,8 +321,10 @@ func Render(path string) string {
 }
 ```
 
-**Note**: An interactive demo of this DAO is available at `/r/samcrew/daodemo/simple_dao:demo`. You are required to register yourself in the DAO before registering your proposal using the `AddMember` function.
-As well, every `daodemo` directory contain a `tx_script` directory containing **scripts** files, executable by doing:
+## Interactive example
+
+An interactive demo of this DAO is available at `/r/samcrew/daodemo/simple_dao:demo`. You are required to register yourself in the DAO before registering your proposal using the `AddMember` function.
+Every `daodemo` directory contain a `tx_script` directory containing **scripts** files, executable by doing:
 ```bash
 gnokey maketx run \
   --gas-fee 1gnot \

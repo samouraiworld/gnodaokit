@@ -44,7 +44,7 @@ func AddMember(cur realm) {
 // See why a run is necessary for creating a proposal -> https://docs.gno.land/users/interact-with-gnokey#run.
 // Parameters:
 //   - address: The std.Address of the member to be added
-//   - roles: Comma-separated string of roles to assign to the member (e.g., "admin,moderator" or "voter")
+//   - roles: Comma-separated roles (e.g., "public-relationships,finance-officer" or "finance-officer")
 func ProposeAddMember(cur realm, address std.Address, roles string) {
 	rs := strings.Split(roles, ",")
 	for i, s := range rs {
@@ -66,9 +66,9 @@ func renderDemo() string {
 	s += "Welcome to Simple DAO! This is a demonstration of basic DAO functionality.\n\n"
 	s += "## ℹ️ How it Works\n\n"
 	s += "1. **Join the DAO** using the " + md.Link("AddMember", txlink.Call("AddMember")) + " function.\n\n"
-	s += "2. **Create a pre-made Proposal** using " + md.Link("ProposeAddMember", txlink.Call("")) + "  function using this parameters:\n\n"
+	s += "2. **Create a pre-made Proposal** using " + md.Link("ProposeAddMember", txlink.Call("ProposeAddMember")) + "  function using this parameters:\n\n"
 	s += "- `address`: The std.Address of the member to add\n"
-	s += "- `roles`: Comma-separated roles (e.g., \"admin,moderator\" or \"voter\")\n\n"
+	s += "- `roles`: Comma-separated roles (e.g., \"public-relationships,finance-officer\" or \"finance-officer\")\n\n"
 	s += "3. " + md.Link("Vote", txlink.Call("Vote")) + " on proposals using their ID.\n\n"
 	s += "## 📋 Available Actions\n\n"
 	s += "### Member Management\n"
