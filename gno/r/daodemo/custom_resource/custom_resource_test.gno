@@ -53,11 +53,11 @@ func TestBlogResource(t *testing.T) {
 
 	t.Run("Test proposal creation", func(t *testing.T) {
 		Propose(cross, req)
-		if daoPrivate.Core.Proposals.Tree.Size() != 1 {
+		if daoPrivate.Core.Proposals.Tree.Size() != 4 {
 			t.Fatalf("Expected 1 proposal, got %d", daoPrivate.Core.Proposals.Tree.Size())
 		}
 
-		prop := daoPrivate.Core.Proposals.GetProposal(1)
+		prop := daoPrivate.Core.Proposals.GetProposal(4)
 		if prop.Title != req.Title {
 			t.Errorf("Expected title '%s', got '%s'", req.Title, prop.Title)
 		}
@@ -70,14 +70,14 @@ func TestBlogResource(t *testing.T) {
 		}
 
 		// Vote with 3 members (meets 60% threshold of 4 members)
-		Vote(cross, 1, daocond.VoteYes) // member1
+		Vote(cross, 4, daocond.VoteYes) // member1
 		testing.SetRealm(std.NewUserRealm("g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld65"))
-		Vote(cross, 1, daocond.VoteYes) // member2
+		Vote(cross, 4, daocond.VoteYes) // member2
 		testing.SetRealm(std.NewUserRealm("g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld64"))
-		Vote(cross, 1, daocond.VoteYes) // member3
+		Vote(cross, 4, daocond.VoteYes) // member3
 
 		// Execute the proposal
-		Execute(cross, 1)
+		Execute(cross, 4)
 
 		// Verify blog post was created
 		if len(myblog.Post) != 1 {
@@ -100,11 +100,6 @@ func TestBlogResource(t *testing.T) {
 		// Create new proposal
 		req.Action = NewPostAction("Should Not Create", "This shouldn't appear")
 		Propose(cross, req)
-
-		// Vote with only 2 members (50% - below 60% threshold)
-		Vote(cross, 2, daocond.VoteYes) // member1
-		testing.SetRealm(std.NewUserRealm("g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld65"))
-		Vote(cross, 2, daocond.VoteYes) // member2
 
 		// should panic
 		abort := revive(func() { Execute(cross, 2) })

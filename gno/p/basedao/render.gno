@@ -48,7 +48,7 @@ func (d *DAOPrivate) MuxHomePage(res *mux.ResponseWriter, req *mux.Request) {
 }
 
 func (d *DAOPrivate) MuxMembersPage(res *mux.ResponseWriter, req *mux.Request) {
-	res.Write(d.MembersPageView())
+	res.Write(d.MembersPageView(req.RawPath))
 }
 
 func (d *DAOPrivate) MuxProposalsPage(res *mux.ResponseWriter, req *mux.Request) {

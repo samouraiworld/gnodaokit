@@ -24,7 +24,7 @@ func init() {
 		{Address: "g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld69", Roles: []string{}},
 	}
 	memberStore := basedao.NewMembersStore(initialRoles, initialMembers)
-	membersMajority := daocond.MembersThreshold(0.6, memberStore.IsMember, memberStore.MembersCount)
+	membersMajority := daocond.MembersThreshold(0.1, memberStore.IsMember, memberStore.MembersCount)
 
 	DAO, daoPrivate = basedao.New(&basedao.Config{
 		Name:             "Demo DAOKIT DAO",
@@ -44,6 +44,9 @@ func init() {
 	}
 	// Add it to our DAO
 	daoPrivate.Core.Resources.Set(&resource)
+
+	// Add some demo blog post proposals to showcase custom resource
+	initBlogProposals()
 }
 
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
@@ -59,5 +62,13 @@ func Propose(cur realm, req daokit.ProposalRequest) {
 }
 
 func Render(path string) string {
-	return daoPrivate.Render(path)
+	s := ""
+	if path == "" {
+		s += renderDemo()
+	}
+	s += " \n\n--- \n\n "
+	s += daoPrivate.Render(path)
+	s += "# My blog\n"
+	s += myblog.Render()
+	return s
 }

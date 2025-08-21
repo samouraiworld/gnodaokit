@@ -173,6 +173,9 @@ func (m *MembersStore) AddMember(member string, roles []string) {
 			panic("role: " + role + " does not exist")
 		}
 		membersRoles.Set(role, struct{}{})
+		roleDataRaw, _ := m.Roles.Get(role)
+		roleData := roleDataRaw.(*Role)
+		roleData.Members.Set(member, struct{}{})
 	}
 	m.Members.Set(member, membersRoles)
 
@@ -204,7 +207,7 @@ func (m *MembersStore) RemoveMember(member string) {
 		if !ok {
 			panic("a value of memberstore.roles is not a Role, should not happen")
 		}
-		role.Members.Remove(role.Name)
+		role.Members.Remove(member)
 		return false
 	})
 	m.Members.Remove(member)
