@@ -177,8 +177,8 @@ Create a `MembersStore` structure to initialize the DAO with predefined roles an
 
 ```go
 roles := []basedao.RoleInfo{
-	{Name: "admin", Description: "Administrators"},
-	{Name: "finance", Description: "Handles treasury"},
+	{Name: "admin", Description: "Administrators", Color: "#329175"},
+	{Name: "finance", Description: "Handles treasury", Color: "#F3D3BC"},
 }
 
 members := []basedao.Member{
@@ -194,7 +194,7 @@ store := basedao.NewMembersStore(roles, members)
 store := basedao.NewMembersStore(nil, nil)
 
 // Add a role and assign it
-store.AddRole(basedao.RoleInfo{Name: "moderator", Description: "Can moderate posts"})
+store.AddRole(basedao.RoleInfo{Name: "moderator", Description: "Can moderate posts", Color: "#329175"})
 store.AddMember("g1alice...", []string{"moderator"})
 
 // Update role assignment
@@ -263,9 +263,9 @@ var (
 func init() {
 	// Define initial roles in the DAO
 	initialRoles := []basedao.RoleInfo{
-		{Name: "admin", Description: "Admin is the superuser"},
-		{Name: "public-relationships", Description: "Responsible of communication with the public"},
-		{Name: "finance-officer", Description: "Responsible of funds management"},
+		{Name: "admin", Description: "Admin is the superuser", Color: "#329175"},
+		{Name: "public-relationships", Description: "Responsible of communication with the public", Color: "#21577A"},
+		{Name: "finance-officer", Description: "Responsible of funds management", Color: "#F3D3BC"},
 	}
 
 	// Define initial members and their roles

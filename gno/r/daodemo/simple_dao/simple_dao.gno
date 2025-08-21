@@ -28,9 +28,9 @@ var (
 func init() {
 	// Define initial roles in the DAO
 	initialRoles := []basedao.RoleInfo{
-		{Name: "admin", Description: "Admin is the superuser"},
-		{Name: "public-relationships", Description: "Responsible of communication with the public"},
-		{Name: "finance-officer", Description: "Responsible of funds management"},
+		{Name: "admin", Description: "Admin is the superuser", Color: "#329175"},
+		{Name: "public-relationships", Description: "Responsible of communication with the public", Color: "#21577A"},
+		{Name: "finance-officer", Description: "Responsible of funds management", Color: "#F3D3BC"},
 	}
 
 	// Define initial members and their roles
