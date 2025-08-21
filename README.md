@@ -319,6 +319,19 @@ func Render(path string) string {
 }
 ```
 
+**Note**: An interactive demo of this DAO is available at `/r/samcrew/daodemo/simple_dao:demo`. You are required to register yourself in the DAO before registering your proposal using the `AddMember` function.
+As well, every `daodemo` directory contain a `tx_script` directory containing **scripts** files, executable by doing:
+```bash
+gnokey maketx run \
+  --gas-fee 1gnot \
+  --gas-wanted 10000 \
+  --broadcast \
+  -chainid "dev" -remote "tcp://127.0.0.1:26657" \ # For local development
+  mykeyname \
+  ./tx_script/script.gno
+```
+For additional details, refer to the [official Gnoland documentation](https://docs.gno.land/users/interact-with-gnokey#run).
+
 # 5. Create Custom Resources
 
 To add new behavior to your DAO — or to enable others to integrate your package into their own DAOs — define custom resources by implementing:
