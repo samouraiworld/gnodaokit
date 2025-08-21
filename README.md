@@ -1,5 +1,4 @@
 # DAOkit: A Framework for Building Decentralized Autonomous Organizations (DAOs) in Gnolang
-✨ *Introducing flexible conditional proposal execution*
 
 **Note for Contributors**: Currently, building and testing require using the Makefile. Direct use of `gnodev` won't work. 
 
