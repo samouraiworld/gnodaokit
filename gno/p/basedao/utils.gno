@@ -1,6 +1,8 @@
 package basedao
 
 import (
+	"time"
+
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/moul/md"
 )
@@ -25,4 +27,20 @@ func TruncateMiddle(s string, max ...int) string {
 // RenderAddressLink formats an address as a clickable link in Markdown.
 func RenderAddressLink(addr string) string {
 	return md.Link(TruncateMiddle(addr), ufmt.Sprintf("/u/%s", addr))
+}
+
+// FormatDateTimeWithUTCOffset formats a time.Time object as a string with UTC offset.
+func FormatDateTimeWithUTCOffset(t time.Time) string {
+	_, offsetSeconds := t.Zone()
+	hours := offsetSeconds / 3600
+	minutes := (offsetSeconds % 3600) / 60
+	sign := "+"
+	if hours < 0 || minutes < 0 {
+		sign = "-"
+		hours = -hours
+		minutes = -minutes
+	}
+	return ufmt.Sprintf("%s UTC%s%02d:%02d",
+		t.Format("2006-01-02 15:04:05"),
+		sign, hours, minutes)
 }

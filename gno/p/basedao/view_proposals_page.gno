@@ -14,15 +14,16 @@ func (d *DAOPrivate) ProposalsPageView(path string) string {
 	proposalsCount := d.Core.ProposalsCount()
 
 	const pageSize = 10
-	pager := pager.NewPager(d.Core.Proposals.Tree, pageSize, false)
+	pager := pager.NewPager(d.Core.Proposals.Tree, pageSize, true)
 	page := pager.MustGetPageByPath(path)
 
 	s += ufmt.Sprintf("## Proposals 🗳️ (%d)\n\n", proposalsCount)
-	s += ufmt.Sprintf("| **ID** | **Title** | **Resource** | **Proposer** | **CreatedAt** | **Status** |\n")
-	s += ufmt.Sprintf("|--------|-----------|--------------|--------------|---------------|------------|\n")
 
 	if proposalsCount == 0 {
 		s += ufmt.Sprintf("\t⚠️ There are no running proposals at the moment\n\n")
+	} else {
+		s += ufmt.Sprintf("| **ID** | **Title** | **Resource** | **Proposer** | **CreatedAt** | **Status** |\n")
+		s += ufmt.Sprintf("|--------|-----------|--------------|--------------|---------------|------------|\n")
 	}
 
 	for _, item := range page.Items {
@@ -42,7 +43,7 @@ func (d *DAOPrivate) ProposalsPageView(path string) string {
 			proposal.Title, linkPath, "proposal", uint64(id),
 			resource.DisplayName,
 			RenderAddressLink(proposal.ProposerID),
-			proposal.CreatedAt.Format("2006-01-02 15:04:05"),
+			FormatDateTimeWithUTCOffset(proposal.CreatedAt),
 			proposal.Status.String())
 	}
 
