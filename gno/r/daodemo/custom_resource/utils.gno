@@ -71,7 +71,6 @@ func renderDemo() string {
 	s += "## 📋 Available Actions\n\n"
 	s += "### Member Management\n"
 	s += "- " + md.Link("🔗 Add Yourself as Member", txlink.Call("AddMember")) + " - Join the DAO to participate in governance\n"
-	s += "- " + md.Link("🔗 Propose Add Member", txlink.Call("ProposeAddMember")) + " - Create a proposal to add a new member with specific roles\n\n"
 	s += "### Custom Resource Actions\n"
 	s += "- " + md.Link("🔗 Propose New Blog Post", txlink.Call("ProposeNewPost")) + " - Create a proposal to publish a new blog post (demonstrates custom resource)\n\n"
 	s += "### Other Demos\n"
