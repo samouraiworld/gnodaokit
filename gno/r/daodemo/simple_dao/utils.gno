@@ -19,9 +19,8 @@ func initProposals(nb int) {
 	var addr string
 	for i := 1; i <= nb; i++ {
 		addr = ufmt.Sprintf("g1memberxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%02d", i)
-		truncatedAddr := ufmt.Sprintf("g1member...%02d", i)
 		req := daokit.ProposalRequest{
-			Title: ufmt.Sprintf("Add member %s with no role", truncatedAddr),
+			Title: ufmt.Sprintf("Add member %s with no role", basedao.TruncateMiddle(addr)),
 			Action: basedao.NewAddMemberAction(&basedao.ActionAddMember{
 				Address: std.Address(addr),
 				Roles:   []string{},
