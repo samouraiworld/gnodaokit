@@ -50,6 +50,10 @@ func (d *DAOPrivate) ProposalDetailView(idu uint64) string {
 	} else {
 		s += ufmt.Sprintf("## Status - Closed 🔴\n\n")
 	}
+
+	signal := proposal.Condition.Signal(proposal.Ballot)
+	s += ufmt.Sprintf("%f", signal) + "\n"
+
 	s += ufmt.Sprintf("> proposed by %s 👤\n\n", proposal.ProposerID)
 	s += ufmt.Sprintf("\n--------------------------------\n")
 	s += ufmt.Sprintf("## Votes 🗳️\n\n%s\n\n", proposal.Condition.RenderWithVotes(proposal.Ballot))
