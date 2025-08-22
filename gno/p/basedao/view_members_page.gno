@@ -12,17 +12,15 @@ import (
 func (d *DAOPrivate) MembersPageView(path string) string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
-	s := ""
 	membersCount := d.Members.MembersCount()
-
-	const pageSize = 10
-	pager := pager.NewPager(d.Members.Members, pageSize, false)
-	page := pager.MustGetPageByPath(path)
-
-	// pieSlices := make([]piechart.PieSlice, 0, len(d.Members.GetRoles()))
-	pieSlices := []piechart.PieSlice{}
-
+	membersNoRoleCount := d.Members.CountMembersWithNoRole()
+	rolesCount := len(d.Members.GetRoles())
+	if membersNoRoleCount > 0 {
+		rolesCount++
+	}
+	pieSlices := make([]piechart.PieSlice, 0, rolesCount)
 	roles := d.Members.GetRoles()
+
 	for _, role := range roles {
 		count := d.Members.CountMembersWithRole(role)
 		roleInfo := d.Members.RoleInfo(role)
@@ -34,12 +32,19 @@ func (d *DAOPrivate) MembersPageView(path string) string {
 
 	}
 
-	pieSlices = append(pieSlices, piechart.PieSlice{
-		Value: float64(d.Members.CountMembersWithNoRole()),
-		Color: "#CDCDCD",
-		Label: "No role assigned",
-	})
+	if membersNoRoleCount > 0 {
+		pieSlices = append(pieSlices, piechart.PieSlice{
+			Value: float64(membersNoRoleCount),
+			Color: "#CDCDCD",
+			Label: "No role assigned",
+		})
+	}
 
+	const pageSize = 10
+	pager := pager.NewPager(d.Members.Members, pageSize, false)
+	page := pager.MustGetPageByPath(path)
+
+	s := ""
 	s += ufmt.Sprintf("## Members 👥 (%d)\n\n", membersCount)
 	s += ufmt.Sprintf("| **Name** | **Address 🔗** | **Roles 🎭** | **Profile** |\n")
 	s += ufmt.Sprintf("|----------|----------------|--------------|-------------|\n")
