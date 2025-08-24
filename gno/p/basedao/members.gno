@@ -71,6 +71,7 @@ func (m *MembersStore) RoleInfo(role string) RoleInfo {
 	return RoleInfo{
 		Name:        roleData.Name,
 		Description: roleData.Description,
+		Color:       roleData.Color,
 	}
 }
 
