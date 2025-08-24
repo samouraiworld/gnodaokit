@@ -17,6 +17,7 @@ const (
 	PROPOSAL_HISTORY_PATH = "history"
 	MEMBER_DETAIL_PATH    = "member/{address}"
 	PROPOSAL_DETAIL_PATH  = "proposal/{id}"
+	ROLE_DETAIL_PATH      = "role/{name}"
 	FALLBACK_DISPLAY_NAME = "Anon"
 )
 
@@ -35,6 +36,7 @@ func (d *DAOPrivate) InitDefaultRendering() {
 	d.RenderRouter.HandleFunc(PROPOSAL_HISTORY_PATH, d.MuxProposalHistoryPage)
 	d.RenderRouter.HandleFunc(MEMBER_DETAIL_PATH, d.MuxMemberDetailPage)
 	d.RenderRouter.HandleFunc(PROPOSAL_DETAIL_PATH, d.MuxProposalDetailPage)
+	d.RenderRouter.HandleFunc(ROLE_DETAIL_PATH, d.MuxRoleDetailPage)
 }
 
 func (d *DAOPrivate) Render(path string) string {
@@ -73,6 +75,10 @@ func (d *DAOPrivate) MuxProposalDetailPage(res *mux.ResponseWriter, req *mux.Req
 		panic(err)
 	}
 	res.Write(d.ProposalDetailPageView(id))
+}
+
+func (d *DAOPrivate) MuxRoleDetailPage(res *mux.ResponseWriter, req *mux.Request) {
+	res.Write(d.RoleDetailPageView(req.RawPath, req.GetVar("name")))
 }
 
 // UTILITIES

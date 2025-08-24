@@ -22,11 +22,12 @@ func (d *DAOPrivate) ConfigHeaderView() string {
 func (d *DAOPrivate) ConfigRolesView() string {
 	roles := d.Members.GetRoles()
 	s := ""
-	s += ufmt.Sprintf("## Roles 🏷️\n\n")
+	s += ufmt.Sprintf("## Roles 🎭\n\n")
+	s += ufmt.Sprintf("| **Color** | **Name** | **Description** |\n")
+	s += ufmt.Sprintf("|-----------|----------|-----------------|\n")
 	for _, role := range roles {
-		s += ufmt.Sprintf("- %s\n\n", role)
 		info := d.Members.RoleInfo(role)
-		s += ufmt.Sprintf("  %s\n\n", info.Description)
+		s += ufmt.Sprintf("| %s %s | %s | %s |\n", info.Color, d.RoleColoredChip(role), d.RenderRoleLink(role), info.Description)
 	}
 	s += ufmt.Sprintf("\n--------------------------------\n")
 	return s

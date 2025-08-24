@@ -33,9 +33,9 @@ func (d *DAOPrivate) MemberDetailView(address string) string {
 	if pp != "" {
 		s += ufmt.Sprintf("![Avatar](%s)\n\n", pp)
 	}
-	s += ufmt.Sprintf("## Roles 🏷️\n\n")
+	s += ufmt.Sprintf("## Roles 🎭\n\n")
 	for _, role := range roles {
-		s += ufmt.Sprintf("- %s\n\n", role)
+		s += ufmt.Sprintf("- %s\n\n", d.RenderRoleLinkWithChip(role))
 	}
 	s += ufmt.Sprintf("> Learn more about the roles on the [configuration page ⚙️](%s:%s)\n\n", linkPath, CONFIG_PATH)
 	s += ufmt.Sprintf("\n--------------------------------\n")
