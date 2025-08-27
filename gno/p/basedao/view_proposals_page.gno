@@ -38,7 +38,8 @@ func (d *DAOPrivate) ProposalsPageView(path string) string {
 			panic(err)
 		}
 
-		proposal.UpdateStatus()
+		// FIXME: The displayed Status is wrong if I don't use this
+		// proposal.UpdateStatus()
 
 		resource := d.Core.Resources.Get(proposal.Action.Type())
 		s += ufmt.Sprintf("| [%d](%s:%s/%d) | %s | %s | %s | %s |\n",
