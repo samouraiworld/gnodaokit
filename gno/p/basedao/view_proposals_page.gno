@@ -37,6 +37,9 @@ func (d *DAOPrivate) ProposalsPageView(path string) string {
 		if err != nil {
 			panic(err)
 		}
+
+		proposal.UpdateStatus()
+
 		resource := d.Core.Resources.Get(proposal.Action.Type())
 		s += ufmt.Sprintf("| [%d](%s:%s/%d) | %s | %s | %s | %s |\n",
 			uint64(id), linkPath, "proposal", uint64(id),
