@@ -13,18 +13,19 @@ import (
 	"gno.land/p/samcrew/daokit"
 )
 
-const financeOfficer = "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg"
 
 // initProposals creates a number of initial proposals and votes.
-// It divides the proposals into four parts: AddMember, RemoveMember, AssignRole, EditProfile.
+// It divides the proposals into 4 parts: AddMember, RemoveMember, AssignRole, EditProfile.
 // It initializes votes for each proposal type.
 func initProposals(nb int) {
-	q := nb / 4
-	offsets := []int{0, q, 2 * q, 3 * q, nb} // AddMember, Remove, AssignRole, EditProfile
+	const financeOfficer = "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg"
+	const nbTypes = 4
+	proposalsPerType := nb / nbTypes
+	offsets := []int{0, proposalsPerType, 2 * proposalsPerType, 3 * proposalsPerType, nb} // AddMember, Remove, AssignRole, EditProfile
 
 	lastAddr := financeOfficer
 
-	for t, start := range offsets[:4] {
+	for t, start := range offsets[:nbTypes] {
 		end := offsets[t+1]
 		for i := start; i < end; i++ {
 			addr := ufmt.Sprintf("g1memberxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%02d", i)
