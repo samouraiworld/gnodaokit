@@ -15,7 +15,7 @@ var (
 
 func init() {
 	initialRoles := []basedao.RoleInfo{
-		{Name: "Role", Description: "Has a role"},
+		{Name: "Role", Description: "Has a role", Color: "#329175"},
 	}
 	initialMembers := []basedao.Member{
 		{Address: "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh", Roles: []string{}},

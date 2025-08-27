@@ -20,11 +20,13 @@ type Member struct {
 type RoleInfo struct {
 	Name        string
 	Description string
+	Color       string
 }
 
 type Role struct {
 	Name        string
 	Description string
+	Color       string
 	Members     *avl.Tree // string -> struct{}
 }
 
@@ -69,6 +71,7 @@ func (m *MembersStore) RoleInfo(role string) RoleInfo {
 	return RoleInfo{
 		Name:        roleData.Name,
 		Description: roleData.Description,
+		Color:       roleData.Color,
 	}
 }
 
@@ -225,6 +228,7 @@ func (m *MembersStore) AddRole(role RoleInfo) {
 	roleData := &Role{
 		Name:        role.Name,
 		Description: role.Description,
+		Color:       role.Color,
 		Members:     avl.NewTree(),
 	}
 

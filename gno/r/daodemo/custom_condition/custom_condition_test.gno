@@ -10,8 +10,8 @@ import (
 func TestNoRoleCountCond(t *testing.T) {
 	// Setup test members and roles
 	initialRoles := []basedao.RoleInfo{
-		{Name: "Role1", Description: "Test role 1"},
-		{Name: "Role2", Description: "Test role 2"},
+		{Name: "Role1", Description: "Test role 1", Color: "#329175"},
+		{Name: "Role2", Description: "Test role 2", Color: "#21577A"},
 	}
 
 	initialMembers := []basedao.Member{
