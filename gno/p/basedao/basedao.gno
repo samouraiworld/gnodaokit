@@ -90,8 +90,10 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 
 		if conf.SetProfileString != nil {
 			dao.Core.Resources.Set(&daokit.Resource{
-				Handler:   NewEditProfileHandler(conf.SetProfileString, []string{"DisplayName", "Bio", "Avatar"}),
-				Condition: conf.InitialCondition,
+				Handler:     NewEditProfileHandler(conf.SetProfileString, []string{"DisplayName", "Bio", "Avatar"}),
+				Condition:   conf.InitialCondition,
+				DisplayName: "Edit Profile",
+				Description: "This proposal allows you to edit a profile information.",
 			})
 		}
 
