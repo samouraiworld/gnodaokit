@@ -1,14 +1,13 @@
 package basedao
 
 import (
-	"gno.land/p/demo/seqid"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/samcrew/daokit"
+	"gno.land/p/moul/md"
 )
 
-func (d *DAOPrivate) ProposalHistoryPageView() string {
+func (d *DAOPrivate) ProposalHistoryPageView(path string) string {
 	return d.ProposalHistoryHeaderView() +
-		d.ProposalHistoryView()
+		d.ProposalHistoryView(path)
 }
 
 func (d *DAOPrivate) ProposalHistoryHeaderView() string {
@@ -19,26 +18,17 @@ func (d *DAOPrivate) ProposalHistoryHeaderView() string {
 	return s
 }
 
-func (d *DAOPrivate) ProposalHistoryView() string {
+func (d *DAOPrivate) ProposalHistoryView(path string) string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
+	proposals := d.Core.Proposals.GetInactiveProposals()
+
 	s := ""
-	s += ufmt.Sprintf("## Proposals 🗳️\n\n")
-	i := 1
-	d.Core.Proposals.Tree.Iterate("", "", func(key string, value interface{}) bool {
-		proposal, ok := value.(*daokit.Proposal)
-		if !ok {
-			panic("unexpected invalid proposal type")
-		}
-		id, err := seqid.FromString(key)
-		if err != nil {
-			panic(err)
-		}
-		s += ufmt.Sprintf("- **Proposal %d: [%s](%s:%s/%d) - %s**\n\n", uint64(id), proposal.Title, linkPath, "proposal", uint64(id), proposal.Status)
-		i += 1
-		return false
-	})
-	s += ufmt.Sprintf("[Add a new proposal 🗳️](%s$help)\n\n", linkPath)
+	s += ufmt.Sprintf("## Inactive Proposals 🗳️ (%d)\n\n", proposals.Tree.Size())
+	s += d.RenderProposalsTable(path, proposals)
 	s += ufmt.Sprintf("\n--------------------------------\n")
+	s += md.Link("> Go to the active Proposals 📃", ufmt.Sprintf("%s:%s", linkPath, PROPOSALS_PATH)) + "\n\n"
+	s += md.Link("Add a new proposal 🗳️", ufmt.Sprintf("%s$help", linkPath)) + "\n\n"
+
 	return s
 }

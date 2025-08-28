@@ -91,6 +91,38 @@ func (p *ProposalsStore) GetProposal(id uint64) *Proposal {
 	return proposal
 }
 
+func (p *ProposalsStore) GetActiveProposals() *ProposalsStore {
+	activeProposals := NewProposalsStore()
+	p.Tree.Iterate("", "", func(key string, value interface{}) bool {
+		prop, ok := value.(*Proposal)
+		if !ok {
+			panic(errors.New("unexpected invalid proposal type"))
+		}
+		prop.UpdateStatus()
+		if prop.Status == ProposalStatusOpen || prop.Status == ProposalStatusPassed {
+			activeProposals.Tree.Set(key, prop)
+		}
+		return false
+	})
+	return activeProposals
+}
+
+func (p *ProposalsStore) GetInactiveProposals() *ProposalsStore {
+	inactiveProposals := NewProposalsStore()
+	p.Tree.Iterate("", "", func(key string, value interface{}) bool {
+		prop, ok := value.(*Proposal)
+		if !ok {
+			panic(errors.New("unexpected invalid proposal type"))
+		}
+		prop.UpdateStatus()
+		if prop.Status != ProposalStatusOpen && prop.Status != ProposalStatusPassed {
+			inactiveProposals.Tree.Set(key, prop)
+		}
+		return false
+	})
+	return inactiveProposals
+}
+
 func (p *Proposal) UpdateStatus() {
 	conditionsAreMet := p.Condition.Eval(p.Ballot)
 	if p.Status == ProposalStatusOpen && conditionsAreMet {

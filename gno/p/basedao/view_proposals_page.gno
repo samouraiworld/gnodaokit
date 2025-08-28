@@ -1,53 +1,20 @@
 package basedao
 
 import (
-	"gno.land/p/demo/avl/pager"
-	"gno.land/p/demo/seqid"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/samcrew/daokit"
+	"gno.land/p/moul/md"
 )
 
 func (d *DAOPrivate) ProposalsPageView(path string) string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
+	proposals := d.Core.Proposals.GetActiveProposals()
+
 	s := ""
-	proposalsCount := d.Core.ProposalsCount()
-
-	const pageSize = 10
-	pager := pager.NewPager(d.Core.Proposals.Tree, pageSize, true)
-	page := pager.MustGetPageByPath(path)
-
-	s += ufmt.Sprintf("## Proposals 🗳️ (%d)\n\n", proposalsCount)
-
-	if proposalsCount == 0 {
-		s += ufmt.Sprintf("\t⚠️ There are no running proposals at the moment\n\n")
-	} else {
-		s += ufmt.Sprintf("| **ID** | **Resource** | **Proposer** | **CreatedAt** | **Status** |\n")
-		s += ufmt.Sprintf("|--------|--------------|--------------|---------------|------------|\n")
-	}
-
-	for _, item := range page.Items {
-		proposal := item.Value.(*daokit.Proposal)
-		key := item.Key
-
-		if proposal.Status != daokit.ProposalStatusOpen {
-			continue
-		}
-		id, err := seqid.FromString(key)
-		if err != nil {
-			panic(err)
-		}
-		resource := d.Core.Resources.Get(proposal.Action.Type())
-		s += ufmt.Sprintf("| [%d](%s:%s/%d) | %s | %s | %s | %s |\n",
-			uint64(id), linkPath, "proposal", uint64(id),
-			resource.DisplayName,
-			RenderAddressLink(proposal.ProposerID),
-			FormatDateTimeWithUTCOffset(proposal.CreatedAt),
-			proposal.Status.String())
-	}
-
-	s += "\n" + page.Picker(path) + "\n"
-	s += ufmt.Sprintf("> See the [proposal history 📜](%s:%s) for more information\n\n", linkPath, PROPOSAL_HISTORY_PATH)
+	s += ufmt.Sprintf("## Active Proposals 🗳️ (%d)\n\n", proposals.Tree.Size())
+	s += d.RenderProposalsTable(path, proposals)
 	s += ufmt.Sprintf("\n--------------------------------\n")
+	s += md.Link("> Go to the Proposals history 📜", ufmt.Sprintf("%s:%s", linkPath, PROPOSAL_HISTORY_PATH)) + "\n\n"
+	s += md.Link("Add a new proposal 🗳️", ufmt.Sprintf("%s$help", linkPath)) + "\n\n"
 	return s
 }
