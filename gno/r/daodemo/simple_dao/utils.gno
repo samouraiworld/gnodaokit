@@ -9,25 +9,68 @@ import (
 	"gno.land/p/mason/md"
 	"gno.land/p/moul/txlink"
 	"gno.land/p/samcrew/basedao"
+	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
 )
 
-// initProposals creates initial proposals ("Add member").
-// Takes the number of proposals to create and uses the last created address as proposer.
+
+// initProposals creates a number of initial proposals and votes.
+// It divides the proposals into 4 parts: AddMember, RemoveMember, AssignRole, EditProfile.
+// It initializes votes for each proposal type.
 func initProposals(nb int) {
-	var lastAddr string = "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg"
-	var addr string
-	for i := 1; i <= nb; i++ {
-		addr = ufmt.Sprintf("g1memberxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%02d", i)
-		req := daokit.ProposalRequest{
-			Title: ufmt.Sprintf("Add member %s with no role", basedao.TruncateMiddle(addr)),
-			Action: basedao.NewAddMemberAction(&basedao.ActionAddMember{
-				Address: std.Address(addr),
-				Roles:   []string{},
-			}),
+	const financeOfficer = "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg"
+	const nbTypes = 4
+	proposalsPerType := nb / nbTypes
+	offsets := []int{0, proposalsPerType, 2 * proposalsPerType, 3 * proposalsPerType, nb} // AddMember, Remove, AssignRole, EditProfile
+
+	lastAddr := financeOfficer
+
+	for t, start := range offsets[:nbTypes] {
+		end := offsets[t+1]
+		for i := start; i < end; i++ {
+			addr := ufmt.Sprintf("g1memberxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%02d", i)
+			var action daokit.Action
+			var title string
+
+			// CREATE
+			switch t {
+			case 0: // AddMember
+				action = basedao.NewAddMemberAction(&basedao.ActionAddMember{Address: std.Address(addr), Roles: []string{}})
+				title = ufmt.Sprintf("Add member %s with no role", basedao.TruncateMiddle(addr))
+			case 1: // RemoveMember
+				action = basedao.NewRemoveMemberAction(std.Address(addr))
+				title = ufmt.Sprintf("Remove member %s", basedao.TruncateMiddle(addr))
+			case 2: // AssignRole
+				role := "public-relationships"
+				action = basedao.NewAssignRoleAction(&basedao.ActionAssignRole{Address: std.Address(financeOfficer), Role: role})
+				title = ufmt.Sprintf("Assign role %s for %s", role, basedao.TruncateMiddle(addr))
+			case 3: // EditProfile
+				action = basedao.NewEditProfileAction([2]string{"Bio", "Simple DAO to the moon!"})
+				title = "Edit the DAO's profile"
+			}
+			req := daokit.ProposalRequest{
+				Title:       title,
+				Action:      action,
+				Description: "Random description",
+			}
+			id := daoPrivate.Core.Propose(lastAddr, req)
+
+			// VOTE
+			quart := i * 4 / nb
+			switch quart {
+			case 0: // VoteNo
+				daoPrivate.Core.Vote(financeOfficer, id, daocond.VoteNo)
+			case 1: // VoteYes
+				daoPrivate.Core.Vote(financeOfficer, id, daocond.VoteYes)
+			case 2: // VoteAbstain
+				daoPrivate.Core.Vote(financeOfficer, id, daocond.VoteAbstain)
+			case 3: // VoteYes + Execute
+				daoPrivate.Core.Vote(financeOfficer, id, daocond.VoteYes)
+				daoPrivate.Core.Execute(id)
+			}
+
+			lastAddr = addr
 		}
-		daoPrivate.Core.Propose(lastAddr, req)
-		lastAddr = addr
 	}
 }
 

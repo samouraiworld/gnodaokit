@@ -27,7 +27,7 @@ func init() {
 
 	// Define initial members and their roles
 	initialMembers := []basedao.Member{
-		{Address: "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg", Roles: []string{"finance-officer", "public-relationships"}},
+		{Address: "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg", Roles: []string{"finance-officer"}},
 	}
 
 	// create the member store now to be able to use it in the condition
