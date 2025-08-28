@@ -17,9 +17,12 @@ func (d *DAOPrivate) ProposalDetailPageView(idu uint64) string {
 }
 
 func (d *DAOPrivate) ProposalDetailHeaderView() string {
+	pkgPath := d.Realm.PkgPath()
+	linkPath := getLinkPath(pkgPath)
 	name := d.GetProfileString(d.Realm.Address(), "DisplayName", "DAO")
 	s := ""
 	s += ufmt.Sprintf("# %s - Proposal Detail\n\n", name)
+	s += md.Link("> Go to Proposals", linkPath+":"+PROPOSALS_PATH) + "\n"
 	s += ufmt.Sprintf("\n--------------------------------\n")
 	return s
 }

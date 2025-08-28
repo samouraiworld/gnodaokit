@@ -63,7 +63,7 @@ func (c *noRoleCountCond) Render() string {
 // Generates a detailed vote status report
 func (c *noRoleCountCond) RenderWithVotes(ballot daocond.Ballot) string {
 	s := ""
-	s += ufmt.Sprintf("to meet the condition, %d members with no role must vote yes\n\n", c.count)
+	s += ufmt.Sprintf("%d members with no role must vote yes\n\n", c.count)
 	s += ufmt.Sprintf("Yes: %d/%d\n\n", c.totalYes(ballot), c.count)
 	return s
 }

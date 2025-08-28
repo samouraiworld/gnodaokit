@@ -84,7 +84,7 @@ func TestNoRoleCountCond(t *testing.T) {
 
 		// Test render with votes
 		renderedWithVotes := cond.RenderWithVotes(ballot)
-		expected := "to meet the condition, 3 members with no role must vote yes\n\nYes: 1/3\n\n"
+		expected := "3 members with no role must vote yes\n\nYes: 1/3\n\n"
 		if renderedWithVotes != expected {
 			t.Errorf("Expected:\n%s\nGot:\n%s", expected, renderedWithVotes)
 		}

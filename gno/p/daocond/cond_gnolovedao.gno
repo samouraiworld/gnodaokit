@@ -42,12 +42,12 @@ func GnoloveDAOCondThreshold(threshold float64, roles []string, hasRoleFn func(m
 
 // Eval implements Condition.
 func (c *gnolovDaoCondThreshold) Eval(ballot Ballot) bool {
-	return c.yesRatio(ballot) >= c.threshold
+	return c.voteRatio(ballot, VoteYes) >= c.threshold
 }
 
 // Signal implements Condition.
 func (c *gnolovDaoCondThreshold) Signal(ballot Ballot) float64 {
-	return math.Min(c.yesRatio(ballot)/c.threshold, 1)
+	return math.Min(c.voteRatio(ballot, VoteYes)/c.threshold, 1)
 }
 
 // Render implements Condition.
@@ -71,30 +71,32 @@ func (c *gnolovDaoCondThreshold) RenderWithVotes(ballot Ballot) string {
 	s := ""
 	s += ufmt.Sprintf("%g%% of total voting power | %s\n\n", c.threshold*100, strings.Join(rolePowers, " | "))
 	s += ufmt.Sprintf("Threshold needed: %g%% of total voting power\n\n", c.threshold*100)
-	s += ufmt.Sprintf("Yes: %d/%d\n\n", c.yesRatio(ballot), totalPower)
+	s += ufmt.Sprintf("Yes: %d/%d\n\n", c.voteRatio(ballot, VoteYes), totalPower)
+	s += ufmt.Sprintf("No: %d/%d\n\n", c.voteRatio(ballot, VoteNo), totalPower)
+	s += ufmt.Sprintf("Abstain: %d/%d\n\n", c.voteRatio(ballot, VoteAbstain), totalPower)
 	s += ufmt.Sprintf("Voting power needed: %g%% of total voting power\n\n", c.threshold*totalPower)
 	return s
 }
 
 var _ Condition = (*gnolovDaoCondThreshold)(nil)
 
-func (c *gnolovDaoCondThreshold) yesRatio(ballot Ballot) float64 {
-	var totalYes float64
+func (c *gnolovDaoCondThreshold) voteRatio(ballot Ballot, vote Vote) float64 {
+	var total float64
 	votingPowersByTier, totalPower := c.computeVotingPowers()
 	// Case when there are zero T1s
 	if totalPower == 0.0 {
 		return totalPower
 	}
 
-	ballot.Iterate(func(voter string, vote Vote) bool {
-		if vote != VoteYes {
+	ballot.Iterate(func(voter string, v Vote) bool {
+		if v != vote {
 			return false
 		}
 		tier := c.getUserRole(voter)
-		totalYes += votingPowersByTier[tier]
+		total += votingPowersByTier[tier]
 		return false
 	})
-	return totalYes / totalPower
+	return total / totalPower
 }
 
 func (c *gnolovDaoCondThreshold) getUserRole(userID string) string {
