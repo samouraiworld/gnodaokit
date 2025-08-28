@@ -40,7 +40,7 @@ func (c *andCond) Render() string {
 	for _, condition := range c.conditions {
 		renders = append(renders, condition.Render())
 	}
-	return "[" + strings.Join(renders, " AND ") + "]"
+	return strings.Join(renders, " **AND** ")
 }
 
 // RenderWithVotes implements Condition.
@@ -49,7 +49,7 @@ func (c *andCond) RenderWithVotes(ballot Ballot) string {
 	for _, condition := range c.conditions {
 		renders = append(renders, condition.RenderWithVotes(ballot))
 	}
-	return "[" + strings.Join(renders, " AND ") + "]"
+	return "- #### " + strings.Join(renders, "- #### **AND** ")
 }
 
 var _ Condition = (*andCond)(nil)
