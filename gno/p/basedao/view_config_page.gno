@@ -43,7 +43,7 @@ func (d *DAOPrivate) ConfigResourcesView() string {
 		// TODO: add doc to handler and print here
 		s += ufmt.Sprintf("  - **Name:** %s\n", resource.DisplayName)
 		s += ufmt.Sprintf("  - **Description:** %s\n", resource.Description)
-		s += ufmt.Sprintf("  - **Condition:** %s\n\n", resource.Condition.Render())
+		s += ufmt.Sprintf("  - **Condition:** %s\n\n", d.RenderWithRolesLinks(resource.Condition.Render()))
 		i += 1
 		return false
 	})

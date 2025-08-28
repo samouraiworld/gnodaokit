@@ -34,6 +34,15 @@ func RenderAddressLink(addr string) string {
 	return md.Link(TruncateMiddle(addr), ufmt.Sprintf("/u/%s", addr))
 }
 
+// RenderWithRolesLinks replaces all occurrences of roles in the given string with clickable links in Markdown.
+func (d *DAOPrivate) RenderWithRolesLinks(s string) string {
+	roles := d.Members.GetRoles()
+	for _, role := range roles {
+		s = strings.ReplaceAll(s, role, d.RenderRoleLink(role))
+	}
+	return s
+}
+
 // RenderRoleLink formats a role as a clickable link in Markdown.
 func (d *DAOPrivate) RenderRoleLink(role string) string {
 	pkgPath := d.Realm.PkgPath()
