@@ -153,7 +153,7 @@ func (m *MembersStore) CountMembersWithRole(role string) uint32 {
 	return uint32(len(m.GetMembersWithRole(role)))
 }
 
-func (m *MembersStore) GetMembersWithNoRole() []string {
+func (m *MembersStore) GetMembersWithoutRole() []string {
 	var res []string
 	m.Members.Iterate("", "", func(key string, value interface{}) bool {
 		roles := m.GetMemberRoles(key)
