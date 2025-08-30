@@ -7,7 +7,7 @@ import (
 
 func (d *DAOPrivate) MembersPageView(path string) string {
 	memberCount := d.Members.MembersCount()
-	membersNoRoleCount := d.Members.CountMembersWithNoRole()
+	membersNoRoleCount := d.Members.CountMembersWithoutRole()
 	rolesCount := len(d.Members.GetRoles())
 	if membersNoRoleCount > 0 {
 		rolesCount++
