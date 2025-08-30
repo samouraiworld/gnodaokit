@@ -1,53 +1,37 @@
 package basedao
 
 import (
-	"gno.land/p/demo/avl/pager"
-	"gno.land/p/demo/seqid"
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/moul/md"
 	"gno.land/p/samcrew/daokit"
 )
 
 func (d *DAOPrivate) ProposalsPageView(path string) string {
+	return d.ProposalsHeaderView() +
+		d.ProposalsView(path)
+}
+
+func (d *DAOPrivate) ProposalsHeaderView() string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
+	name := d.GetProfileString(d.Realm.Address(), "DisplayName", "DAO")
 	s := ""
-	proposalsCount := d.Core.ProposalsCount()
+	s += ufmt.Sprintf("# %s - Proposals\n\n", name)
+	s += md.Link("> Go to the Proposal history 📜", ufmt.Sprintf("%s:%s", linkPath, PROPOSAL_HISTORY_PATH)) + "\n\n"
+	s += md.Link("Add a new proposal 🗳️", ufmt.Sprintf("%s$help", linkPath)) + "\n\n"
+	s += ufmt.Sprintf("\n--------------------------------\n")
+	return s
+}
 
-	const pageSize = 10
-	pager := pager.NewPager(d.Core.Proposals.Tree, pageSize, true)
-	page := pager.MustGetPageByPath(path)
-
-	s += ufmt.Sprintf("## Proposals 🗳️ (%d)\n\n", proposalsCount)
-
-	if proposalsCount == 0 {
-		s += ufmt.Sprintf("\t⚠️ There are no running proposals at the moment\n\n")
-	} else {
-		s += ufmt.Sprintf("| **ID** | **Resource** | **Proposer** | **CreatedAt** | **Status** |\n")
-		s += ufmt.Sprintf("|--------|--------------|--------------|---------------|------------|\n")
-	}
-
-	for _, item := range page.Items {
-		proposal := item.Value.(*daokit.Proposal)
-		key := item.Key
-
-		if proposal.Status != daokit.ProposalStatusOpen {
-			continue
-		}
-		id, err := seqid.FromString(key)
-		if err != nil {
-			panic(err)
-		}
-		resource := d.Core.Resources.Get(proposal.Action.Type())
-		s += ufmt.Sprintf("| [%d](%s:%s/%d) | %s | %s | %s | %s |\n",
-			uint64(id), linkPath, "proposal", uint64(id),
-			resource.DisplayName,
-			RenderAddressLink(proposal.ProposerID),
-			FormatDateTimeWithUTCOffset(proposal.CreatedAt),
-			proposal.Status.String())
-	}
-
-	s += "\n" + page.Picker(path) + "\n"
-	s += ufmt.Sprintf("> See the [proposal history 📜](%s:%s) for more information\n\n", linkPath, PROPOSAL_HISTORY_PATH)
+func (d *DAOPrivate) ProposalsView(path string) string {
+	activeProposals := d.Core.Proposals.GetProposals(
+		func(p daokit.Proposal) bool {
+			return p.Status == daokit.ProposalStatusOpen || p.Status == daokit.ProposalStatusPassed
+		},
+	)
+	s := ""
+	s += ufmt.Sprintf("## Active Proposals 🗳️ (%d)\n\n", activeProposals.Tree.Size())
+	s += d.RenderProposalsTable(path, activeProposals)
 	s += ufmt.Sprintf("\n--------------------------------\n")
 	return s
 }
