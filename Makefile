@@ -7,7 +7,7 @@ dev: gnobuild/contribs/gnodev/build/gnodev
 gnobuild: .gnoversion
 	rm -fr gnobuild
 	mkdir -p gnobuild
-	git clone https://github.com/n0izn0iz/gno.git gnobuild --branch pkgloadlint
+	git clone https://github.com/n0izn0iz/gno.git gnobuild
 	cd gnobuild && git checkout $(shell $(CAT) .gnoversion)
 
 gnobuild/gnovm/build/gno: gnobuild
