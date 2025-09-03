@@ -165,8 +165,8 @@ func (m *MembersStore) GetMembersWithoutRole() []string {
 	return res
 }
 
-func (m *MembersStore) CountMembersWithNoRole() uint32 {
-	return uint32(len(m.GetMembersWithNoRole()))
+func (m *MembersStore) CountMembersWithoutRole() uint32 {
+	return uint32(len(m.GetMembersWithoutRole()))
 }
 
 func (m *MembersStore) setRoles(roles []RoleInfo) {
