@@ -37,7 +37,7 @@ func (d *DAOPrivate) ProposalDetailView(idu uint64) string {
 	resource := d.Core.Resources.Get(proposal.Action.Type())
 	s += ufmt.Sprintf("  - **Name:** %s\n", resource.DisplayName)
 	s += ufmt.Sprintf("  - **Description:** %s\n", resource.Description)
-	s += ufmt.Sprintf("  - **Condition:** %s\n\n", resource.Condition.Render())
+	s += ufmt.Sprintf("  - **Condition:** %s\n\n", d.RenderWithRolesLinks(resource.Condition.Render()))
 	s += ("---\n\n")
 	s += proposal.Action.String() + "\n\n"
 	s += ("---\n\n")
@@ -58,7 +58,7 @@ func (d *DAOPrivate) ProposalDetailView(idu uint64) string {
 	s += ufmt.Sprintf("%f", signal) + "\n"
 	s += ufmt.Sprintf("> proposed by %s 👤\n\n", proposal.ProposerID)
 	s += ufmt.Sprintf("\n--------------------------------\n")
-	s += ufmt.Sprintf("## Votes 🗳️\n\n%s\n\n", proposal.Condition.RenderWithVotes(proposal.Ballot))
+	s += ufmt.Sprintf("## Votes 🗳️\n\n%s\n\n", d.RenderWithRolesLinks(proposal.Condition.RenderWithVotes(proposal.Ballot)))
 	s += ufmt.Sprintf("\n--------------------------------\n")
 	return s
 }
