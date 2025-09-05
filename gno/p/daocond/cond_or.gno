@@ -41,7 +41,7 @@ func (c *orCond) Render() string {
 	for _, condition := range c.conditions {
 		renders = append(renders, condition.Render())
 	}
-	return "[" + strings.Join(renders, " OR ") + "]"
+	return "**[** " + strings.Join(renders, " **OR** ") + " **]**"
 }
 
 // RenderWithVotes implements Condition.
@@ -50,7 +50,7 @@ func (c *orCond) RenderWithVotes(ballot Ballot) string {
 	for _, condition := range c.conditions {
 		renders = append(renders, condition.RenderWithVotes(ballot))
 	}
-	return "[" + strings.Join(renders, " OR ") + "]"
+	return "**[** " + strings.Join(renders, " **OR** ") + " **]**"
 }
 
 var _ Condition = (*orCond)(nil)
