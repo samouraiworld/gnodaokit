@@ -62,7 +62,7 @@ func (d *DAOPrivate) MuxConfigPage(res *mux.ResponseWriter, req *mux.Request) {
 }
 
 func (d *DAOPrivate) MuxProposalHistoryPage(res *mux.ResponseWriter, req *mux.Request) {
-	res.Write(d.ProposalHistoryPageView())
+	res.Write(d.ProposalHistoryPageView(req.RawPath))
 }
 
 func (d *DAOPrivate) MuxMemberDetailPage(res *mux.ResponseWriter, req *mux.Request) {

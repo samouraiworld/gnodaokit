@@ -7,9 +7,11 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/avl/pager"
+	"gno.land/p/demo/seqid"
 	"gno.land/p/demo/svg"
 	"gno.land/p/demo/ufmt"
 	"gno.land/p/moul/md"
+	"gno.land/p/samcrew/daokit"
 )
 
 // TruncateMiddle truncates a string to a maximum length, adding "..." in the middle if it exceeds the limit.
@@ -147,6 +149,42 @@ func (d *DAOPrivate) RenderMembersTable(path string, members *avl.Tree) string {
 			RenderAddressLink(item.Key),
 			rolesStr,
 			linkPath, "member", item.Key)
+	}
+
+	s += "\n" + page.Picker(path) + "\n"
+	return s
+}
+
+func (d *DAOPrivate) RenderProposalsTable(path string, proposals *daokit.ProposalsStore) string {
+	pkgPath := d.Realm.PkgPath()
+	linkPath := getLinkPath(pkgPath)
+	proposalsCount := proposals.Tree.Size()
+	const pageSize = 10
+	pager := pager.NewPager(proposals.Tree, pageSize, true)
+	page := pager.MustGetPageByPath(path)
+
+	s := ""
+	if proposalsCount == 0 {
+		s += ufmt.Sprintf("\t⚠️ There are no proposals to show\n\n")
+	} else {
+		s += ufmt.Sprintf("| **ID** | **Resource** | **Proposer** | **CreatedAt** | **Status** |\n")
+		s += ufmt.Sprintf("|--------|--------------|--------------|---------------|------------|\n")
+	}
+
+	for _, item := range page.Items {
+		proposal := item.Value.(*daokit.Proposal)
+		key := item.Key
+		id, err := seqid.FromString(key)
+		if err != nil {
+			panic(err)
+		}
+		resource := d.Core.Resources.Get(proposal.Action.Type())
+		s += ufmt.Sprintf("| [%d](%s:%s/%d) | %s | %s | %s | %s |\n",
+			uint64(id), linkPath, "proposal", uint64(id),
+			resource.DisplayName,
+			RenderAddressLink(proposal.ProposerID),
+			FormatDateTimeWithUTCOffset(proposal.CreatedAt),
+			proposal.Status.String())
 	}
 
 	s += "\n" + page.Picker(path) + "\n"
