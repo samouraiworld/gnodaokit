@@ -23,7 +23,6 @@ gno-mod-tidy:
 
 # we need this since gnodev cannot be `go install`ed
 gnobuild/${GNOVERSION}/gnodev:
-gnobuild/${GNOVERSION}/gnodev:
 	rm -fr gnobuild/${GNOVERSION}
 	mkdir -p gnobuild/${GNOVERSION}/gno
 	git clone https://github.com/gnolang/gno.git gnobuild/${GNOVERSION}/gno
