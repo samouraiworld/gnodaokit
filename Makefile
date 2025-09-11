@@ -21,7 +21,7 @@ test:
 gno-mod-tidy:
 	find gno -name gno.mod -type f | xargs -I'{}' sh -c 'cd $$(dirname {}); ${GNO} mod tidy' \;
 
-# we need this since gnodev cannot be `go install`ed
+# we need this since gnodev cannot be `go run`ed
 gnobuild/${GNOVERSION}/gnodev:
 	rm -fr gnobuild/${GNOVERSION}
 	mkdir -p gnobuild/${GNOVERSION}/gno
