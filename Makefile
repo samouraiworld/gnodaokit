@@ -1,38 +1,28 @@
-CAT := $(if $(filter $(OS),Windows_NT),type,cat)
+GNOVERSION=78e5264bb4cd3950eaf1795cb9fe6f96da060ecd
+GNO=go run github.com/gnolang/gno/gnovm/cmd/gno@${GNOVERSION}
 
 .PHONY: dev
-dev: gnobuild/contribs/gnodev/build/gnodev
-	./gnobuild/contribs/gnodev/build/gnodev staging $$(find gno -name gnomod.toml -type f -exec dirname {} \;)
+dev: gnobuild/${GNOVERSION}/gnodev
+	gnodev staging $$(find gno -name gnomod.toml -type f -exec dirname {} \;)
 
-gnobuild: .gnoversion
-	rm -fr gnobuild
-	mkdir -p gnobuild
-	git clone https://github.com/n0izn0iz/gno.git gnobuild
-	cd gnobuild && git checkout $(shell $(CAT) .gnoversion)
-
-gnobuild/gnovm/build/gno: gnobuild
-	cd gnobuild/gnovm && make build
-
-gnobuild/contribs/gnodev/build/gnodev: gnobuild
-	cd gnobuild/contribs/gnodev && make build
-
-.PHONY: install-gno
-install-gno: gnobuild
-	cd gnobuild/gno && make install
+gnobuild/${GNOVERSION}/gnodev:
+gnobuild/${GNOVERSION}/gnodev:
+	rm -fr gnobuild/${GNOVERSION}
+	mkdir -p gnobuild/${GNOVERSION}/gno
+	git clone https://github.com/gnolang/gno.git gnobuild/${GNOVERSION}/gno
+	cd gnobuild/${GNOVERSION}/gno && git checkout ${GNOVERSION}
+	cd gnobuild/${GNOVERSION}/gno/contribs/gnodev && make build
+	cp gnobuild/${GNOVERSION}/gno/contribs/gnodev/build/gnodev gnobuild/${GNOVERSION}/gnodev
+	rm -fr gnobuild/${GNOVERSION}/gno
 
 .PHONY: lint
-lint: gnobuild/gnovm/build/gno
-	./gnobuild/gnovm/build/gno lint ./gno/... -v
+lint:
+	${GNO} lint ./gno/... -v
 
 .PHONY: test
-test: gnobuild/gnovm/build/gno
-	./gnobuild/gnovm/build/gno test ./gno/... -v
+test:
+	${GNO} test ./gno/... -v
 
 .PHONY: gno-mod-tidy
-gno-mod-tidy: gnobuild/gnovm/build/gno
-	export gno=$$(pwd)/gnobuild/gnovm/build/gno; \
-	find gno -name gno.mod -type f | xargs -I'{}' sh -c 'cd $$(dirname {}); $$gno mod tidy' \;
-
-.PHONY: clean-gno
-clean-gno:
-	rm -rf gnobuild
+gno-mod-tidy:
+	find gno -name gno.mod -type f | xargs -I'{}' sh -c 'cd $$(dirname {}); ${GNO} mod tidy' \;

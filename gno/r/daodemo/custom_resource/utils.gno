@@ -3,9 +3,9 @@ package custom_resource
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
 	"gno.land/p/mason/md"
 	"gno.land/p/moul/txlink"
+	"gno.land/p/nt/ufmt"
 	"gno.land/p/samcrew/daokit"
 )
 
