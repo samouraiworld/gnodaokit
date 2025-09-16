@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	DAO        daokit.DAO          // External interface for DAO interaction
+	DAO        daokit.CrossingDAO  // External interface for DAO interaction
 	daoPrivate *basedao.DAOPrivate // Full access to internal DAO state
 )
 
@@ -41,7 +41,8 @@ func init() {
 	adminCond := daocond.And(membersMajority, financeOfficer)
 
 	// Initialize DAO with configuration
-	DAO, daoPrivate = basedao.New(&basedao.Config{
+	var dao daokit.DAO
+	dao, daoPrivate = basedao.New(&basedao.Config{
 		Name:             "Demo DAOKIT DAO",
 		Description:      "This is a demo DAO built with DAOKIT",
 		Members:          memberStore,
@@ -49,25 +50,26 @@ func init() {
 		GetProfileString: profile.GetStringField,
 		SetProfileString: profile.SetStringField,
 	})
+	DAO = &crossingDAOWrapper{dao: dao}
 
 	initProposals(25)
 }
 
 // Vote allows DAO members to cast their vote on a specific proposal
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
-	DAO.Vote(proposalID, vote)
+	DAO.Vote(cur, proposalID, vote)
 }
 
 // Execute triggers the implementation of a proposal's actions
 func Execute(cur realm, proposalID uint64) {
-	DAO.Execute(proposalID)
+	DAO.Execute(cur, proposalID)
 }
 
 // Execute triggers the implementation of a proposal's actions
 // To execute this function, you must use a MsgRun (maketx run)
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
-	DAO.Propose(req)
+	DAO.Propose(cur, req)
 }
 
 // Render generates a UI representation of the DAO's state
@@ -80,4 +82,23 @@ func Render(path string) string {
 	s += " \n\n--- \n\n "
 	s += daoPrivate.Render(path)
 	return s
+}
+
+type crossingDAOWrapper struct {
+	dao daokit.DAO
+}
+
+// Execute implements CrossingDAO.
+func (c *crossingDAOWrapper) Execute(cur realm, id uint64) {
+	c.dao.Execute(id)
+}
+
+// Propose implements CrossingDAO.
+func (c *crossingDAOWrapper) Propose(cur realm, req daokit.ProposalRequest) uint64 {
+	return c.dao.Propose(req)
+}
+
+// Vote implements CrossingDAO.
+func (c *crossingDAOWrapper) Vote(cur realm, id uint64, vote daocond.Vote) {
+	c.dao.Vote(id, vote)
 }

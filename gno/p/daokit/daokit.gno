@@ -12,10 +12,23 @@ type DAO interface {
 	Vote(id uint64, vote daocond.Vote)
 }
 
+type CrossingDAO interface {
+	Propose(cur realm, req ProposalRequest) uint64
+	Execute(cur realm, id uint64)
+	Vote(cur realm, id uint64, vote daocond.Vote)
+}
+
 func InstantExecute(d DAO, req ProposalRequest) uint64 {
 	id := d.Propose(req)
 	d.Vote(id, daocond.VoteYes)
 	d.Execute(id)
+	return id
+}
+
+func InstantExecuteCrossing(d CrossingDAO, req ProposalRequest) uint64 {
+	id := d.Propose(cross, req)
+	d.Vote(cross, id, daocond.VoteYes)
+	d.Execute(cross, id)
 	return id
 }
 

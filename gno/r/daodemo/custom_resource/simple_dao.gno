@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	DAO        daokit.DAO
+	DAO        daokit.CrossingDAO
 	daoPrivate *basedao.DAOPrivate
 	myblog     Blog
 )
@@ -26,7 +26,8 @@ func init() {
 	memberStore := basedao.NewMembersStore(initialRoles, initialMembers)
 	membersMajority := daocond.MembersThreshold(0.1, memberStore.IsMember, memberStore.MembersCount)
 
-	DAO, daoPrivate = basedao.New(&basedao.Config{
+	var dao daokit.DAO
+	dao, daoPrivate = basedao.New(&basedao.Config{
 		Name:             "Demo DAOKIT DAO",
 		Description:      "This is a demo DAO built with DAOKIT",
 		Members:          memberStore,
@@ -34,6 +35,7 @@ func init() {
 		GetProfileString: profile.GetStringField,
 		SetProfileString: profile.SetStringField,
 	})
+	DAO = &crossingDAOWrapper{dao: dao}
 
 	// Create a new custom resource
 	resource := daokit.Resource{
@@ -50,15 +52,15 @@ func init() {
 }
 
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
-	DAO.Vote(proposalID, vote)
+	DAO.Vote(cur, proposalID, vote)
 }
 
 func Execute(cur realm, proposalID uint64) {
-	DAO.Execute(proposalID)
+	DAO.Execute(cur, proposalID)
 }
 
 func Propose(cur realm, req daokit.ProposalRequest) {
-	DAO.Propose(req)
+	DAO.Propose(cur, req)
 }
 
 func Render(path string) string {
@@ -71,4 +73,23 @@ func Render(path string) string {
 	s += "# My blog\n"
 	s += myblog.Render()
 	return s
+}
+
+type crossingDAOWrapper struct {
+	dao daokit.DAO
+}
+
+// Execute implements CrossingDAO.
+func (c *crossingDAOWrapper) Execute(cur realm, id uint64) {
+	c.dao.Execute(id)
+}
+
+// Propose implements CrossingDAO.
+func (c *crossingDAOWrapper) Propose(cur realm, req daokit.ProposalRequest) uint64 {
+	return c.dao.Propose(req)
+}
+
+// Vote implements CrossingDAO.
+func (c *crossingDAOWrapper) Vote(cur realm, id uint64, vote daocond.Vote) {
+	c.dao.Vote(id, vote)
 }

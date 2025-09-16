@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/aeddi/panictoerr"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
 )
@@ -102,8 +103,10 @@ func TestBlogResource(t *testing.T) {
 		Propose(cross, req)
 
 		// should panic
-		abort := revive(func() { Execute(cross, 2) })
-		if abort != "proposal condition is not met" {
+		abort := panictoerr.PanicAbortToError(func() {
+			Execute(cross, 2)
+		})
+		if abort.Error() != "proposal condition is not met" {
 			t.Fatal("expected execute to panic, but it did not")
 		}
 
