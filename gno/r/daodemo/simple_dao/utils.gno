@@ -5,14 +5,13 @@ import (
 	"strings"
 	"unicode"
 
-	"gno.land/p/demo/ufmt"
 	"gno.land/p/mason/md"
 	"gno.land/p/moul/txlink"
+	"gno.land/p/nt/ufmt"
 	"gno.land/p/samcrew/basedao"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
 )
-
 
 // initProposals creates a number of initial proposals and votes.
 // It divides the proposals into 4 parts: AddMember, RemoveMember, AssignRole, EditProfile.

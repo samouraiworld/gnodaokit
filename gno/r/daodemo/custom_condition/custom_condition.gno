@@ -1,7 +1,7 @@
 package custom_condition
 
 import (
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 	"gno.land/p/samcrew/basedao"
 	"gno.land/p/samcrew/daocond"
 
