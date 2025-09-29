@@ -1,7 +1,7 @@
 package custom_condition
 
 import (
-	"std"
+	"chain/runtime"
 	"strings"
 	"unicode"
 
@@ -15,7 +15,7 @@ import (
 // Bypass limitation by adding yourself to the DAO.
 // It is necessary to be part of the DAO to create a Proposal.
 func AddMember(cur realm) {
-	addr := std.PreviousRealm().Address().String()
+	addr := runtime.PreviousRealm().Address().String()
 	daoPrivate.Members.AddMember(addr, make([]string, 0))
 }
 
@@ -25,7 +25,7 @@ func AddMember(cur realm) {
 // Parameters:
 //   - address: The std.Address of the member to be added
 //   - roles: Comma-separated string of roles to assign to the member (e.g., "admin,moderator" or "voter")
-func ProposeAddMember(cur realm, address std.Address, roles string) {
+func ProposeAddMember(cur realm, address address, roles string) {
 	rs := strings.Split(roles, ",")
 	for i, s := range rs {
 		rs[i] = strings.TrimFunc(s, unicode.IsSpace)
