@@ -1,7 +1,7 @@
 package custom_resource
 
 import (
-	"std"
+	"chain/runtime"
 	"time"
 )
 
@@ -9,7 +9,7 @@ type Post struct {
 	Title   string
 	Content string
 	Created time.Time
-	Creator std.Address // Address of the creator
+	Creator address // Address of the creator
 }
 
 type Blog struct {
@@ -21,7 +21,7 @@ func (a *Blog) NewPost(title string, content string) {
 		Title:   title,
 		Content: content,
 		Created: time.Now(),
-		Creator: std.PreviousRealm().Address(),
+		Creator: runtime.PreviousRealm().Address(),
 	}
 	a.Post = append(a.Post, newPost)
 }

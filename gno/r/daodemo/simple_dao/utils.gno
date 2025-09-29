@@ -1,7 +1,7 @@
 package simple_dao
 
 import (
-	"std"
+	"chain/runtime"
 	"strings"
 	"unicode"
 
@@ -34,14 +34,14 @@ func initProposals(nb int) {
 			// CREATE
 			switch t {
 			case 0: // AddMember
-				action = basedao.NewAddMemberAction(&basedao.ActionAddMember{Address: std.Address(addr), Roles: []string{}})
+				action = basedao.NewAddMemberAction(&basedao.ActionAddMember{Address: address(addr), Roles: []string{}})
 				title = ufmt.Sprintf("Add member %s with no role", basedao.TruncateMiddle(addr))
 			case 1: // RemoveMember
-				action = basedao.NewRemoveMemberAction(std.Address(addr))
+				action = basedao.NewRemoveMemberAction(address(addr))
 				title = ufmt.Sprintf("Remove member %s", basedao.TruncateMiddle(addr))
 			case 2: // AssignRole
 				role := "public-relationships"
-				action = basedao.NewAssignRoleAction(&basedao.ActionAssignRole{Address: std.Address(financeOfficer), Role: role})
+				action = basedao.NewAssignRoleAction(&basedao.ActionAssignRole{Address: address(financeOfficer), Role: role})
 				title = ufmt.Sprintf("Assign role %s for %s", role, basedao.TruncateMiddle(addr))
 			case 3: // EditProfile
 				action = basedao.NewEditProfileAction([2]string{"Bio", "Simple DAO to the moon!"})
@@ -76,7 +76,7 @@ func initProposals(nb int) {
 // Bypass limitation by adding yourself to the DAO.
 // It is necessary to be part of the DAO to create a Proposal.
 func AddMember(cur realm) {
-	addr := std.PreviousRealm().Address().String()
+	addr := runtime.PreviousRealm().Address().String()
 	daoPrivate.Members.AddMember(addr, make([]string, 0))
 }
 
@@ -86,7 +86,7 @@ func AddMember(cur realm) {
 // Parameters:
 //   - address: The std.Address of the member to be added
 //   - roles: Comma-separated roles (e.g., "public-relationships,finance-officer" or "finance-officer")
-func ProposeAddMember(cur realm, address std.Address, roles string) {
+func ProposeAddMember(cur realm, address address, roles string) {
 	rs := strings.Split(roles, ",")
 	for i, s := range rs {
 		rs[i] = strings.TrimFunc(s, unicode.IsSpace)

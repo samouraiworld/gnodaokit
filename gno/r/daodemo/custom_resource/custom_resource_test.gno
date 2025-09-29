@@ -1,7 +1,6 @@
 package custom_resource
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/samcrew/daocond"
@@ -41,7 +40,7 @@ func TestDAOInitialization(t *testing.T) {
 }
 
 func TestBlogResource(t *testing.T) {
-	testing.SetRealm(std.NewUserRealm("g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh"))
+	testing.SetRealm(testing.NewUserRealm("g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh"))
 
 	action := NewPostAction("Test Title", "Test Content")
 	// Create test proposal
@@ -71,9 +70,9 @@ func TestBlogResource(t *testing.T) {
 
 		// Vote with 3 members (meets 60% threshold of 4 members)
 		Vote(cross, 4, daocond.VoteYes) // member1
-		testing.SetRealm(std.NewUserRealm("g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld65"))
+		testing.SetRealm(testing.NewUserRealm("g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld65"))
 		Vote(cross, 4, daocond.VoteYes) // member2
-		testing.SetRealm(std.NewUserRealm("g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld64"))
+		testing.SetRealm(testing.NewUserRealm("g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld64"))
 		Vote(cross, 4, daocond.VoteYes) // member3
 
 		// Execute the proposal
