@@ -10,7 +10,10 @@ type DAO interface {
 	Propose(req ProposalRequest) uint64
 	Execute(id uint64)
 	Vote(id uint64, vote daocond.Vote)
+	Render(path string) string
 }
+
+type SetImplemFn = func(implem DAO)
 
 func InstantExecute(d DAO, req ProposalRequest) uint64 {
 	id := d.Propose(req)
@@ -78,12 +81,4 @@ func (d *Core) Propose(proposerID string, req ProposalRequest) uint64 {
 
 	prop := d.Proposals.newProposal(proposerID, req, resource.Condition)
 	return uint64(prop.ID)
-}
-
-func (d *Core) ResourcesCount() int {
-	return d.Resources.Tree.Size()
-}
-
-func (d *Core) ProposalsCount() int {
-	return d.Proposals.Tree.Size()
 }

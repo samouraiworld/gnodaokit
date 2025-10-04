@@ -33,4 +33,8 @@ func (c *crossingDAO) Propose(req ProposalRequest) uint64 {
 	return id
 }
 
+func (c *crossingDAO) Render(path string) string {
+	return c.Render(path)
+}
+
 var _ DAO = (*crossingDAO)(nil)

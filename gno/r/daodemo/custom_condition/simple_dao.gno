@@ -9,6 +9,7 @@ import (
 
 var (
 	DAO        daokit.DAO
+	localDAO   daokit.DAO
 	daoPrivate *basedao.DAOPrivate
 )
 
@@ -26,34 +27,52 @@ func init() {
 	// Define the "NoRole" condition
 	noRole := NoRole(memberStore, 1)
 
-	DAO, daoPrivate = basedao.New(&basedao.Config{
+	localDAO, daoPrivate = basedao.New(&basedao.Config{
 		Name:             "Demo DAOKIT DAO",
 		Description:      "This is a demo DAO built with DAOKIT",
 		Members:          memberStore,
 		InitialCondition: noRole,
 		GetProfileString: profile.GetStringField,
 		SetProfileString: profile.SetStringField,
+		SetImplemFn: func(implem daokit.DAO) {
+			localDAO = implem
+			DAO = daokit.NewCrossing(implem, crossFn)
+		},
+		RenderFn: func(path string, dao *basedao.DAOPrivate) string {
+			s := ""
+			if path == "" {
+				s += renderDemo()
+			}
+			s += " \n\n--- \n\n "
+			s += dao.RenderRouter.Render(path)
+			return s
+		},
 	})
+	DAO = daokit.NewCrossing(localDAO, crossFn)
 }
 
+// Vote allows DAO members to cast their vote on a specific proposal
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
-	DAO.Vote(proposalID, vote)
+	localDAO.Vote(proposalID, vote)
 }
 
+// Execute triggers the implementation of a proposal's actions
 func Execute(cur realm, proposalID uint64) {
-	DAO.Execute(proposalID)
+	localDAO.Execute(proposalID)
 }
 
+// Propose creates a new proposal
+// To execute this function, you must use a MsgRun (maketx run)
+// See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
-	DAO.Propose(req)
+	localDAO.Propose(req)
 }
 
+// Render generates a UI representation of the DAO's state
 func Render(path string) string {
-	s := ""
-	if path == "" {
-		s += renderDemo()
-	}
-	s += " \n\n--- \n\n "
-	s += daoPrivate.Render(path)
-	return s
+	return localDAO.Render(path)
+}
+
+func crossFn(_ realm, cb func()) {
+	cb()
 }

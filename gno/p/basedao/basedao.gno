@@ -26,6 +26,10 @@ func (d *daoPublic) Vote(id uint64, vote daocond.Vote) {
 	d.impl.Vote(id, vote)
 }
 
+func (d *daoPublic) Render(path string) string {
+	return d.impl.Render(path)
+}
+
 // DAO is meant for internal realm usage and should not be exposed
 type DAOPrivate struct {
 	Core             *daokit.Core
@@ -33,7 +37,10 @@ type DAOPrivate struct {
 	RenderRouter     *mux.Router
 	GetProfileString ProfileStringGetter
 	Realm            runtime.Realm
+	RenderFn         func(path string, dao *DAOPrivate) string
 }
+
+type RenderFn func(path string, dao *DAOPrivate) string
 
 type Config struct {
 	Name               string
@@ -46,6 +53,8 @@ type Config struct {
 	SetProfileString   ProfileStringSetter
 	GetProfileString   ProfileStringGetter
 	NoCreationEvent    bool
+	SetImplemFn        daokit.SetImplemFn
+	RenderFn           RenderFn
 }
 
 type ProfileStringSetter func(cur realm, field string, value string) bool
@@ -71,6 +80,7 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 		Members:          members,
 		GetProfileString: conf.GetProfileString,
 		Realm:            runtime.CurrentRealm(),
+		RenderFn:         conf.RenderFn,
 	}
 	dao.initRenderingRouter()
 
@@ -95,6 +105,15 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 				Condition:   conf.InitialCondition,
 				DisplayName: "Edit Profile",
 				Description: "This proposal allows you to edit this DAO profile.",
+			})
+		}
+
+		if conf.SetImplemFn != nil {
+			dao.Core.Resources.Set(&daokit.Resource{
+				Handler:     NewChangeDAOImplementationHandler(dao, conf.SetImplemFn),
+				Condition:   conf.InitialCondition,
+				DisplayName: "Change DAO Implementation",
+				Description: "Change the underlying DAO implementation.",
 			})
 		}
 
