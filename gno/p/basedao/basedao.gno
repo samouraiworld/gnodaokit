@@ -14,6 +14,23 @@ type daoPublic struct {
 	impl *DAOPrivate
 }
 
+// Extension implements daokit.DAO.
+func (d *daoPublic) Extension(path string) daokit.Extension {
+	ext, ok := d.impl.Core.Extensions.Get(path)
+	if !ok {
+		return nil
+	}
+	if ext.Info().Private && runtime.CurrentRealm().PkgPath() != d.impl.Realm.PkgPath() {
+		panic("attempt to get private extension outside of DAO realm")
+	}
+	return ext
+}
+
+// ExtensionsList implements daokit.DAO.
+func (d *daoPublic) ExtensionsList() daokit.ExtensionsList {
+	return d.impl.Core.Extensions.List()
+}
+
 func (d *daoPublic) Propose(req daokit.ProposalRequest) uint64 {
 	return d.impl.Propose(req)
 }
@@ -38,6 +55,8 @@ type DAOPrivate struct {
 	GetProfileString ProfileStringGetter
 	Realm            runtime.Realm
 	RenderFn         func(path string, dao *DAOPrivate) string
+
+	InitialConfig *Config // mostly there in case we need this data during upgrade
 }
 
 type RenderFn func(path string, dao *DAOPrivate) string
@@ -55,6 +74,8 @@ type Config struct {
 	NoCreationEvent    bool
 	SetImplemFn        daokit.SetImplemFn
 	RenderFn           RenderFn
+	CrossFn            daokit.CrossFn
+	PrivateVarName     string
 }
 
 type ProfileStringSetter func(cur realm, field string, value string) bool
@@ -81,7 +102,14 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 		GetProfileString: conf.GetProfileString,
 		Realm:            runtime.CurrentRealm(),
 		RenderFn:         conf.RenderFn,
+		InitialConfig:    conf,
 	}
+
+	dao.Core.Extensions.Set(&membersViewExtension{
+		getStore:  func() *MembersStore { return dao.Members },
+		queryPath: dao.Realm.PkgPath() + "." + conf.PrivateVarName + ".Members", // XXX: take varname as input
+	})
+
 	dao.initRenderingRouter()
 
 	if !conf.NoDefaultRendering {

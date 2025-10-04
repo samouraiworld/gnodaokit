@@ -49,6 +49,7 @@ func init() {
 		InitialCondition: adminCond,
 		GetProfileString: profile.GetStringField,
 		SetProfileString: profile.SetStringField,
+		PrivateVarName:   "daoPrivate",
 		SetImplemFn: func(implem daokit.DAO) {
 			localDAO = implem
 			DAO = daokit.NewCrossing(implem, crossFn)

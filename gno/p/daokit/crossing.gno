@@ -13,6 +13,16 @@ type crossingDAO struct {
 	crossFn CrossFn
 }
 
+// Extension implements DAO.
+func (c *crossingDAO) Extension(path string) Extension {
+	return c.dao.Extension(path)
+}
+
+// ExtensionsList implements DAO.
+func (c *crossingDAO) ExtensionsList() ExtensionsList {
+	return c.dao.ExtensionsList()
+}
+
 func (c *crossingDAO) Vote(proposalID uint64, vote daocond.Vote) {
 	c.crossFn(cross, func() {
 		c.dao.Vote(proposalID, vote)

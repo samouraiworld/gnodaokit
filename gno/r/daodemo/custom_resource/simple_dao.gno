@@ -34,6 +34,7 @@ func init() {
 		InitialCondition: membersMajority,
 		GetProfileString: profile.GetStringField,
 		SetProfileString: profile.SetStringField,
+		PrivateVarName:   "daoPrivate",
 		RenderFn: func(path string, dao *basedao.DAOPrivate) string {
 			s := ""
 			if path == "" {

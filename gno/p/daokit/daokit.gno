@@ -8,9 +8,13 @@ import (
 
 type DAO interface {
 	Propose(req ProposalRequest) uint64
-	Execute(id uint64)
 	Vote(id uint64, vote daocond.Vote)
+	Execute(id uint64)
+
 	Render(path string) string
+
+	Extension(path string) Extension
+	ExtensionsList() ExtensionsList
 }
 
 type SetImplemFn = func(implem DAO)
@@ -23,14 +27,16 @@ func InstantExecute(d DAO, req ProposalRequest) uint64 {
 }
 
 type Core struct {
-	Resources *ResourcesStore
-	Proposals *ProposalsStore
+	Resources  *ResourcesStore
+	Proposals  *ProposalsStore
+	Extensions *ExtensionsStore
 }
 
 func NewCore() *Core {
 	return &Core{
-		Resources: NewResourcesStore(),
-		Proposals: NewProposalsStore(),
+		Resources:  NewResourcesStore(),
+		Proposals:  NewProposalsStore(),
+		Extensions: &ExtensionsStore{},
 	}
 }
 
