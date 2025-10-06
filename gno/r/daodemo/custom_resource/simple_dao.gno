@@ -9,6 +9,7 @@ import (
 
 var (
 	DAO        daokit.DAO
+	localDAO   daokit.DAO
 	daoPrivate *basedao.DAOPrivate
 	myblog     Blog
 )
@@ -26,14 +27,29 @@ func init() {
 	memberStore := basedao.NewMembersStore(initialRoles, initialMembers)
 	membersMajority := daocond.MembersThreshold(0.1, memberStore.IsMember, memberStore.MembersCount)
 
-	DAO, daoPrivate = basedao.New(&basedao.Config{
+	localDAO, daoPrivate = basedao.New(&basedao.Config{
 		Name:             "Demo DAOKIT DAO",
 		Description:      "This is a demo DAO built with DAOKIT",
 		Members:          memberStore,
 		InitialCondition: membersMajority,
 		GetProfileString: profile.GetStringField,
 		SetProfileString: profile.SetStringField,
+		PrivateVarName:   "daoPrivate",
+		RenderFn: func(path string, dao *basedao.DAOPrivate) string {
+			s := ""
+			if path == "" {
+				s += renderDemo()
+			}
+			s += " \n\n--- \n\n "
+			s += dao.RenderRouter.Render(path)
+			s += "# My blog\n"
+			s += myblog.Render()
+			return s
+		},
+		SetImplemFn: setImplem,
+		CrossFn:     crossFn,
 	})
+	DAO = daokit.NewCrossing(localDAO, crossFn)
 
 	// Create a new custom resource
 	resource := daokit.Resource{
@@ -49,26 +65,32 @@ func init() {
 	initBlogProposals()
 }
 
+// Vote allows DAO members to cast their vote on a specific proposal
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
-	DAO.Vote(proposalID, vote)
+	localDAO.Vote(proposalID, vote)
 }
 
+// Execute triggers the implementation of a proposal's actions
 func Execute(cur realm, proposalID uint64) {
-	DAO.Execute(proposalID)
+	localDAO.Execute(proposalID)
 }
 
+// Propose creates a new proposal
+// To execute this function, you must use a MsgRun (maketx run)
+// See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
-	DAO.Propose(req)
+	localDAO.Propose(req)
 }
 
+// Render generates a UI representation of the DAO's state
 func Render(path string) string {
-	s := ""
-	if path == "" {
-		s += renderDemo()
-	}
-	s += " \n\n--- \n\n "
-	s += daoPrivate.Render(path)
-	s += "# My blog\n"
-	s += myblog.Render()
-	return s
+	return localDAO.Render(path)
+}
+
+func crossFn(_ realm, cb func()) {
+	cb()
+}
+
+func setImplem(newLocalDAO daokit.DAO, newDAO daokit.DAO) {
+	localDAO, DAO = newLocalDAO, newDAO
 }

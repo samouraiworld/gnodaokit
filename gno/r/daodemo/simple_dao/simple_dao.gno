@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	DAO        daokit.DAO          // External interface for DAO interaction
+	DAO        daokit.DAO          // Crossing interface for DAO interaction
+	localDAO   daokit.DAO          // Local interface for maketx call
 	daoPrivate *basedao.DAOPrivate // Full access to internal DAO state
 )
 
@@ -41,43 +42,58 @@ func init() {
 	adminCond := daocond.And(membersMajority, financeOfficer)
 
 	// Initialize DAO with configuration
-	DAO, daoPrivate = basedao.New(&basedao.Config{
+	localDAO, daoPrivate = basedao.New(&basedao.Config{
 		Name:             "Demo DAOKIT DAO",
 		Description:      "This is a demo DAO built with DAOKIT",
 		Members:          memberStore,
 		InitialCondition: adminCond,
 		GetProfileString: profile.GetStringField,
 		SetProfileString: profile.SetStringField,
+		PrivateVarName:   "daoPrivate",
+		SetImplemFn:      setImplem,
+		RenderFn: func(path string, dao *basedao.DAOPrivate) string {
+			s := ""
+			// Demo path to showcase the possibility of this realm
+			if path == "" {
+				s += renderDemo()
+			}
+			s += " \n\n--- \n\n "
+			s += dao.RenderRouter.Render(path)
+			return s
+		},
+		CrossFn: crossFn,
 	})
+	DAO = daokit.NewCrossing(localDAO, crossFn)
 
 	initProposals(25)
 }
 
 // Vote allows DAO members to cast their vote on a specific proposal
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
-	DAO.Vote(proposalID, vote)
+	localDAO.Vote(proposalID, vote)
 }
 
 // Execute triggers the implementation of a proposal's actions
 func Execute(cur realm, proposalID uint64) {
-	DAO.Execute(proposalID)
+	localDAO.Execute(proposalID)
 }
 
-// Execute triggers the implementation of a proposal's actions
+// Propose creates a new proposal
 // To execute this function, you must use a MsgRun (maketx run)
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
-	DAO.Propose(req)
+	localDAO.Propose(req)
 }
 
 // Render generates a UI representation of the DAO's state
 func Render(path string) string {
-	s := ""
-	// Demo path to showcase the possibility of this realm
-	if path == "" {
-		s += renderDemo()
-	}
-	s += " \n\n--- \n\n "
-	s += daoPrivate.Render(path)
-	return s
+	return localDAO.Render(path)
+}
+
+func crossFn(_ realm, cb func()) {
+	cb()
+}
+
+func setImplem(newLocalDAO daokit.DAO, newDAO daokit.DAO) {
+	localDAO, DAO = newLocalDAO, newDAO
 }
