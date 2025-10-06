@@ -50,10 +50,7 @@ func init() {
 		GetProfileString: profile.GetStringField,
 		SetProfileString: profile.SetStringField,
 		PrivateVarName:   "daoPrivate",
-		SetImplemFn: func(implem daokit.DAO) {
-			localDAO = implem
-			DAO = daokit.NewCrossing(implem, crossFn)
-		},
+		SetImplemFn:      setImplem,
 		RenderFn: func(path string, dao *basedao.DAOPrivate) string {
 			s := ""
 			// Demo path to showcase the possibility of this realm
@@ -95,4 +92,8 @@ func Render(path string) string {
 
 func crossFn(_ realm, cb func()) {
 	cb()
+}
+
+func setImplem(newLocalDAO daokit.DAO, newDAO daokit.DAO) {
+	localDAO, DAO = newLocalDAO, newDAO
 }

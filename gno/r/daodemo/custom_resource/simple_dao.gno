@@ -46,11 +46,8 @@ func init() {
 			s += myblog.Render()
 			return s
 		},
-		SetImplemFn: func(implem daokit.DAO) {
-			localDAO = implem
-			DAO = daokit.NewCrossing(implem, crossFn)
-		},
-		CrossFn: crossFn,
+		SetImplemFn: setImplem,
+		CrossFn:     crossFn,
 	})
 	DAO = daokit.NewCrossing(localDAO, crossFn)
 
@@ -92,4 +89,8 @@ func Render(path string) string {
 
 func crossFn(_ realm, cb func()) {
 	cb()
+}
+
+func setImplem(newLocalDAO daokit.DAO, newDAO daokit.DAO) {
+	localDAO, DAO = newLocalDAO, newDAO
 }
