@@ -50,6 +50,7 @@ func init() {
 			localDAO = implem
 			DAO = daokit.NewCrossing(implem, crossFn)
 		},
+		CrossFn: crossFn,
 	})
 	DAO = daokit.NewCrossing(localDAO, crossFn)
 

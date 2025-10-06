@@ -64,6 +64,7 @@ func init() {
 			s += dao.RenderRouter.Render(path)
 			return s
 		},
+		CrossFn: crossFn,
 	})
 	DAO = daokit.NewCrossing(localDAO, crossFn)
 
