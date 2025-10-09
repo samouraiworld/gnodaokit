@@ -1,7 +1,6 @@
 package custom_resource
 
 import (
-	"chain/runtime"
 	"time"
 )
 
@@ -9,7 +8,7 @@ type Post struct {
 	Title   string
 	Content string
 	Created time.Time
-	Creator address // Address of the creator
+	Creator string // id of the creator, address or pkg path
 }
 
 type Blog struct {
@@ -21,7 +20,7 @@ func (a *Blog) NewPost(title string, content string) {
 		Title:   title,
 		Content: content,
 		Created: time.Now(),
-		Creator: runtime.PreviousRealm().Address(),
+		Creator: daoPrivate.CallerID(),
 	}
 	a.Post = append(a.Post, newPost)
 }
@@ -35,7 +34,7 @@ func (a *Blog) Render() string {
 		s += "## " + a.Post[i].Title + "\n\n"
 		s += " " + a.Post[i].Content + "\n\n"
 		s += a.Post[i].Created.Format("15h04 02/01/2006")
-		s += " - " + a.Post[i].Creator.String() + "\n\n"
+		s += " - " + a.Post[i].Creator + "\n\n"
 		s += "---\n"
 	}
 	return s

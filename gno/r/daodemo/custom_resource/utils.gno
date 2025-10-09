@@ -1,8 +1,6 @@
 package custom_resource
 
 import (
-	"chain/runtime"
-
 	"gno.land/p/mason/md"
 	"gno.land/p/moul/txlink"
 	"gno.land/p/nt/ufmt"
@@ -37,8 +35,8 @@ func initBlogProposals() {
 // Bypass limitation by adding yourself to the DAO.
 // It is necessary to be part of the DAO to create a Proposal.
 func AddMember(cur realm) {
-	addr := runtime.PreviousRealm().Address().String()
-	daoPrivate.Members.AddMember(addr, make([]string, 0))
+	id := daoPrivate.CallerID()
+	daoPrivate.Members.AddMember(id, make([]string, 0))
 }
 
 // Creates a Proposal to create a new blog post.
