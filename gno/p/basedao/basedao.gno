@@ -8,6 +8,7 @@ import (
 	"gno.land/p/nt/mux"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
+	"gno.land/p/samcrew/realmid"
 )
 
 type daoPublic struct {
@@ -103,7 +104,7 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 	}
 
 	if conf.CallerKeyFn == nil {
-		conf.CallerKeyFn = DefaultCallerID
+		conf.CallerKeyFn = realmid.Previous
 	}
 
 	core := daokit.NewCore()
@@ -238,12 +239,4 @@ func (d *DAOPrivate) assertCallerIsMember() string {
 		panic(errors.New("caller is not a member"))
 	}
 	return id
-}
-
-func DefaultCallerID() string {
-	caller := runtime.PreviousRealm()
-	if caller.IsUser() {
-		return caller.Address().String()
-	}
-	return caller.PkgPath()
 }
