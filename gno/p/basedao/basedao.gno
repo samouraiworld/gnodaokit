@@ -68,22 +68,35 @@ type DAOPrivate struct {
 type CallerIDFn func() string
 
 type Config struct {
-	Name               string
-	Description        string
-	ImageURI           string
-	Members            *MembersStore
-	NoDefaultHandlers  bool
-	NoDefaultRendering bool
-	InitialCondition   daocond.Condition
-	SetProfileString   ProfileStringSetter
-	GetProfileString   ProfileStringGetter
-	NoCreationEvent    bool
-	SetImplemFn        SetImplemRaw
-	MigrationParamsFn  MigrationParamsFn
-	RenderFn           RenderFn
-	CrossFn            daokit.CrossFn
-	CallerID           CallerIDFn
-	PrivateVarName     string
+	// Basic DAO information
+	Name        string
+	Description string
+	ImageURI    string
+
+	// Core components
+	Members *MembersStore
+
+	// Feature toggles
+	NoDefaultHandlers  bool // Skips registration of default management actions (add/remove members, etc.)
+	NoDefaultRendering bool // Skips setup of default web UI rendering routes
+	NoCreationEvent    bool // Skips emitting the DAO creation event
+
+	// Governance configuration
+	InitialCondition daocond.Condition // Default condition for all built-in actions, defaults to 60% member majority
+
+	// Profile integration (optional)
+	SetProfileString ProfileStringSetter // Function to update profile fields (DisplayName, Bio, Avatar)
+	GetProfileString ProfileStringGetter // Function to retrieve profile fields for members
+
+	// Advanced customization hooks
+	SetImplemFn       SetImplemRaw      // Function called when DAO implementation changes via governance
+	MigrationParamsFn MigrationParamsFn // Function providing parameters for DAO upgrades
+	RenderFn          RenderFn          // Rendering function for Gnoweb
+	CrossFn           daokit.CrossFn    // Cross-realm communication function for multi-realm DAOs
+	CallerID          CallerIDFn        // Custom function to identify the current caller, defaults to realmid.Previous
+
+	// Internal configuration
+	PrivateVarName string // Name of the private DAO variable for member querying extensions
 }
 
 type ProfileStringSetter func(cur realm, field string, value string) bool
