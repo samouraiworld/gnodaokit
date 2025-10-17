@@ -27,7 +27,7 @@ func init() {
 
 	// Define initial members and their roles
 	initialMembers := []basedao.Member{
-		{Address: "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg", Roles: []string{"finance-officer"}},
+		{Address: "g1demo1234567890abcdefghijklmnopqrstuvwxyz", Roles: []string{"finance-officer"}},
 	}
 
 	// Create the member store now to be able to use it in the condition
@@ -78,7 +78,7 @@ func Execute(cur realm, proposalID uint64) {
 }
 
 // Creates a new proposal
-// To execute this function, you must use a MsgRun (maketx run)
+// To execute this function, you must use a MsgRun `gnokey maketx run“
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
 	localDAO.Propose(req)
