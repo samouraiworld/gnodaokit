@@ -65,6 +65,8 @@ type DAOPrivate struct {
 	InitialConfig *Config // mostly there in case we need this data during upgrade
 }
 
+// Function type that returns the identifier of the current caller.
+// Used to identify who is making calls to DAO functions.
 type CallerIDFn func() string
 
 type Config struct {
