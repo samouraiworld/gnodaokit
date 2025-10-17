@@ -12,17 +12,14 @@ The `daocond` package implements a flexible condition system that allows DAOs to
 
 ```go
 type Condition interface {
-    // Eval checks if the condition is satisfied based on current votes
+    // Eval - checks if the condition is satisfied based on current votes
     Eval(ballot Ballot) bool
     
-    // Signal returns a value from 0.0 to 1.0 indicating progress toward satisfaction
+    // Signal - returns a value from 0.0 to 1.0 indicating progress toward satisfaction
     Signal(ballot Ballot) float64
     
-    // Render returns a static human-readable representation of the condition
-    Render() string
-    
-    // RenderWithVotes returns a dynamic representation with vote context
-    RenderWithVotes(ballot Ballot) string
+    Render() string // returns a representation of the condition
+    RenderWithVotes(ballot Ballot) string // returns a representation with vote context
 }
 ```
 
@@ -30,17 +27,13 @@ type Condition interface {
 
 ```go
 type Ballot interface {
-    // Vote allows a user to vote on a proposal
-    Vote(voter string, vote Vote)
+    Vote(voter string, vote Vote) // allows a user to vote on a proposal
+
+    Get(voter string) Vote // returns the vote of a specific user
     
-    // Get returns the vote of a specific user
-    Get(voter string) Vote
+    Total() int // returns the total number of votes cast
     
-    // Total returns the total number of votes cast
-    Total() int
-    
-    // Iterate iterates over all votes
-    Iterate(fn func(voter string, vote Vote) bool)
+    Iterate(fn func(voter string, vote Vote) bool) // iterates over all votes
 }
 ```
 
@@ -58,90 +51,55 @@ const (
 
 ## Built-in Conditions
 
-### MembersThreshold
-
-Requires a specified fraction of all DAO members to approve the proposal.
+`daocond` provides three core condition types for common governance scenarios:
 
 ```go
-func MembersThreshold(
-    threshold float64,                           // Fraction required (0.0 to 1.0)
-    isMemberFn func(memberId string) bool,       // Function to check membership
-    membersCountFn func() uint64                 // Function to get total member count
-) Condition
+// MembersThreshold - Requires a fraction of all DAO members to approve
+func MembersThreshold(threshold float64, isMemberFn func(string) bool, membersCountFn func() uint64) Condition
+
+// RoleThreshold - Requires a percentage of role holders to approve  
+func RoleThreshold(threshold float64, role string, hasRoleFn func(string, string) bool, roleCountFn func(string) uint32) Condition
+
+// RoleCount - Requires a minimum number of role holders to approve
+func RoleCount(count uint64, role string, hasRoleFn func(string, string) bool) Condition
 ```
 
-**Example**: Require 60% of all members to approve
+**Usage Examples**:
 ```go
-condition := daocond.MembersThreshold(0.6, store.IsMember, store.MembersCount)
-```
+// Require 60% of all members
+memberMajority := daocond.MembersThreshold(0.6, store.IsMember, store.MembersCount)
 
-### RoleThreshold
+// Require 50% of contributor  
+adminApproval := daocond.RoleThreshold(0.5, "contributor", store.HasRole, store.RoleCount)
 
-Requires a certain percentage of members holding a specific role to approve.
-
-```go
-func RoleThreshold(
-    threshold float64,                                       // Fraction required (0.0 to 1.0)
-    role string,                                             // Role name to check
-    hasRoleFn func(memberId string, role string) bool,       // Function to check role membership
-    usersRoleCountFn func(role string) uint32                // Function to count role members
-) Condition
-```
-
-**Example**: Require 50% of admins to approve
-```go
-condition := daocond.RoleThreshold(0.5, "admin", store.HasRole, store.RoleCount)
-```
-
-### RoleCount
-
-Requires a fixed minimum number of members holding a specific role to approve.
-
-```go
-func RoleCount(
-    count uint64,                                      // Minimum number of approvals needed
-    role string,                                       // Role name to check
-    hasRoleFn func(memberId string, role string) bool  // Function to check role membership
-) Condition
-```
-
-**Example**: Require at least 2 CFO approvals
-```go
-condition := daocond.RoleCount(2, "CFO", store.HasRole)
+// Require at least 2 core-contributor
+treasurerApproval := daocond.RoleCount(2, "core-contributor", store.HasRole)
 ```
 
 ## Logical Composition
 
-Combine multiple conditions to create sophisticated governance rules:
-
-### And Condition
-
-All provided conditions must be satisfied.
+Combine conditions using logical operators to create complex governance rules:
 
 ```go
+// And - All conditions must be satisfied
 func And(conditions ...Condition) Condition
-```
 
-### Or Condition
-
-At least one of the provided conditions must be satisfied.
-
-```go
+// Or - At least one condition must be satisfied  
 func Or(conditions ...Condition) Condition
 ```
 
-**Example**: Complex governance rule
+**Examples**:
 ```go
-// Require BOTH admin majority AND at least one CFO approval
-complexCondition := daocond.And(
-    daocond.RoleThreshold(0.5, "admin", store.HasRole, store.RoleCount),
-    daocond.RoleCount(1, "CFO", store.HasRole),
+// Require BOTH admin majority AND treasurer approval
+strictGovernance := daocond.And(
+    daocond.RoleThreshold(0.5, "contributor", store.HasRole, store.RoleCount),
+    daocond.RoleCount(1, "treasurer", store.HasRole),
 )
 
-// Require EITHER admin majority OR unanimous board approval
-flexibleCondition := daocond.Or(
-    daocond.RoleThreshold(0.5, "admin", store.HasRole, store.RoleCount),
-    daocond.RoleThreshold(1.0, "board", store.HasRole, store.RoleCount),
+// Require EITHER treasurer majority OR unanimous core-contributor approval
+flexibleGovernance := daocond.Or(
+    daocond.RoleThreshold(0.5, "treasurer", store.HasRole, store.RoleCount),
+    daocond.RoleThreshold(1.0, "core-contributor", store.HasRole, store.RoleCount),
 )
 ```
 
@@ -156,7 +114,7 @@ type customCondition struct {
 
 func (c *customCondition) Eval(ballot daocond.Ballot) bool {
     // Implement your evaluation logic
-    return true // or false based on your criteria
+    return true
 }
 
 func (c *customCondition) Signal(ballot daocond.Ballot) float64 {
@@ -193,7 +151,7 @@ if condition.Eval(ballot) {
 progress := condition.Signal(ballot) // Returns 0.0 to 1.0
 ```
 
-### Advanced Governance Rules
+### Complex Governance Rules
 
 ```go
 // Multi-tier approval system
@@ -201,8 +159,8 @@ governance := daocond.And(
     // Require 30% of all members
     daocond.MembersThreshold(0.3, store.IsMember, store.MembersCount),
     
-    // AND at least 2 T! approvals
-    daocond.RoleCount(2, "T1", store.HasRole),
+    // AND at least 2 core-contributor approvals
+    daocond.RoleCount(2, "core-contributor", store.HasRole),
     
     // AND either CTO approval OR finance team majority
     daocond.Or(
@@ -213,6 +171,11 @@ governance := daocond.And(
 ```
 
 ### Integration with daokit
+
+`daocond` is designed to work seamlessly with:
+- **[daokit](../daokit/)**: Core DAO framework
+- **[basedao](../basedao/)**: Member and role management
+- Custom DAO implementations
 
 ```go
 import (
@@ -234,13 +197,6 @@ resource := daokit.Resource{
     Description: "Proposals for treasury operations",
 }
 ```
-
-## Integration
-
-`daocond` is designed to work seamlessly with:
-- **[daokit](../daokit/)**: Core DAO framework
-- **[basedao](../basedao/)**: Member and role management
-- Custom DAO implementations built on the daokit framework
 
 For complete examples and interactive demos, see the [/r/samcrew/daodemo/custom_condition](/r/samcrew/daodemo/custom_condition) realms.
 
