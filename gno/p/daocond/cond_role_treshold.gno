@@ -14,6 +14,8 @@ type roleThresholdCond struct {
 	role             string
 }
 
+// Creates a condition requiring a percentage of role holders to vote yes.
+// Example: RoleThreshold(0.6, "admin", hasRoleFn, countFn) requires 60% of admins.
 func RoleThreshold(threshold float64, role string, hasRoleFn func(memberId string, role string) bool, usersRoleCountFn func(role string) uint32) Condition {
 	if threshold <= 0 || threshold > 1 {
 		panic(errors.New("invalid threshold"))
@@ -32,22 +34,24 @@ func RoleThreshold(threshold float64, role string, hasRoleFn func(memberId strin
 	}
 }
 
-// Eval implements Condition.
+// Checks if enough role holders voted yes to meet the threshold.
 func (c *roleThresholdCond) Eval(ballot Ballot) bool {
 	return c.voteRatio(ballot, VoteYes) >= c.threshold
 }
 
-// Signal implements Condition.
+// Returns progress toward meeting the threshold between 0.0 and 1.0.
 func (c *roleThresholdCond) Signal(ballot Ballot) float64 {
 	return math.Min(c.voteRatio(ballot, VoteYes)/c.threshold, 1)
 }
 
-// Render implements Condition.
+// Displays the condition as text.
+// Example output: "60% of admin members"
 func (c *roleThresholdCond) Render() string {
 	return ufmt.Sprintf("%g%% of %s members", c.threshold*100, c.role)
 }
 
-// RenderWithVotes implements Condition.
+// Displays the condition with current vote counts.
+// Example output: "60% of admin members with role admin must vote yes\n\nYes: 1/2 = 50%"
 func (c *roleThresholdCond) RenderWithVotes(ballot Ballot) string {
 	s := ""
 	s += ufmt.Sprintf("%g%% of %s members with role %s must vote yes\n\n", c.threshold*100, c.role)
