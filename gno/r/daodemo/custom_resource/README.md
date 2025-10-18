@@ -1,29 +1,30 @@
-# Simple DAO Demo - [simple_dao](/r/samcrew/daodemo/simple_dao)
+# Custom Resource Demo - [custom_resource](/r/samcrew/daodemo/custom_resource)
 
-Basic elementary DAO example with roles and voting.
+DAO with custom blog post actions.
 
-- Creates a DAO with 2 roles: `public-relationships` and `finance-officer`
-- Members can vote on proposals (60% majority needed)
-- Add/remove members and assign roles
+- Creates custom action: `NewPost` for blog posts
+- Members vote on proposed blog content (60% majority needed)
+- Automatically publish approved posts
 
 ## Core Functions
 
 - `Vote(proposalID, vote)` - Cast your vote on a proposal
 - `Execute(proposalID)` - Execute an approved proposal
 - `Propose(proposalRequest)` - Create a new proposal (requires MsgRun)
-- `Render(path)` - Display DAO state and UI
+- `Render(path)` - Display DAO state and blog posts
 
 ## Utility Functions
 
 - `AddMember(address, roles)` - Directly add member (admin only)
 - `ProposeAddMember(address, roles)` - Create proposal to add member
+- `ProposeNewPost(title, content)` - Create proposal for new blog post
 
 ## Running Scripts
 
 Use the transaction script to create proposals:
 
 ```bash
-# Create a proposal to add a new member
+# Create a proposal for a new blog post
 gnokey maketx run \
   --gas-fee 100000ugnot \
   --gas-wanted 10000000 \
@@ -34,7 +35,9 @@ gnokey maketx run \
 
 ## Files Overview
 
+- `custom_resource.gno` - Custom action definition
+- `blog.gno` - Blog post storage and management
 - `simple_dao.gno` - Main DAO implementation
 - `utils.gno` - Helper functions for testing
 - `tx_script/create_proposal.gno` - Example transaction script
-- `simple_dao_test.gno` - Unit tests
+- `custom_resource_test.gno` - Unit tests
