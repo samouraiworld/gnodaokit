@@ -15,7 +15,9 @@ type roleThresholdCond struct {
 }
 
 // Creates a condition requiring a percentage of role holders to vote yes.
-// Example: RoleThreshold(0.6, "admin", hasRoleFn, countFn) requires 60% of admins.
+//
+// Example: RoleThreshold(0.6, "admin", hasRoleFn, countFn)
+// Requires 60% of admins.
 func RoleThreshold(threshold float64, role string, hasRoleFn func(memberId string, role string) bool, usersRoleCountFn func(role string) uint32) Condition {
 	if threshold <= 0 || threshold > 1 {
 		panic(errors.New("invalid threshold"))

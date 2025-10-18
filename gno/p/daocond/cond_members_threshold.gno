@@ -14,7 +14,9 @@ type membersThresholdCond struct {
 }
 
 // Creates a condition requiring a percentage of members to vote yes.
-// Example: MembersThreshold(0.6, isMemberFn, countFn) requires 60% member approval.
+//
+// Example: MembersThreshold(0.6, isMemberFn, countFn)
+// Requires 60% member approval.
 func MembersThreshold(threshold float64, isMemberFn func(memberId string) bool, membersCountFn func() uint64) Condition {
 	if threshold <= 0 || threshold > 1 {
 		panic(errors.New("invalid threshold"))

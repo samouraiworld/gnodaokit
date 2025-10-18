@@ -14,7 +14,9 @@ type roleCountCond struct {
 }
 
 // Creates a condition requiring a specific number of role holders to vote yes.
-// Example: RoleCount(2, "admin", hasRoleFn) requires 2 admin votes.
+//
+// Example: RoleCount(2, "admin", hasRoleFn)
+// Requires 2 admin votes.
 func RoleCount(count uint64, role string, hasRoleFn func(memberId string, role string) bool) Condition {
 	if count == 0 {
 		panic(errors.New("count must be greater than 0"))

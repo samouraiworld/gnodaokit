@@ -10,6 +10,7 @@ type orCond struct {
 }
 
 // Creates a new condition from multiple conditions where any one must be true.
+//
 // Example: Or(MembersThreshold(0.6), RoleCount(2, "admin"))
 // Requires either 60% member approval OR 2 admin votes.
 func Or(conditions ...Condition) Condition {
