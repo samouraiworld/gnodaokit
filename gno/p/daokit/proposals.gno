@@ -1,14 +1,9 @@
 package daokit
 
-// Proposals manage the lifecycle of DAO governance decisions.
-// Each proposal has a status, voting condition, and executable action.
-// Members vote on proposals which can be executed when conditions are met.
+// Handles DAO governance through proposal voting and execution.
+// They contain actions that run when voting requirements are satisfied.
 //
-// Example: Proposal to add a member, transfer funds, or change governance rules.
-//
-// Usage:
-//   req := ProposalRequest{Title: "Add Member", Action: addMemberAction}
-//   proposal := store.newProposal(proposerID, req, condition)
+// Common use cases: member management, treasury operations, rule updates.
 
 import (
 	"chain/runtime"
