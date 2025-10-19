@@ -40,7 +40,7 @@ func (c *orCond) Signal(ballot Ballot) float64 {
 }
 
 // Displays the condition as text.
-// Example output: "**[** 60% Members **OR** 2 admin **]**"
+// Example output: "[ 60% Members OR 2 admin ]"
 func (c *orCond) Render() string {
 	renders := []string{}
 	for _, condition := range c.conditions {
@@ -50,7 +50,7 @@ func (c *orCond) Render() string {
 }
 
 // Displays the condition with current vote counts.
-// Example output: "**[** 3/5 Members **OR** 1/2 admin **]**"
+// Example output: "[ 3/5 Members OR 1/2 admin ]"
 func (c *orCond) RenderWithVotes(ballot Ballot) string {
 	renders := []string{}
 	for _, condition := range c.conditions {

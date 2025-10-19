@@ -2,8 +2,7 @@ package daocond
 
 // Package daocond provides a stateless condition system for DAO voting.
 //
-// This model replaces complex event handlers for membership changes,
-// role assignments, and other governance actions. It works well for
+// This model replaces complex event handlers. It works well for
 // small DAOs with few voters, with plans to add stateful models for
 // larger DAOs in the future.
 
@@ -15,13 +14,14 @@ type Condition interface {
 	Signal(ballot Ballot) float64
 
 	// Displays the condition as human-readable text.
+	// Example output: "[ 60% Members OR 2 admin ]"
 	Render() string
 	// Displays the condition with current vote counts.
+	// Example output: "[ 3/5 Members OR 1/2 admin ]"
 	RenderWithVotes(ballot Ballot) string
 }
 
-// Represents a collection of votes that can be evaluated
-// against conditions.
+// Represents a collection of votes that can be evaluated against conditions.
 type Ballot interface {
 	// Records a vote from a specific voter.
 	Vote(voter string, vote Vote)
