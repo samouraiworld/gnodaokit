@@ -16,7 +16,7 @@ import (
 	"gno.land/p/samcrew/daocond"
 )
 
-// Current state of a proposal in the governance process.
+// Current state of a proposal.
 type ProposalStatus int
 
 const (
@@ -71,24 +71,6 @@ func NewProposalsStore() *ProposalsStore {
 	return &ProposalsStore{
 		Tree: avl.NewTree(),
 	}
-}
-
-func (p *ProposalsStore) newProposal(proposer string, req ProposalRequest, condition daocond.Condition) *Proposal {
-	id := p.genID.Next()
-	proposal := &Proposal{
-		ID:            id,
-		Title:         req.Title,
-		Description:   req.Description,
-		ProposerID:    proposer,
-		Status:        ProposalStatusOpen,
-		Action:        req.Action,
-		Condition:     condition,
-		Ballot:        daocond.NewBallot(),
-		CreatedAt:     time.Now(),
-		CreatedHeight: runtime.ChainHeight(),
-	}
-	p.Tree.Set(id.String(), proposal)
-	return proposal
 }
 
 func (p *ProposalsStore) GetProposal(id uint64) *Proposal {
@@ -151,4 +133,22 @@ func (p *ProposalsStore) GetProposalsJSON() string {
 		panic(err)
 	}
 	return string(bz)
+}
+
+func (p *ProposalsStore) newProposal(proposer string, req ProposalRequest, condition daocond.Condition) *Proposal {
+	id := p.genID.Next()
+	proposal := &Proposal{
+		ID:            id,
+		Title:         req.Title,
+		Description:   req.Description,
+		ProposerID:    proposer,
+		Status:        ProposalStatusOpen,
+		Action:        req.Action,
+		Condition:     condition,
+		Ballot:        daocond.NewBallot(),
+		CreatedAt:     time.Now(),
+		CreatedHeight: runtime.ChainHeight(),
+	}
+	p.Tree.Set(id.String(), proposal)
+	return proposal
 }
