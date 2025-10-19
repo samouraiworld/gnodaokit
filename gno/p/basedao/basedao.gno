@@ -19,7 +19,6 @@ type SetImplemRaw func(newLocalDAO daokit.DAO, newDAO daokit.DAO)
 
 type RenderFn func(path string, dao *DAOPrivate) string
 
-// Extension implements daokit.DAO.
 func (d *daoPublic) Extension(path string) daokit.Extension {
 	ext, ok := d.impl.Core.Extensions.Get(path)
 	if !ok {
@@ -31,7 +30,6 @@ func (d *daoPublic) Extension(path string) daokit.Extension {
 	return ext
 }
 
-// ExtensionsList implements daokit.DAO.
 func (d *daoPublic) ExtensionsList() daokit.ExtensionsList {
 	return d.impl.Core.Extensions.List()
 }
@@ -52,7 +50,7 @@ func (d *daoPublic) Render(path string) string {
 	return d.impl.Render(path)
 }
 
-// DAO is meant for internal realm usage and should not be exposed
+// DAO is meant for internal realm usage and should not be exposed.
 type DAOPrivate struct {
 	Core             *daokit.Core
 	Members          *MembersStore

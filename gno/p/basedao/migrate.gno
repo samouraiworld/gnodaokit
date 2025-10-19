@@ -6,7 +6,7 @@ import (
 	"gno.land/p/samcrew/daokit"
 )
 
-// making this action name extra explicit
+// Making this action name extra explicit.
 const ActionChangeDAOImplementationKind = "gno.land/p/samcrew/basedao.ChangeDAOImplementation"
 
 type MigrateFn = func(prev *DAOPrivate, params []any) daokit.DAO

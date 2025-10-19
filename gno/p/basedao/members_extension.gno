@@ -25,14 +25,12 @@ type membersViewExtension struct {
 	queryPath string
 }
 
-// IsMember implements MembersViewExtension.
 func (m *membersViewExtension) IsMember(memberId string) bool {
 	return m.getStore().IsMember(memberId)
 }
 
 var _ MembersViewExtension = (*membersViewExtension)(nil)
 
-// Info implements daokit.Extension.
 func (m *membersViewExtension) Info() daokit.ExtensionInfo {
 	return daokit.ExtensionInfo{
 		Path:      MembersViewExtensionPath,
