@@ -7,8 +7,8 @@ package daocond
 // small DAOs with few voters, with plans to add stateful models for
 // larger DAOs in the future.
 
-// Condition defines the interface for voting conditions that can be
-// evaluated against a ballot and display progress information.
+// Represents a voting requirement that can be evaluated
+// against ballots and provides progress feedback.
 type Condition interface {
 	// Eval checks if the condition is satisfied by the current votes.
 	Eval(ballot Ballot) bool
@@ -23,16 +23,16 @@ type Condition interface {
 	RenderWithVotes(ballot Ballot) string
 }
 
-// Ballot represents a collection of votes that can be evaluated
+// Represents a collection of votes that can be evaluated
 // against conditions.
 type Ballot interface {
-	// Vote records a vote from a specific voter.
+	// Records a vote from a specific voter.
 	Vote(voter string, vote Vote)
 
-	// Get retrieves the vote from a specific voter.
+	// Retrieves the vote from a specific voter.
 	Get(voter string) Vote
 
-	// Total returns the total number of votes cast.
+	// Returns the total number of votes cast.
 	Total() int
 
 	// Iterate over all votes, calling fn for each voter-vote pair.
@@ -41,12 +41,12 @@ type Ballot interface {
 	Iterate(fn func(voter string, vote Vote) bool)
 }
 
-// Vote represents a voting decision.
+// Represents a voting decision.
 type Vote string
 
 // Available vote options.
 const (
-	VoteYes     Vote = "yes"
-	VoteNo      Vote = "no"
-	VoteAbstain Vote = "abstain"
+	VoteYes     = "yes"
+	VoteNo      = "no"
+	VoteAbstain = "abstain"
 )
