@@ -16,7 +16,6 @@ import (
 	"gno.land/p/samcrew/daocond"
 )
 
-// Current state of a proposal.
 type ProposalStatus int
 
 const (

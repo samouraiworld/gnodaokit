@@ -6,7 +6,6 @@ import (
 	"gno.land/p/samcrew/daocond"
 )
 
-// DAO defines the main interface for interacting with a decentralized autonomous organization.
 type DAO interface {
 	// Creates a new proposal and returns its ID.
 	Propose(req ProposalRequest) uint64

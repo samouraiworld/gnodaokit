@@ -1,5 +1,7 @@
 package daokit
 
+// Allows DAOs to add custom features dynamically.
+
 import "gno.land/p/nt/avl"
 
 type Extension interface {
@@ -7,10 +9,10 @@ type Extension interface {
 }
 
 type ExtensionInfo struct {
-	Path      string // must uniquely identify an interface
-	Version   string // implementation version, all versions must implement the interface specified by Path
+	Path      string // Unique extension identifier
+	Version   string // Implementation version. Must implement the interface specified by Path
 	QueryPath string
-	Private   bool // if private, can only get this extension if the current realm is the DAO realm
+	Private   bool // If true, the extension is only accessible from the current realm scope
 }
 
 type ExtensionsList interface {
@@ -24,6 +26,7 @@ type ExtensionsStore struct {
 	Tree avl.Tree
 }
 
+// Registers a new extension using extension info as key.
 func (es *ExtensionsStore) Set(ext Extension) bool {
 	info := ext.Info()
 	return es.Tree.Set(info.Path, ext)
@@ -45,6 +48,7 @@ func (es *ExtensionsStore) Remove(path string) (Extension, bool) {
 	return iface.(Extension), true
 }
 
+// Returns an iterable list of extensions.
 func (es *ExtensionsStore) List() ExtensionsList {
 	return &extensionsList{es: es}
 }
@@ -53,7 +57,6 @@ type extensionsList struct {
 	es *ExtensionsStore
 }
 
-// ForEach implements ExtensionsList.
 func (e *extensionsList) ForEach(fn func(index int, value ExtensionInfo) bool) {
 	if e.es.Tree.Size() == 0 {
 		return
@@ -68,7 +71,6 @@ func (e *extensionsList) ForEach(fn func(index int, value ExtensionInfo) bool) {
 	})
 }
 
-// Get implements ExtensionsList.
 func (e *extensionsList) Get(index int) *ExtensionInfo {
 	if index < 0 || index >= e.es.Tree.Size() {
 		return nil
@@ -79,12 +81,10 @@ func (e *extensionsList) Get(index int) *ExtensionInfo {
 	return &info
 }
 
-// Len implements ExtensionsList.
 func (e *extensionsList) Len() int {
 	return e.es.Tree.Size()
 }
 
-// Slice implements ExtensionsList.
 func (e *extensionsList) Slice(startIndex int, endIndex int) []ExtensionInfo {
 	size := e.es.Tree.Size()
 
