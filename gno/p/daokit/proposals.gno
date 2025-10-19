@@ -1,5 +1,15 @@
 package daokit
 
+// Proposals manage the lifecycle of DAO governance decisions.
+// Each proposal has a status, voting condition, and executable action.
+// Members vote on proposals which can be executed when conditions are met.
+//
+// Example: Proposal to add a member, transfer funds, or change governance rules.
+//
+// Usage:
+//   req := ProposalRequest{Title: "Add Member", Action: addMemberAction}
+//   proposal := store.newProposal(proposerID, req, condition)
+
 import (
 	"chain/runtime"
 	"errors"
@@ -11,12 +21,13 @@ import (
 	"gno.land/p/samcrew/daocond"
 )
 
+// Current state of a proposal in the governance process.
 type ProposalStatus int
 
 const (
-	ProposalStatusOpen ProposalStatus = iota
-	ProposalStatusPassed
-	ProposalStatusExecuted
+	ProposalStatusOpen     ProposalStatus = iota // Currently accepting votes
+	ProposalStatusPassed                         // Met conditions, ready for execution
+	ProposalStatusExecuted                       // Successfully executed
 )
 
 func (s ProposalStatus) String() string {
@@ -39,12 +50,14 @@ type Proposal struct {
 	CreatedAt     time.Time
 	CreatedHeight int64
 	ProposerID    string
-	Condition     daocond.Condition
-	Action        Action
-	Status        ProposalStatus
-	ExecutorID    string
-	ExecutedAt    time.Time
-	Ballot        daocond.Ballot
+
+	Action     Action            // What to execute if passed
+	Condition  daocond.Condition // Voting conditions for this proposal
+	Status     ProposalStatus
+	ExecutorID string
+	ExecutedAt time.Time
+
+	Ballot daocond.Ballot // All votes cast on this proposal
 }
 
 type ProposalsStore struct {
@@ -52,6 +65,7 @@ type ProposalsStore struct {
 	genID seqid.ID
 }
 
+// Data needed to create a new proposal.
 type ProposalRequest struct {
 	Title       string
 	Description string
@@ -91,6 +105,7 @@ func (p *ProposalsStore) GetProposal(id uint64) *Proposal {
 	return proposal
 }
 
+// Returns all proposals that match the given filter function.
 func (p *ProposalsStore) GetProposals(filter func(Proposal) bool) *ProposalsStore {
 	proposals := NewProposalsStore()
 	p.Tree.Iterate("", "", func(key string, value interface{}) bool {
@@ -107,6 +122,7 @@ func (p *ProposalsStore) GetProposals(filter func(Proposal) bool) *ProposalsStor
 	return proposals
 }
 
+// Updates proposal status based on current voting condition results.
 func (p *Proposal) UpdateStatus() {
 	conditionsAreMet := p.Condition.Eval(p.Ballot)
 	if p.Status == ProposalStatusOpen && conditionsAreMet {
@@ -114,6 +130,7 @@ func (p *Proposal) UpdateStatus() {
 	}
 }
 
+// Returns all proposals as a JSON string.
 func (p *ProposalsStore) GetProposalsJSON() string {
 	props := make([]*json.Node, 0, p.Tree.Size())
 	// XXX: pagination

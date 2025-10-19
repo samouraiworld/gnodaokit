@@ -1,5 +1,14 @@
 package daokit
 
+// Define what DAOs can do when proposals are executed.
+// Each action has a type and handler that implements the actual logic.
+//
+// Example: Adding a member, transferring funds, or updating configuration.
+//
+// Usage:
+//   action := NewAction("custom.AddMember", memberData)
+//   handler := NewActionHandler("custom.AddMember", addMemberFunc)
+
 import (
 	"errors"
 
@@ -7,45 +16,55 @@ import (
 	"gno.land/p/nt/ufmt"
 )
 
+// Represents a proposal's executable operation.
 type Action interface {
+	// Returns human-readable description of the action.
 	String() string
+	// Returns unique identifier for the action type.
 	Type() string
 }
 
+// Executes actions when proposals pass.
 type ActionHandler interface {
+	// Executes the given action's logic.
 	Execute(action Action)
+	// Returns the action type this handler processes.
 	Type() string
 }
 
+// Creates a new action with the specified type and payload data.
 func NewAction(kind string, payload interface{}) Action {
 	return &genericAction{kind: kind, payload: payload}
 }
 
+// Generic action implementation that stores type and payload data.
 type genericAction struct {
-	payload interface{}
-	kind    string
+	payload interface{} // The action's data
+	kind    string      // The action's type identifier
 }
 
-// String implements Action.
+// Returns string representation of the action's payload.
 func (g *genericAction) String() string {
 	return ufmt.Sprintf("%v", g.payload)
 }
 
-// Type implements Action.
+// Returns the action's type identifier.
 func (g *genericAction) Type() string {
 	return g.kind
 }
 
+// Creates a new action handler with the specified type and execution function.
 func NewActionHandler(kind string, executor func(interface{})) ActionHandler {
 	return &genericActionHandler{kind: kind, executor: executor}
 }
 
+// Generic action handler that executes functions on action payloads.
 type genericActionHandler struct {
-	executor func(payload interface{})
-	kind     string
+	executor func(payload interface{}) // Function that processes the action
+	kind     string                    // Action type this handler processes
 }
 
-// Execute implements ActionHandler.
+// Executes the action by calling the executor function with the payload.
 func (g *genericActionHandler) Execute(iaction Action) {
 	action, ok := iaction.(*genericAction)
 	if !ok {
@@ -54,18 +73,22 @@ func (g *genericActionHandler) Execute(iaction Action) {
 	g.executor(action.payload)
 }
 
-// Instantiate implements ActionHandler.
+// Creates a new empty action instance of this handler's type.
 func (g *genericActionHandler) Instantiate() Action {
 	return &genericAction{
 		kind: g.kind,
 	}
 }
 
-// Type implements ActionHandler.
+// Returns the action type this handler processes.
 func (g *genericActionHandler) Type() string {
 	return g.kind
 }
 
+// //////////////////////////////////////////////////////////
+// ActionExecuteLambdaKind
+//
+// Built-in action type for executing lambda functions.
 const ActionExecuteLambdaKind = "gno.land/p/samcrew/daokit.ExecuteLambda"
 
 func NewExecuteLambdaHandler() ActionHandler {
@@ -82,11 +105,15 @@ func NewExecuteLambdaAction(cb func()) Action {
 	return NewAction(ActionExecuteLambdaKind, cb)
 }
 
+// //////////////////////////////////////////////////////////
+// ActionInstantExecuteKind
+//
+// Built-in action type for instantly executing sub-proposals.
 const ActionInstantExecuteKind = "gno.land/p/samcrew/daokit.InstantExecute"
 
 type actionInstantExecute struct {
-	dao DAO
-	req ProposalRequest
+	dao DAO             // Target DAO to execute on
+	req ProposalRequest // Proposal to execute instantly
 }
 
 func (a *actionInstantExecute) String() string {
