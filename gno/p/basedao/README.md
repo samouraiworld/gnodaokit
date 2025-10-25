@@ -75,35 +75,40 @@ membersJSON := store.GetMembersJSON() // Export as JSON
 
 Provides built-in actions for common DAO operations. Each action has a unique type identifier:
 
+### Action Type Constants
+```go
+const ActionAddMemberKind = "gno.land/p/samcrew/basedao.AddMember"
+const ActionRemoveMemberKind = "gno.land/p/samcrew/basedao.RemoveMember"  
+const ActionAssignRoleKind = "gno.land/p/samcrew/basedao.AssignRole"
+const ActionUnassignRoleKind = "gno.land/p/samcrew/basedao.UnassignRole"
+const ActionEditProfileKind = "gno.land/p/samcrew/basedao.EditProfile"
+const ActionChangeDAOImplementationKind = "gno.land/p/samcrew/basedao.ChangeDAOImplementation"
+```
+
 ### Creating Actions
 ```go
 // Add a member with roles
-const ActionAddMemberKind = "gno.land/p/samcrew/basedao.AddMember"
 action := basedao.NewAddMemberAction(&basedao.ActionAddMember{
     Address: address("g1newmember..."),
     Roles:   []string{"moderator", "treasurer"},
 })
 
 // Remove member
-const ActionRemoveMemberKind = "gno.land/p/samcrew/basedao.RemoveMember"
 action := basedao.NewRemoveMemberAction(address("g1member..."))
 
 // Assign role to member
-const ActionAssignRoleKind = "gno.land/p/samcrew/basedao.AssignRole"
 action := basedao.NewAssignRoleAction(&basedao.ActionAssignRole{
     Address: address("g1member..."),
     Role:    "admin",
 })
 
 // Remove role from member
-const ActionUnassignRoleKind = "gno.land/p/samcrew/basedao.UnassignRole"
 action := basedao.NewUnassignRoleAction(&basedao.ActionUnassignRole{
     Address: address("g1member..."),
     Role:    "moderator",
 })
 
 // Edit DAO profile
-const ActionEditProfileKind = "gno.land/p/samcrew/basedao.EditProfile"
 action := basedao.NewEditProfileAction(
     [2]string{"DisplayName", "My Updated DAO Name"},
     [2]string{"Bio", "An improved description of our DAO"},
@@ -161,6 +166,17 @@ func Execute(proposalID uint64) {...}
 
 Execute(1) // Execute proposal #1 -- only works if it has enough votes
 ```
+
+#### Instant Execution
+
+Skip the voting process and execute a proposal immediately if you have the required permissions:
+
+```go
+// This performs: Propose() -> Vote(VoteYes) -> Execute()
+proposalID := daokit.InstantExecute(DAO, proposal)
+```
+
+Useful for admin actions, migrations, and emergency procedures.
 
 ### Rendering DAO Information
 
@@ -303,8 +319,10 @@ func crossFn(_ realm, callback func()) {
 3. Execute Migration
 
 ```go
-// Migration functions signature
+// Migration function signature
 type MigrateFn = func(prev *DAOPrivate, params []any) daokit.DAO
+
+// Parameters function signature  
 type MigrationParamsFn = func() []any
 
 // 1. Define migration function
@@ -350,21 +368,98 @@ daokit.InstantExecute(DAO, proposal)
 
 ## Extensions System
 
-Provides an extensions system for DAO. 
+Enables DAOs to expose additional functionality that can be accessed by other packages or realms. It provide a secure way to make specific DAO capabilities available without exposing internal implementation details.
+
+
+### Extension Interface
+
+All extensions must implement the `Extension` interface:
+
+```go
+type Extension interface {
+    // Returns metadata about this extension including its path, version,
+    // query path for external access, and privacy settings.
+    Info() ExtensionInfo
+}
+
+type ExtensionInfo struct {
+    Path      string // Unique extension identifier (e.g., "gno.land/p/demo/basedao.MembersView")
+    Version   string // Extension version (e.g., "1", "2.0", etc.)
+    QueryPath string // Path for external queries to access this extension's data
+    Private   bool   // If true, extension is only accessible from the same realm
+}
+```
+
+### Accessing Extensions
+
+```go
+// Get a specific extension by path
+ext := dao.Extension("gno.land/p/demo/basedao.MembersView")
+
+// List all available extensions
+extList := dao.ExtensionsList()
+count := extList.Len()
+
+// Iterate through extensions
+extList.ForEach(func(index int, info ExtensionInfo) bool {
+    fmt.Printf("Extension: %s v%s\n", info.Path, info.Version)
+    return false // continue iteration
+})
+
+// Get extension info by index
+info := extList.Get(0)
+if info != nil {
+    fmt.Printf("First extension: %s\n", info.Path)
+}
+
+// Get a slice of extensions
+extensions := extList.Slice(0, 5) // Get first 5 extensions
+```
 
 ### MembersViewExtension
 
-Allows other packages to check membership.
+Built-in `MembersViewExtension` allows external packages to check DAO membership:
 
 ```go
-// Get the members extension from a DAO
-ext := basedao.MustGetMembersViewExtension(dao)
+// Interface for membership queries
+type MembersViewExtension interface {
+    IsMember(memberId string) bool
+}
 
-// Check if someone is a member
+// Check if someone is a DAO member from any realm
+ext := basedao.MustGetMembersViewExtension(dao)
 isMember := ext.IsMember("g1user...")
 
-// Alternative: Get extension directly by path
-ext := dao.Extension(basedao.MembersViewExtensionPath)
+// Extension path constant
+const MembersViewExtensionPath = "gno.land/p/demo/basedao.MembersView"
+```
+
+### Creating Custom Extensions
+
+You can register custom extensions in your DAO:
+
+```go
+// Custom extension implementation
+type MyCustomExtension struct {
+    queryPath string
+}
+
+func (e *MyCustomExtension) Info() daokit.ExtensionInfo {
+    return daokit.ExtensionInfo{
+        Path:      "gno.land/p/mydao/custom",
+        Version:   "1.0",
+        QueryPath: e.queryPath,
+        Private:   false, // Accessible from other realms
+    }
+}
+
+// Register the extension
+daoPrivate.Core.Extensions.Set(&MyCustomExtension{
+    queryPath: "custom-data",
+})
+
+// Remove an extension
+removed, ok := daoPrivate.Core.Extensions.Remove("gno.land/p/mydao/custom.CustomExtension")
 ```
 
 ## Custom Actions Registration
