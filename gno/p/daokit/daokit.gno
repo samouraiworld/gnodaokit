@@ -27,6 +27,8 @@ type DAO interface {
 type SetImplemFn = func(implem DAO)
 
 // Creates, votes yes, and immediately executes a proposal in one operation.
+// Useful when you have enough permission to execute an action directly.
+// Examples: migrations, adding members
 func InstantExecute(d DAO, req ProposalRequest) uint64 {
 	id := d.Propose(req)
 	d.Vote(id, daocond.VoteYes)
