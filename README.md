@@ -39,6 +39,8 @@ make test
 
 A **Decentralized Autonomous Organization (DAO)** is a self-governing entity that operates through smart contracts, enabling transparent decision-making without centralized control.
 
+---
+
 DAOkit is a Gnolang framework for building complex DAOs with programmable governance rules and role-based access control. It is based on the following packages:
 
 - **[`daokit`](./gno/p/daokit/)** - Core package for building DAOs, proposals, and actions
@@ -115,7 +117,7 @@ type Core struct {
 
 ### 2.2.2 DAO Interface
 
-Defines the external functions that users or other modules interact with. 
+External functions for creating proposals, voting, and executing actions.
 
 ```go
 type DAO interface {
