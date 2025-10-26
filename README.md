@@ -26,8 +26,12 @@ make test
 - **[Custom Condition](./gno/r/daodemo/custom_condition/)** - DAO with custom voting rules
 
 ### Quick Navigation
-- [🚀 Quick Start](#4-quick-start)
-- [🎮 Examples & Live Demos](#5-examples--live-demos)
+- [🏗️ Architecture Overview](#2-architecture)
+- [🚀 Quick Start](#3-quick-start)
+- [🎮 Examples & Live Demos](#4-examples--live-demos)
+- [⚙️ Create Custom Resources](#5-create-custom-resources)
+- [🔄 DAO Migration](#6-dao-migration)
+- [🔌 Extensions](#7-extensions)
 
 ---
 
@@ -35,29 +39,25 @@ make test
 
 A **Decentralized Autonomous Organization (DAO)** is a self-governing entity that operates through smart contracts, enabling transparent decision-making without centralized control.
 
-`daokit` is a gnolang framework for creating complex DAO models based on conditions. It is composed of :
-- `daokit` : Core package for building DAOs, proposals, and actions
-- `basedao` : Extension with membership and role management
-- `daocond`: Stateless condition engine for evaluating proposals
+DAOkit is a Gnolang framework for building complex DAOs with programmable governance rules and role-based access control. It is based on the following packages:
 
-### Key Concepts
+- **[`daokit`](./gno/p/daokit/)** - Core package for building DAOs, proposals, and actions
+- **[`basedao`](./gno/p/basedao/)** - Extension with membership and role management
+- **[`daocond`](./gno/p/daocond/)** - Stateless condition engine for evaluating proposals
 
-- **Proposal**: A request to execute a **Resource**. Proposals are voted on and executed only if predefined **Conditions** are met.
-- **Resource**: An executable action within the DAO. Each resource is governed by a **Condition**.
-- **Condition**: A set of rules that determine whether a proposal can be executed.
-- **Role**: Labels that assign governance power or permissions to DAO members.
+It works using **Proposals** (requests to execute actions), **Resources** (the actual executable actions), **Conditions** (voting rules that must be met), and **Roles** (member permissions). 
 
-**Example**: Treasury spending requires 50% CFO approval + CEO approval. Only CFO and CEO can vote.
+**Example**: Treasury spending requires 50% CFO approval + CEO approval, where only CFO and CEO members can vote.
 
-# 3. Architecture
+# 2. Architecture
 
-## 3.1 [daocond](./gno/p/daocond/) - Stateless Condition Engine
+## 2.1 [daocond](./gno/p/daocond/) - Stateless Condition Engine
 
 `daocond` is a stateless condition engine used to evaluate if a proposal should be executed. It serves as the decision-making core of the daokit framework.
 
 > 📖 **[Full Documentation](./gno/p/daocond/README.md)** - Comprehensive guide with examples
 
-### 3.1.1 Core Interface
+### 2.1.1 Core Interface
 ```go
 type Condition interface {
 	Eval(ballot Ballot) bool              // Check if condition is satisfied
@@ -67,7 +67,7 @@ type Condition interface {
 }
 ```
 
-### 3.1.2 Common Usage Patterns
+### 2.1.2 Common Usage Patterns
 
 ```go
 // Simple majority of all members
@@ -84,7 +84,7 @@ governance := daocond.And(
 )
 ```
 
-### 3.1.3 Custom Conditions
+### 2.1.3 Custom Conditions
 
 Implement the `Condition` interface for custom voting rules:
 
@@ -100,11 +100,11 @@ func (c *MyCondition) Eval(ballot daocond.Ballot) bool {
 
 > 📖 **[See full example](./gno/r/daodemo/custom_condition/README.md)**
 
-## 3.2 [daokit](./gno/p/daokit/) - Core DAO Framework
+## 2.2 [daokit](./gno/p/daokit/) - Core DAO Framework
 
 `daokit` is the core mechanics for DAO governance, proposal management, and resource execution.
 
-### 3.2.1 Core Structure
+### 2.2.1 Core Structure
 
 ```go
 type Core struct {
@@ -113,7 +113,7 @@ type Core struct {
 }
 ```
 
-### 3.2.2 DAO Interface
+### 2.2.2 DAO Interface
 
 Defines the external functions that users or other modules interact with. 
 
@@ -125,7 +125,7 @@ type DAO interface {
 }
 ```
 
-### 3.2.3 Proposal Lifecycle
+### 2.2.3 Proposal Lifecycle
 
 Proposals follow three states:
 
@@ -133,15 +133,15 @@ Proposals follow three states:
 2. **Passed** - Condition met, ready for execution
 3. **Executed** - Action completed
 
-> 📖 [Quick Start Example](#4-quick-start)
+> 📖 [Quick Start Example](#3-quick-start)
 
-## 3.3 [basedao](./gno/p/basedao/) - Membership and Role Management
+## 2.3 [basedao](./gno/p/basedao/) - Membership and Role Management
 
 `basedao` extends `daokit` to handle members and roles management.
 
 > 📖 **[Full Documentation](./gno/p/basedao/README.md)**
 
-### 3.3.1 Quick Start
+### 2.3.1 Quick Start
 ```go
 // Initialize with roles and members
 roles := []basedao.RoleInfo{
@@ -165,7 +165,7 @@ DAO, daoPrivate := basedao.New(&basedao.Config{
 })
 ```
 
-### 3.3.2 Built-in Actions
+### 2.3.2 Built-in Actions
 Provides ready-to-use governance actions:
 
 ```go
@@ -191,7 +191,7 @@ action := basedao.NewEditProfileAction(
 )
 ```
 
-### 3.3.3 Configuration:
+### 2.3.3 Configuration:
 ```go
 type Config struct {
 	// Basic DAO information
@@ -226,7 +226,7 @@ type Config struct {
 }
 ```
 
-# 4. Quick Start
+# 3. Quick Start
 
 Create a DAO with roles and member voting in just a few steps:
 
@@ -275,7 +275,7 @@ func init() {
 // Create a new Proposal to be voted on
 // To execute this function, you must use a MsgRun (maketx run)
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
-func Propose(cur realm, req daokit.ProposalRequest) {
+func Propose(req daokit.ProposalRequest) {
 	DAO.Propose(req)
 }
 
@@ -291,26 +291,30 @@ func Execute(proposalID uint64) {
 
 // Render generates a UI representation of the DAO's state
 func Render(path string) string {
-	return daoPrivate.Render(path)
+	return DAO.Render(path)
 }
 ```
 
-# 5. Examples & Live Demos
+# 4. Examples & Live Demos
 
 DAOkit provides three complete example implementations demonstrating different capabilities:
 
-## 5.1 [Simple DAO](./gno/r/daodemo/simple_dao/)
+## 4.1 [Simple DAO](./gno/r/daodemo/simple_dao/)
 Basic DAO with roles and member voting. [Documentation](./gno/r/daodemo/simple_dao/README.md)
 
-## 5.2 [Custom Resource](./gno/r/daodemo/custom_resource/)
+## 4.2 [Custom Resource](./gno/r/daodemo/custom_resource/)
 DAO with custom actions (blog management). [Documentation](./gno/r/daodemo/custom_resource/README.md)
 
-## 5.3 [Custom Condition](./gno/r/daodemo/custom_condition/)
+## 4.3 [Custom Condition](./gno/r/daodemo/custom_condition/)
 DAO with custom voting rules. [Documentation](./gno/r/daodemo/custom_condition/README.md)
 
-## Running the Examples
+## Getting Started with Live Demos
 
-Each example includes ready-to-use transaction scripts in the `tx_script` directory:
+1. Register yourself as a member using the `AddMember` function
+2. Create proposals using the utils function (as `ProposeAddMember`)
+3. Vote on proposals to see governance in action
+
+To create your personalised proposal, modify and execute the transaction script available in the `./tx_script` directory by doing:
 
 ```bash
 gnokey maketx run \
@@ -321,21 +325,16 @@ gnokey maketx run \
   mykeyname \
   ./tx_script/create_proposal.gno
 ```
-> [`gnokey maketx run` Gnoland Docs](https://docs.gno.land/users/interact-with-gnokey#run)
+> [Gnoland Docs](https://docs.gno.land/users/interact-with-gnokey#run)
 
-**Getting Started with Live Demos:**
-1. Register yourself as a member using the `AddMember` function
-2. Create proposals using the transaction scripts
-3. Vote on proposals to see governance in action
-
-## 5.4 Video Tutorial
+## 4.4 Video Tutorial
 
 Watch our comprehensive video tutorial on our [`Youtube Channel`](https://www.youtube.com/@peerdevlearning) for a walkthrough of all examples.
 > [Video Tutorial](https://youtu.be/SphPgsjKQyQ)
 
-# 6. Create Custom Resources
+# 5. Create Custom Resources
 
-To add new behavior to your DAO — or to enable others to integrate your package into their own DAOs — define custom resources by implementing:
+To add new behavior to your DAO or to enable others to integrate your package into their own DAOs, define custom resources by implementing:
 
 ```go
 type Action interface {
@@ -396,7 +395,69 @@ resource := daokit.Resource{
 daoPrivate.Core.Resources.Set(&resource)
 ```
 
+# 6. DAO Migration
 
+DAOs can evolve over time through governance-approved migrations. This allows adding new features, fixing bugs, or changing governance rules while preserving member data and history.
+
+```go
+// 1. Define migration function that preserves existing data
+func migrateTo2_0(prev *basedao.DAOPrivate, params []any) daokit.DAO {
+    // Keep existing members and add new features
+    memberStore := prev.Members
+    memberStore.AddRole(basedao.RoleInfo{Name: "auditor", Description: "Financial oversight"})
+    
+    // Create upgraded DAO
+    newDAO, _ := basedao.New(&basedao.Config{
+        Name:             prev.InitialConfig.Name + " v2.0",
+        Members:          memberStore,
+        InitialCondition: prev.InitialConfig.InitialCondition,
+    })
+    return newDAO
+}
+
+// 2. Create and vote on upgrade proposal
+action := basedao.NewChangeDAOImplementationAction(migrateTo2_0)
+proposal := daokit.ProposalRequest{
+    Title:       "Upgrade to DAO v2.0",
+    Description: "Add auditor role and enhanced governance",
+    Action:      action,
+}
+proposalID := DAO.Propose(proposal)
+
+// 3. Execute migration after approval
+DAO.Execute(proposalID)
+```
+
+# 7. Extensions
+
+Extensions allow DAOs to expose controlled functionality to other packages while maintaining security. The most common use case is checking membership from external contracts.
+
+```go
+// Built-in membership extension - check if someone is a DAO member
+ext := basedao.MustGetMembersViewExtension(dao)
+isMember := ext.IsMember("g1user...")
+
+// List all available extensions
+extList := dao.ExtensionsList()
+fmt.Printf("Available extensions: %d\n", extList.Len())
+
+// Create custom extension for specialized queries
+type CustomExtension struct {
+    dao *basedao.DAOPrivate
+}
+
+func (e *CustomExtension) Info() daokit.ExtensionInfo {
+    return daokit.ExtensionInfo{
+        Path:      "gno.land/p/mydao/custom.View",
+        Version:   "1.0",
+        QueryPath: "custom-queries",
+        Private:   false, // Accessible from other realms
+    }
+}
+
+// Register custom extension
+daoPrivate.Core.Extensions.Set(&CustomExtension{dao: daoPrivate})
+```
 
 ---
 
