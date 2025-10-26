@@ -24,7 +24,6 @@ type Condition interface {
 ```go
 type Ballot interface {
     Vote(voter string, vote Vote) // allows a user to vote on a proposal
-
     Get(voter string) Vote // returns the vote of a specific user
     
     Total() int // returns the total number of votes cast
