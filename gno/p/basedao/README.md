@@ -370,7 +370,6 @@ daokit.InstantExecute(DAO, proposal)
 
 Enables DAOs to expose additional functionality that can be accessed by other packages or realms. It provide a secure way to make specific DAO capabilities available without exposing internal implementation details.
 
-
 ### Extension Interface
 
 All extensions must implement the `Extension` interface:
@@ -446,7 +445,7 @@ type MyCustomExtension struct {
 
 func (e *MyCustomExtension) Info() daokit.ExtensionInfo {
     return daokit.ExtensionInfo{
-        Path:      "gno.land/p/mydao/custom",
+        Path:      "gno.land/p/mydao/custom.CustomView",
         Version:   "1.0",
         QueryPath: e.queryPath,
         Private:   false, // Accessible from other realms
@@ -459,7 +458,7 @@ daoPrivate.Core.Extensions.Set(&MyCustomExtension{
 })
 
 // Remove an extension
-removed, ok := daoPrivate.Core.Extensions.Remove("gno.land/p/mydao/custom.CustomExtension")
+removed, ok := daoPrivate.Core.Extensions.Remove("gno.land/p/mydao/custom.CustomView")
 ```
 
 ## Custom Actions Registration
