@@ -67,6 +67,13 @@ func init() {
 	initProposals(25)
 }
 
+// Creates a new proposal
+// To execute this function, you must use a MsgRun `gnokey maketx run“
+// See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
+func Propose(cur realm, req daokit.ProposalRequest) {
+	localDAO.Propose(req)
+}
+
 // Allows DAO members to cast their vote on a specific proposal
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
 	localDAO.Vote(proposalID, vote)
@@ -75,13 +82,6 @@ func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
 // Triggers the implementation of a proposal's actions
 func Execute(cur realm, proposalID uint64) {
 	localDAO.Execute(proposalID)
-}
-
-// Creates a new proposal
-// To execute this function, you must use a MsgRun `gnokey maketx run“
-// See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
-func Propose(cur realm, req daokit.ProposalRequest) {
-	localDAO.Propose(req)
 }
 
 // Generates a UI representation of the DAO's state
