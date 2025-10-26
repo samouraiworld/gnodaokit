@@ -26,12 +26,12 @@ make test
 - **[Custom Condition](./gno/r/daodemo/custom_condition/)** - DAO with custom voting rules
 
 ### Quick Navigation
-- [🏗️ Architecture Overview](#2-architecture)
-- [🚀 Quick Start](#3-quick-start)
-- [🎮 Examples & Live Demos](#4-examples--live-demos)
-- [⚙️ Create Custom Resources](#5-create-custom-resources)
-- [🔄 DAO Migration](#6-dao-migration)
-- [🔌 Extensions](#7-extensions)
+- [Architecture Overview](#2-architecture)
+- [Quick Start](#3-quick-start)
+- [Examples & Live Demos](#4-examples--live-demos)
+- [Create Custom Resources](#5-create-custom-resources)
+- [DAO Migration](#6-dao-migration)
+- [Extensions](#7-extensions)
 
 ---
 
