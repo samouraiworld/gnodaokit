@@ -1,10 +1,6 @@
 # daocond: Stateless Condition Engine for DAO Governance
 
-`daocond` is a gnolang package that provides a powerful stateless condition engine for evaluating DAO proposal execution. It serves as the decision-making core of the daokit framework, determining whether proposals should be executed based on configurable governance rules.
-
-## Overview
-
-The `daocond` package implements a flexible condition system that allows DAOs to define complex governance rules without maintaining state. Conditions evaluate votes in real-time to determine if proposals meet the required criteria for execution.
+`daocond` is a Gnolang package that provides a stateless condition engine for evaluating DAO proposal execution. It serves as the decision-making core of the daokit framework, determining whether proposals should be executed based on configurable governance rules. 
 
 ## Core Interfaces
 
