@@ -117,7 +117,7 @@ type Core struct {
 
 ### 2.2.2 DAO Interface
 
-External functions for creating proposals, voting, and executing actions.
+Interface functions for creating proposals, voting, and executing actions.
 
 ```go
 type DAO interface {
@@ -168,6 +168,7 @@ DAO, daoPrivate := basedao.New(&basedao.Config{
 ```
 
 ### 2.3.2 Built-in Actions
+
 Provides ready-to-use governance actions:
 
 ```go
@@ -301,14 +302,14 @@ func Render(path string) string {
 
 DAOkit provides three complete example implementations demonstrating different capabilities:
 
-## 4.1 [Simple DAO](./gno/r/daodemo/simple_dao/)
-Basic DAO with roles and member voting. [Documentation](./gno/r/daodemo/simple_dao/README.md)
+## 4.1 [Simple DAO](./gno/r/daodemo/simple_dao/) - [Documentation](./gno/r/daodemo/simple_dao/README.md)
+Basic DAO with roles and member voting. 
 
-## 4.2 [Custom Resource](./gno/r/daodemo/custom_resource/)
-DAO with custom actions (blog management). [Documentation](./gno/r/daodemo/custom_resource/README.md)
+## 4.2 [Custom Resource](./gno/r/daodemo/custom_resource/) - [Documentation](./gno/r/daodemo/custom_resource/README.md)
+DAO with custom actions (blog management).
 
-## 4.3 [Custom Condition](./gno/r/daodemo/custom_condition/)
-DAO with custom voting rules. [Documentation](./gno/r/daodemo/custom_condition/README.md)
+## 4.3 [Custom Condition](./gno/r/daodemo/custom_condition/) - [Documentation](./gno/r/daodemo/custom_condition/README.md)
+DAO with custom voting rules.
 
 ## Getting Started with Live Demos
 
@@ -316,7 +317,7 @@ DAO with custom voting rules. [Documentation](./gno/r/daodemo/custom_condition/R
 2. Create proposals using the utils function (as `ProposeAddMember`)
 3. Vote on proposals to see governance in action
 
-To create your personalised proposal, modify and execute the transaction script available in the `./tx_script` directory by doing:
+To create your personalised proposal, modify the transaction script available in the `./tx_script/` directory, and execute it by doing:
 
 ```bash
 gnokey maketx run \
@@ -345,11 +346,12 @@ type Action interface {
 }
 
 type ActionHandler interface {
-	Type() string // return the type of the action. e.g.: "gno.land/p/samcrew/blog"
+	Type() string // return the type of the action. e.g.: "gno.land/p/samcrew/blog.NewPost"
 	Execute(action Action) // executes logic associated with the action
 }
 ```
-This allows DAOs to execute arbitrary logic or interact with Gno packages through governance-approved decisions.
+
+This allows DAOs to execute code through governance-approved decisions.
 
 ## Steps to Add a Custom Resource:
 1. Define the path of the action, it should be unique 
