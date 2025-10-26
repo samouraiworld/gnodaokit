@@ -77,10 +77,10 @@ Combine conditions using logical operators to create complex governance rules:
 
 ```go
 // And - All conditions must be satisfied
-func And(conditions ...Condition) Condition
+func And(conditions ...Condition) Condition {...}
 
 // Or - At least one condition must be satisfied  
-func Or(conditions ...Condition) Condition
+func Or(conditions ...Condition) Condition {...}
 ```
 
 **Examples**:

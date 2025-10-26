@@ -201,52 +201,61 @@ import (
     "gno.land/p/samcrew/basedao"
     "gno.land/p/samcrew/daocond"
     "gno.land/p/samcrew/daokit"
-    "gno.land/r/demo/profile"
 )
 
 var (
-    DAO        daokit.DAO
-    daoPrivate *basedao.DAOPrivate
+	DAO        daokit.DAO          // External interface for DAO interaction
+	daoPrivate *basedao.DAOPrivate // Full access to internal DAO state
 )
 
 func init() {
-    // Define initial roles in the DAO
-    initialRoles := []basedao.RoleInfo{
-        {Name: "admin", Description: "Administrators with full access", Color: "#329175"},
-        {Name: "public-relationships", Description: "Responsible for communication with the public", Color: "#21577A"},
-        {Name: "finance-officer", Description: "Responsible for funds management", Color: "#F3D3BC"},
+    // Set up roles
+    roles := []basedao.RoleInfo{
+        {Name: "admin", Description: "Administrators", Color: "#329175"},
+        {Name: "member", Description: "Regular members", Color: "#21577A"},
     }
 
-    // Define initial members and their roles
-    initialMembers := []basedao.Member{
-        {Address: "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg", Roles: []string{"admin", "public-relationships"}},
-        {Address: "g1ld6uaykyugld4rnm63rcy7vju4zx23lufml3jv", Roles: []string{"public-relationships"}},
-        {Address: "g1r69l0vhp7tqle3a0rk8m8fulr8sjvj4h7n0tth", Roles: []string{"finance-officer"}},
-        {Address: "g16jv3rpz7mkt0gqulxas56se2js7v5vmc6n6e0r", Roles: []string{}},
+    // Add initial members
+    members := []basedao.Member{
+        {Address: "g1admin...", Roles: []string{"admin"}},
+        {Address: "g1user1...", Roles: []string{"member"}},
+        {Address: "g1user2...", Roles: []string{"member"}},
     }
 
-    // Create the member store to use in conditions
-    memberStore := basedao.NewMembersStore(initialRoles, initialMembers)
+    store := basedao.NewMembersStore(roles, members)
 
-    // Define governance conditions using `daocond`
-    membersMajority := daocond.MembersThreshold(0.6, memberStore.IsMember, memberStore.MembersCount)
+    // Require 60% of members to approve proposals
+    condition := daocond.MembersThreshold(0.6, store.IsMember, store.MembersCount)
 
-    // Create the DAO with comprehensive configuration
+    // Create the DAO
     DAO, daoPrivate = basedao.New(&basedao.Config{
-        Name:             "Demo DAOKIT DAO",
-        Description:      "This is a demo DAO built with DAOKIT",
-        Members:          memberStore,
-        InitialCondition: membersMajority,
-        GetProfileString: profile.GetStringField,
-        SetProfileString: profile.SetStringField,
-        PrivateVarName:   "daoPrivate",
-        RenderFn: func(path string, dao *basedao.DAOPrivate) string {
-            if path == "demo" {
-                return renderDemo()
-            }
-            return dao.RenderRouter.Render(path)
-        },
+        Name:             "My DAO",
+        Description:      "A simple DAO example",
+        Members:          store,
+        InitialCondition: condition,
     })
+}
+
+// Create a new Proposal to be voted on
+// To execute this function, you must use a MsgRun (maketx run)
+// See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
+func Propose(req daokit.ProposalRequest) {
+	DAO.Propose(req)
+}
+
+// Allows DAO members to cast their vote on a specific proposal
+func Vote(proposalID uint64, vote daocond.Vote) {
+    DAO.Vote(proposalID, vote)
+}
+
+// Triggers the implementation of a proposal's actions
+func Execute(proposalID uint64) {
+	DAO.Execute(proposalID)
+}
+
+// Render generates a UI representation of the DAO's state
+func Render(path string) string {
+	return DAO.Render(path)
 }
 ```
 

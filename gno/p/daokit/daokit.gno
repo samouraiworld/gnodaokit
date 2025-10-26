@@ -36,7 +36,7 @@ func InstantExecute(d DAO, req ProposalRequest) uint64 {
 	return id
 }
 
-// Core manages the essential components of a DAO: resources, proposals, and extensions.
+// Manages the essential components of a DAO: resources, proposals, and extensions.
 type Core struct {
 	Resources  *ResourcesStore  // Available actions and their conditions
 	Proposals  *ProposalsStore  // All proposals and their voting state

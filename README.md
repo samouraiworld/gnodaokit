@@ -332,7 +332,7 @@ gnokey maketx run \
 
 ## 4.4 Video Tutorial
 
-Watch our comprehensive video tutorial on our [`Youtube Channel`](https://www.youtube.com/@peerdevlearning) for a walkthrough of all examples.
+A tutorial and a walkthrough in video of all our examples video is available on our [`Youtube Channel`](https://www.youtube.com/@peerdevlearning).
 > [Video Tutorial](https://youtu.be/SphPgsjKQyQ)
 
 # 5. Create Custom Resources
@@ -403,6 +403,8 @@ daoPrivate.Core.Resources.Set(&resource)
 
 DAOs can evolve over time through governance-approved migrations. This allows adding new features, fixing bugs, or changing governance rules while preserving member data and history.
 
+> 📖 **[Full Documentation](./gno/p/basedao/README.md#dao-upgrades-and-migration)** - Complete migration guide
+
 ```go
 // 1. Define migration function that preserves existing data
 func migrateTo2_0(prev *basedao.DAOPrivate, params []any) daokit.DAO {
@@ -435,6 +437,8 @@ DAO.Execute(proposalID)
 # 7. Extensions
 
 Extensions allow DAOs to expose controlled functionality to other packages while maintaining security. The most common use case is checking membership from external contracts.
+
+> 📖 **[Full Documentation](./gno/p/basedao/README.md#extensions-system)** - Complete extensions guide
 
 ```go
 // Built-in membership extension - check if someone is a DAO member

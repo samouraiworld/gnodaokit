@@ -1,7 +1,7 @@
 package daokit
 
 // Extensions system enables DAOs to expose additional functionality that can be
-// accessed by other packages or realms. Extensions provide a secure way to make
+// accessed by other packages or realms. It provides a secure way to make
 // specific DAO capabilities available without exposing internal implementation details.
 
 import "gno.land/p/nt/avl"
