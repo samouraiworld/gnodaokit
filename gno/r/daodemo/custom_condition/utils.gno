@@ -53,7 +53,7 @@ func renderDemo() string {
 	s += "1. **Join the DAO** using the " + md.Link("AddMember", txlink.Call("AddMember")) + " function.\n\n"
 	s += "2. **Create a Proposal** using " + md.Link("ProposeAddMember", txlink.Call("ProposeAddMember")) + " function with these parameters:\n\n"
 	s += "- `address`: The std.Address of the member to add\n"
-	s += "- `roles`: Comma-separated roles (e.g., \"admin,moderator\" or \"voter\")\n\n"
+	s += "- `roles`: Comma-separated roles (e.g., \"Role\")\n\n"
 	s += "3. " + md.Link("Vote", txlink.Call("Vote")) + " on proposals using their ID.\n\n"
 	s += "## 🎯 Custom Condition: NoRole\n\n"
 	s += "This DAO uses a custom condition called **NoRole** that requires:\n"
