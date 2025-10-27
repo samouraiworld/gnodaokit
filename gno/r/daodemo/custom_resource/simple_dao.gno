@@ -55,8 +55,8 @@ func init() {
 	resource := daokit.Resource{
 		Handler:     NewPostHandler(&myblog),
 		Condition:   membersMajority,
-		DisplayName: "Hello",
-		Description: "Description",
+		DisplayName: "Create Blog Post",
+		Description: "Allows DAO members to create and publish new blog posts",
 	}
 	// Add it to our DAO
 	daoPrivate.Core.Resources.Set(&resource)

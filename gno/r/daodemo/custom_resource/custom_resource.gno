@@ -15,7 +15,7 @@ type ActionNewPost struct {
 }
 
 func (m *ActionNewPost) String() string {
-	return ufmt.Sprintf("Add member %s with roles %v", m.Title, m.Content)
+	return ufmt.Sprintf("## %s\n\n%s", m.Title, m.Content)
 }
 
 func (m *ActionNewPost) Type() string {

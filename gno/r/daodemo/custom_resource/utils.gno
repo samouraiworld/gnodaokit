@@ -14,9 +14,9 @@ func initBlogProposals() {
 		content  string
 		proposer string
 	}{
-		{"Welcome to our DAO Blog", "This is our first blog post created through DAO governance!", "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh"},
-		{"Custom Resources in Action", "This post demonstrates how custom resources work in daokit. Any custom action can be proposed and voted on!", "g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld65"},
-		{"Community Updates", "Regular updates from our DAO community will be posted here through democratic proposals.", "g1v9kxjcm9ta047h6lta047h6lzd40gh"},
+		{"Welcome to our DAO Blog", "This is our first blog post created through DAO governance!", "g1demo1234567890abcdefghijklmnopqrstuvw1"},
+		{"Custom Resources in Action", "This post demonstrates how custom resources work in daokit. Any custom action can be proposed and voted on!", "g1demo1234567890abcdefghijklmnopqrstuvw2"},
+		{"Community Updates", "Regular updates from our DAO community will be posted here through democratic proposals.", "g1demo1234567890abcdefghijklmnopqrstuvw3"},
 	}
 
 	for _, post := range blogPosts {
@@ -25,7 +25,7 @@ func initBlogProposals() {
 
 		req := daokit.ProposalRequest{
 			Title:       ufmt.Sprintf("Create blog post: %s", post.title),
-			Description: ufmt.Sprintf("This proposal will create a new blog post with content: %s", post.content),
+			Description: ufmt.Sprintf("This proposal will create a new blog post."),
 			Action:      action,
 		}
 		daoPrivate.Core.Propose(post.proposer, req)
@@ -66,6 +66,8 @@ func renderDemo() string {
 	s += "- `title`: The title of the blog post\n"
 	s += "- `content`: The content of the blog post\n\n"
 	s += "3. " + md.Link("Vote", txlink.Call("Vote")) + " on proposals using their ID.\n\n"
+	s += "4. " + md.Link("Execute", txlink.Call("Execute")) + " proposals that have passed (met the required voting conditions).\n\n"
+	s += "   📝 **Note**: Only proposals that have met the governance conditions can be executed. You need at least **10% of member approval** to execute a proposal.\n\n"
 	s += "## 📋 Available Actions\n\n"
 	s += "### Member Management\n"
 	s += "- " + md.Link("🔗 Add Yourself as Member", txlink.Call("AddMember")) + " - Join the DAO to participate in governance\n"

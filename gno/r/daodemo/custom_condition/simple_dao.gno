@@ -48,6 +48,7 @@ func init() {
 		CrossFn: crossFn,
 	})
 	DAO = daokit.NewCrossing(localDAO, crossFn)
+	initDemoProposals()
 }
 
 // Propose creates a new proposal
