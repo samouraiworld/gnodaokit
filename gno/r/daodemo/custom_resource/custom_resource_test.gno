@@ -33,6 +33,9 @@ func TestDAOInitialization(t *testing.T) {
 		if res == nil {
 			t.Fatalf("Expected '%s' resource to be registered", ActionNewPostKind)
 		}
+		if res.DisplayName != "Create Blog Post" {
+			t.Errorf("Expected resource display name 'Create Blog Post', got '%s'", res.DisplayName)
+		}
 		if res.Description != "Allows DAO members to create and publish new blog posts through governance proposals" {
 			t.Errorf("Expected resource description 'Allows DAO members to create and publish new blog posts through governance proposals', got '%s'", res.Description)
 		}
@@ -52,8 +55,9 @@ func TestBlogResource(t *testing.T) {
 
 	t.Run("Test proposal creation", func(t *testing.T) {
 		Propose(cross, req)
+		// Should be 4 total proposals (3 initial + 1 test proposal)
 		if daoPrivate.Core.Proposals.Tree.Size() != 4 {
-			t.Fatalf("Expected 1 proposal, got %d", daoPrivate.Core.Proposals.Tree.Size())
+			t.Fatalf("Expected 4 total proposals, got %d", daoPrivate.Core.Proposals.Tree.Size())
 		}
 
 		prop := daoPrivate.Core.Proposals.GetProposal(4)
@@ -99,7 +103,7 @@ func TestBlogResource(t *testing.T) {
 		// should panic
 		abort := revive(func() { Execute(cross, 2) })
 		if abort != "proposal condition is not met" {
-			t.Fatal("expected execute to panic, but it did not")
+			t.Fatalf("Expected execute to panic with 'proposal condition is not met', but got: '%s'", abort)
 		}
 
 		// Verify blog post was NOT created
