@@ -31,10 +31,10 @@ func TestDAOInitialization(t *testing.T) {
 	t.Run("Test custom resource registration", func(t *testing.T) {
 		res := daoPrivate.Core.Resources.Get(ActionNewPostKind)
 		if res == nil {
-			t.Fatal("Expected '%s' resource to be registered", ActionNewPostKind)
+			t.Fatalf("Expected '%s' resource to be registered", ActionNewPostKind)
 		}
-		if res.Description != "Description" {
-			t.Errorf("Expected resource description 'Description', got '%s'", res.Description)
+		if res.Description != "Allows DAO members to create and publish new blog posts through governance proposals" {
+			t.Errorf("Expected resource description 'Allows DAO members to create and publish new blog posts through governance proposals', got '%s'", res.Description)
 		}
 	})
 }
@@ -68,12 +68,8 @@ func TestBlogResource(t *testing.T) {
 			t.Fatalf("Expected 0 posts initially, got %d", len(myblog.Post))
 		}
 
-		// Vote with 3 members (meets 60% threshold of 4 members)
+		// Vote with 1 member (meets 10% threshold of 4 members)
 		Vote(cross, 4, daocond.VoteYes) // member1
-		testing.SetRealm(testing.NewUserRealm("g1demo1234567890abcdefghijklmnopqrstuvw2"))
-		Vote(cross, 4, daocond.VoteYes) // member2
-		testing.SetRealm(testing.NewUserRealm("g1demo1234567890abcdefghijklmnopqrstuvw3"))
-		Vote(cross, 4, daocond.VoteYes) // member3
 
 		// Execute the proposal
 		Execute(cross, 4)
