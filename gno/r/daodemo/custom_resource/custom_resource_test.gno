@@ -36,8 +36,8 @@ func TestDAOInitialization(t *testing.T) {
 		if res.DisplayName != "Create Blog Post" {
 			t.Errorf("Expected resource display name 'Create Blog Post', got '%s'", res.DisplayName)
 		}
-		if res.Description != "Allows DAO members to create and publish new blog posts through governance proposals" {
-			t.Errorf("Expected resource description 'Allows DAO members to create and publish new blog posts through governance proposals', got '%s'", res.Description)
+		if res.Description != "Allows DAO members to create and publish new blog posts" {
+			t.Errorf("Allows DAO members to create and publish new blog posts', got '%s'", res.Description)
 		}
 	})
 }
