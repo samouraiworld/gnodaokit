@@ -403,37 +403,7 @@ daoPrivate.Core.Resources.Set(&resource)
 
 DAOs can evolve over time through governance-approved migrations. This allows adding new features, fixing bugs, or changing governance rules while preserving member data and history.
 
-> 📖 **[Full Documentation](./gno/p/basedao/README.md#dao-upgrades-and-migration)** - Complete migration guide
-
-```go
-// 1. Define migration function
-// params contains data from MigrationParamsFn - use for config, settings, etc.
-func migrateTo2_0(prev *basedao.DAOPrivate, params []any) daokit.DAO {
-    // Keep existing members and add new features
-    memberStore := prev.Members
-    memberStore.AddRole(basedao.RoleInfo{Name: "auditor", Description: "Financial oversight"})
-    
-    // Create upgraded DAO
-    newDAO, _ := basedao.New(&basedao.Config{
-        Name:             prev.InitialConfig.Name + " v2.0",
-        Members:          memberStore,
-        InitialCondition: prev.InitialConfig.InitialCondition,
-    })
-    return newDAO
-}
-
-// 2. Create and vote on upgrade proposal
-action := basedao.NewChangeDAOImplementationAction(migrateTo2_0)
-proposal := daokit.ProposalRequest{
-    Title:       "Upgrade to DAO v2.0",
-    Description: "Add auditor role and enhanced governance",
-    Action:      action,
-}
-proposalID := DAO.Propose(proposal)
-
-// 3. Execute migration after approval
-DAO.Execute(proposalID)
-```
+> 📖 **[Full Documentation](./gno/p/basedao/README.md#5-dao-upgrades-and-migration)** - Complete migration guide
 
 # 7. Extensions
 
@@ -492,19 +462,7 @@ if !ok {
 ext.IsMember()
 ```
 
-## 7.3 MembersViewExtension
-
-Built-in `MembersViewExtension` allows external packages to check DAO membership from any realm:
-
-```go
-const MembersViewExtensionPath = "gno.land/p/demo/basedao.MembersView"
-
-// Check if someone is a DAO member
-ext := basedao.MustGetMembersViewExtension(dao)
-isMember := ext.IsMember("g1user...")
-```
-
-## 7.4 Creating Custom Extensions
+## 7.3 Creating Custom Extensions
 
 You can register custom extensions in your DAO:
 
@@ -553,6 +511,18 @@ if !ok {
 }
 
 message := customExt.SayHello("Alice")
+```
+
+## 7.4 MembersViewExtension
+
+Built-in [`basedao.MembersViewExtension`](./gno/p/basedao/README.md#7-membership-extension) allows external packages to check DAO membership from any realm:
+
+```go
+const MembersViewExtensionPath = "gno.land/p/demo/basedao.MembersView"
+
+// Check if someone is a DAO member
+ext := basedao.MustGetMembersViewExtension(dao)
+isMember := ext.IsMember("g1user...")
 ```
 
 ---

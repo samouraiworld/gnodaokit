@@ -323,10 +323,6 @@ func crossFn(_ realm, callback func()) {
 
 ### 5.2 Migration Process
 
-1. Create Migration Function
-2. Create Upgrade Proposal
-3. Execute Migration
-
 ```go
 // Migration function signature
 type MigrateFn = func(prev *DAOPrivate, params []any) daokit.DAO
@@ -387,6 +383,46 @@ chain.Emit("BaseDAOCreated")
 chain.Emit("BaseDAOAddMember", "address", memberAddr)
 chain.Emit("BaseDAORemoveMember", "address", memberAddr)
 ```
+
+## 7. Membership Extension
+
+Allows other packages and realms to check if an address is a member of your DAO.
+
+### Usage
+
+```go
+import "gno.land/p/samcrew/basedao"
+
+// Check if someone is a DAO member
+ext := basedao.MustGetMembersViewExtension(dao)
+if ext.IsMember("g1user...") {
+    // User is a member
+}
+```
+
+### Example: Member-Only action
+
+```go
+package my_content
+
+import (
+    "gno.land/p/samcrew/basedao"
+    "gno.land/r/some/dao"
+)
+
+func Post(title, content string) {
+    caller := std.PrevRealm().Addr()
+    ext := basedao.MustGetMembersViewExtension(dao.DAO)
+    
+    if !ext.IsMember(caller.String()) {
+        panic("Only DAO members can post")
+    }
+    
+    createPost(title, content)
+}
+```
+
+The extension is automatically registered when you create a DAO with `basedao.New()`.
 
 ---
 
