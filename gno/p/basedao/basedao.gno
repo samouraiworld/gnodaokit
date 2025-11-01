@@ -73,7 +73,7 @@ type Config struct {
 	Description string
 	ImageURI    string
 
-	// Core components
+	// Storage handler
 	Members *MembersStore
 
 	// Feature toggles
