@@ -406,7 +406,8 @@ DAOs can evolve over time through governance-approved migrations. This allows ad
 > 📖 **[Full Documentation](./gno/p/basedao/README.md#dao-upgrades-and-migration)** - Complete migration guide
 
 ```go
-// 1. Define migration function that preserves existing data
+// 1. Define migration function
+// params contains data from MigrationParamsFn - use for config, settings, etc.
 func migrateTo2_0(prev *basedao.DAOPrivate, params []any) daokit.DAO {
     // Keep existing members and add new features
     memberStore := prev.Members
@@ -436,35 +437,122 @@ DAO.Execute(proposalID)
 
 # 7. Extensions
 
-Extensions allow DAOs to expose controlled functionality to other packages while maintaining security. The most common use case is checking membership from external contracts.
+Extensions allows DAOs to expose additional functionality that can be accessed by other packages or realms. They provide a secure way to make specific DAO capabilities available without exposing internal implementation details.
 
-> 📖 **[Full Documentation](./gno/p/basedao/README.md#extensions-system)** - Complete extensions guide
+## 7.1 Extension Interface
+
+All extensions must implement the `Extension` interface:
 
 ```go
-// Built-in membership extension - check if someone is a DAO member
-ext := basedao.MustGetMembersViewExtension(dao)
-isMember := ext.IsMember("g1user...")
+type Extension interface {
+    // Returns metadata about this extension including its path, version,
+    // query path for external access, and privacy settings.
+    Info() ExtensionInfo
+}
+
+type ExtensionInfo struct {
+    Path      string // Unique extension identifier (e.g., "gno.land/p/demo/basedao.MembersView")
+    Version   string // Extension version (e.g., "1", "2.0", etc.)
+    QueryPath string // Path for external queries to access this extension's data
+    Private   bool   // If true, extension is only accessible from the same realm
+}
+```
+
+## 7.2 Accessing Extensions
+
+```go
+// Get a specific extension by path
+ext := dao.Extension("gno.land/p/demo/basedao.MembersView")
 
 // List all available extensions
 extList := dao.ExtensionsList()
-fmt.Printf("Available extensions: %d\n", extList.Len())
+count := extList.Len()
 
-// Create custom extension for specialized queries
-type CustomExtension struct {
-    dao *basedao.DAOPrivate
+// Iterate through extensions
+extList.ForEach(func(index int, info ExtensionInfo) bool {
+    fmt.Printf("Extension: %s v%s\n", info.Path, info.Version)
+    return false // continue iteration
+})
+
+
+// Get a slice of extensions
+extensions := extList.Slice(0, 5) // Get first 5 extensions
+
+// Get extension by index
+extIndex := extList.Get(0)
+if extIndex != nil {
+    fmt.Printf("First extension: %s\n", extIndex.Path)
 }
 
-func (e *CustomExtension) Info() daokit.ExtensionInfo {
+// Use your extension
+ext, ok := extIndex.(*MembersViewExtension)
+if !ok {
+    panic("Invalid extension type")
+}
+ext.IsMember()
+```
+
+## 7.3 MembersViewExtension
+
+Built-in `MembersViewExtension` allows external packages to check DAO membership from any realm:
+
+```go
+const MembersViewExtensionPath = "gno.land/p/demo/basedao.MembersView"
+
+// Check if someone is a DAO member
+ext := basedao.MustGetMembersViewExtension(dao)
+isMember := ext.IsMember("g1user...")
+```
+
+## 7.4 Creating Custom Extensions
+
+You can register custom extensions in your DAO:
+
+```go
+// Custom extension implementation
+type MyCustomExtension struct {
+    queryPath string
+    greeting  string
+}
+
+func (e *MyCustomExtension) Info() daokit.ExtensionInfo {
     return daokit.ExtensionInfo{
-        Path:      "gno.land/p/mydao/custom.View",
+        Path:      "gno.land/p/mydao/custom.CustomView",
         Version:   "1.0",
-        QueryPath: "custom-queries",
+        QueryPath: e.queryPath,
         Private:   false, // Accessible from other realms
     }
 }
 
-// Register custom extension
-daoPrivate.Core.Extensions.Set(&CustomExtension{dao: daoPrivate})
+// Custom method: Example with parameters
+func (e *MyCustomExtension) SayHello(name string) string {
+    return "Hello " + name + "! " + e.greeting
+}
+
+// Register the extension
+daoPrivate.Core.Extensions.Set(&MyCustomExtension{
+    queryPath: "custom-data",
+    greeting:  "Welcome to our DAO!",
+})
+
+// Remove an extension
+removed, ok := daoPrivate.Core.Extensions.Remove("gno.land/p/mydao/custom.CustomView")
+```
+
+### Using Your Custom Extension
+
+```go
+ext := dao.Extension("gno.land/p/mydao/custom.CustomView")
+if ext == nil {
+    panic("Extension not found")
+}
+
+customExt, ok := ext.(*MyCustomExtension)
+if !ok {
+    panic("Invalid extension type")
+}
+
+message := customExt.SayHello("Alice")
 ```
 
 ---

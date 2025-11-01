@@ -1,8 +1,8 @@
 # basedao: Membership and Role Management for DAOs
 
-`basedao` is a gnolang package that extends the daokit framework with comprehensive membership and role management capabilities. It provides a complete solution for building DAOs with structured governance, member onboarding, and permission systems. It serves as the foundation for most DAO implementations, offering both the infrastructure and common actions needed for decentralized governance.
+`basedao` is a gnolang package that extends the DAOkit framework with comprehensive membership and role management capabilities. It serves as the foundation for most DAO implementation.
 
-## Core Components
+## 1. Core Components
 
 Provides three main types for managing DAO membership and roles:
 
@@ -71,7 +71,7 @@ roleInfo := store.RoleInfo("admin")  // Get role metadata
 membersJSON := store.GetMembersJSON() // Export as JSON
 ```
 
-## Built-in Actions
+## 2. Built-in Actions
 
 Provides built-in actions for common DAO operations. Each action has a unique type identifier:
 
@@ -116,7 +116,7 @@ action := basedao.NewEditProfileAction(
 )
 ```
 
-## Core Governance Interface
+## 3. Core Governance Interface
 
 Allow DAO's members to interact through proposals and voting.
 
@@ -190,9 +190,9 @@ Useful for admin actions, migrations, and emergency procedures.
 
 You can add or overwrite renders by providing a custom `RenderFn` in the DAO configuration.
 
-## Creating a DAO with basedao
+## 4. Creating a DAO with basedao
 
-### Basic DAO Setup
+### 4.1 Basic DAO Setup
 
 ```go
 package my_dao
@@ -259,7 +259,7 @@ func Render(path string) string {
 }
 ```
 
-### Configuration Options
+### 4.2 Configuration Options
 
 ```go
 type Config struct {
@@ -295,11 +295,11 @@ type Config struct {
 }
 ```
 
-## DAO Upgrades and Migration
+## 5. DAO Upgrades and Migration
 
 Supports upgrading DAO implementations through governance proposals, allowing DAOs to evolve over time.
 
-### Configuration for Upgrades
+### 5.1 Configuration for Upgrades
 
 ```go
 DAO, daoPrivate = basedao.New(&basedao.Config{
@@ -321,7 +321,7 @@ func crossFn(_ realm, callback func()) {
 }
 ```
 
-### Migration Process
+### 5.2 Migration Process
 
 1. Create Migration Function
 2. Create Upgrade Proposal
@@ -375,115 +375,7 @@ DAO.Execute(proposalID)
 daokit.InstantExecute(DAO, proposal) 
 ```
 
-## Extensions System
-
-Enables DAOs to expose additional functionality that can be accessed by other packages or realms. It provide a secure way to make specific DAO capabilities available without exposing internal implementation details.
-
-### Extension Interface
-
-All extensions must implement the `Extension` interface:
-
-```go
-type Extension interface {
-    // Returns metadata about this extension including its path, version,
-    // query path for external access, and privacy settings.
-    Info() ExtensionInfo
-}
-
-type ExtensionInfo struct {
-    Path      string // Unique extension identifier (e.g., "gno.land/p/demo/basedao.MembersView")
-    Version   string // Extension version (e.g., "1", "2.0", etc.)
-    QueryPath string // Path for external queries to access this extension's data
-    Private   bool   // If true, extension is only accessible from the same realm
-}
-```
-
-### Accessing Extensions
-
-```go
-// Get a specific extension by path
-ext := dao.Extension("gno.land/p/demo/basedao.MembersView")
-
-// List all available extensions
-extList := dao.ExtensionsList()
-count := extList.Len()
-
-// Iterate through extensions
-extList.ForEach(func(index int, info ExtensionInfo) bool {
-    fmt.Printf("Extension: %s v%s\n", info.Path, info.Version)
-    return false // continue iteration
-})
-
-// Get extension info by index
-info := extList.Get(0)
-if info != nil {
-    fmt.Printf("First extension: %s\n", info.Path)
-}
-
-// Get a slice of extensions
-extensions := extList.Slice(0, 5) // Get first 5 extensions
-```
-
-### MembersViewExtension
-
-Built-in `MembersViewExtension` allows external packages to check DAO membership:
-
-```go
-// Interface for membership queries
-type MembersViewExtension interface {
-    IsMember(memberId string) bool
-}
-
-// Check if someone is a DAO member from any realm
-ext := basedao.MustGetMembersViewExtension(dao)
-isMember := ext.IsMember("g1user...")
-
-// Extension path constant
-const MembersViewExtensionPath = "gno.land/p/demo/basedao.MembersView"
-```
-
-### Creating Custom Extensions
-
-You can register custom extensions in your DAO:
-
-```go
-// Custom extension implementation
-type MyCustomExtension struct {
-    queryPath string
-}
-
-func (e *MyCustomExtension) Info() daokit.ExtensionInfo {
-    return daokit.ExtensionInfo{
-        Path:      "gno.land/p/mydao/custom.CustomView",
-        Version:   "1.0",
-        QueryPath: e.queryPath,
-        Private:   false, // Accessible from other realms
-    }
-}
-
-// Register the extension
-daoPrivate.Core.Extensions.Set(&MyCustomExtension{
-    queryPath: "custom-data",
-})
-
-// Remove an extension
-removed, ok := daoPrivate.Core.Extensions.Remove("gno.land/p/mydao/custom.CustomView")
-```
-
-## Custom Actions Registration
-
-```go
-// Register custom resource after DAO creation
-customResource := daokit.Resource{
-    Handler:     MyCustomHandler(),
-    Condition:   customCondition,
-    DisplayName: "Custom Action",
-    Description: "My custom DAO action",
-}
-daoPrivate.Core.Resources.Set(&customResource)
-```
-
-## Event System
+## 6. Event System
 
 Events are emitted when actions happen in your DAO. This helps track activities.
 
