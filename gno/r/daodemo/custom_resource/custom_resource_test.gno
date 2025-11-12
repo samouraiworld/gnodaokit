@@ -31,16 +31,19 @@ func TestDAOInitialization(t *testing.T) {
 	t.Run("Test custom resource registration", func(t *testing.T) {
 		res := daoPrivate.Core.Resources.Get(ActionNewPostKind)
 		if res == nil {
-			t.Fatal("Expected '%s' resource to be registered", ActionNewPostKind)
+			t.Fatalf("Expected '%s' resource to be registered", ActionNewPostKind)
 		}
-		if res.Description != "Description" {
-			t.Errorf("Expected resource description 'Description', got '%s'", res.Description)
+		if res.DisplayName != "Create Blog Post" {
+			t.Errorf("Expected resource display name 'Create Blog Post', got '%s'", res.DisplayName)
+		}
+		if res.Description != "Allows DAO members to create and publish new blog posts" {
+			t.Errorf("Allows DAO members to create and publish new blog posts', got '%s'", res.Description)
 		}
 	})
 }
 
 func TestBlogResource(t *testing.T) {
-	testing.SetRealm(testing.NewUserRealm("g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh"))
+	testing.SetRealm(testing.NewUserRealm("g1demo1234567890abcdefghijklmnopqrstuvw1"))
 
 	action := NewPostAction("Test Title", "Test Content")
 	// Create test proposal
@@ -52,8 +55,9 @@ func TestBlogResource(t *testing.T) {
 
 	t.Run("Test proposal creation", func(t *testing.T) {
 		Propose(cross, req)
+		// Should be 4 total proposals (3 initial + 1 test proposal)
 		if daoPrivate.Core.Proposals.Tree.Size() != 4 {
-			t.Fatalf("Expected 1 proposal, got %d", daoPrivate.Core.Proposals.Tree.Size())
+			t.Fatalf("Expected 4 total proposals, got %d", daoPrivate.Core.Proposals.Tree.Size())
 		}
 
 		prop := daoPrivate.Core.Proposals.GetProposal(4)
@@ -68,12 +72,8 @@ func TestBlogResource(t *testing.T) {
 			t.Fatalf("Expected 0 posts initially, got %d", len(myblog.Post))
 		}
 
-		// Vote with 3 members (meets 60% threshold of 4 members)
+		// Vote with 1 member (meets 10% threshold of 4 members)
 		Vote(cross, 4, daocond.VoteYes) // member1
-		testing.SetRealm(testing.NewUserRealm("g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld65"))
-		Vote(cross, 4, daocond.VoteYes) // member2
-		testing.SetRealm(testing.NewUserRealm("g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld64"))
-		Vote(cross, 4, daocond.VoteYes) // member3
 
 		// Execute the proposal
 		Execute(cross, 4)
@@ -103,7 +103,7 @@ func TestBlogResource(t *testing.T) {
 		// should panic
 		abort := revive(func() { Execute(cross, 2) })
 		if abort != "proposal condition is not met" {
-			t.Fatal("expected execute to panic, but it did not")
+			t.Fatalf("Expected execute to panic with 'proposal condition is not met', but got: '%s'", abort)
 		}
 
 		// Verify blog post was NOT created

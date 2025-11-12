@@ -19,7 +19,6 @@ type SetImplemRaw func(newLocalDAO daokit.DAO, newDAO daokit.DAO)
 
 type RenderFn func(path string, dao *DAOPrivate) string
 
-// Extension implements daokit.DAO.
 func (d *daoPublic) Extension(path string) daokit.Extension {
 	ext, ok := d.impl.Core.Extensions.Get(path)
 	if !ok {
@@ -31,7 +30,6 @@ func (d *daoPublic) Extension(path string) daokit.Extension {
 	return ext
 }
 
-// ExtensionsList implements daokit.DAO.
 func (d *daoPublic) ExtensionsList() daokit.ExtensionsList {
 	return d.impl.Core.Extensions.List()
 }
@@ -52,7 +50,7 @@ func (d *daoPublic) Render(path string) string {
 	return d.impl.Render(path)
 }
 
-// DAO is meant for internal realm usage and should not be exposed
+// DAO is meant for internal realm usage and should not be exposed.
 type DAOPrivate struct {
 	Core             *daokit.Core
 	Members          *MembersStore
@@ -65,25 +63,40 @@ type DAOPrivate struct {
 	InitialConfig *Config // mostly there in case we need this data during upgrade
 }
 
+// Function type that returns the identifier of the current caller.
+// Used to identify who is making calls to DAO functions.
 type CallerIDFn func() string
 
 type Config struct {
-	Name               string
-	Description        string
-	ImageURI           string
-	Members            *MembersStore
-	NoDefaultHandlers  bool
-	NoDefaultRendering bool
-	InitialCondition   daocond.Condition
-	SetProfileString   ProfileStringSetter
-	GetProfileString   ProfileStringGetter
-	NoCreationEvent    bool
-	SetImplemFn        SetImplemRaw
-	MigrationParamsFn  MigrationParamsFn
-	RenderFn           RenderFn
-	CrossFn            daokit.CrossFn
-	CallerID           CallerIDFn
-	PrivateVarName     string
+	// Basic DAO information
+	Name        string
+	Description string
+	ImageURI    string
+
+	// Storage handler
+	Members *MembersStore
+
+	// Feature toggles
+	NoDefaultHandlers  bool // Skips registration of default management actions (add/remove members, etc.)
+	NoDefaultRendering bool // Skips setup of default web UI rendering routes
+	NoCreationEvent    bool // Skips emitting the DAO creation event
+
+	// Governance configuration
+	InitialCondition daocond.Condition // Default condition for all built-in actions, defaults to 60% member majority
+
+	// Profile integration (optional)
+	SetProfileString ProfileStringSetter // Function to update profile fields (DisplayName, Bio, Avatar)
+	GetProfileString ProfileStringGetter // Function to retrieve profile fields for members
+
+	// Advanced customization hooks
+	SetImplemFn       SetImplemRaw      // Function called when DAO implementation changes via governance
+	MigrationParamsFn MigrationParamsFn // Function providing parameters for DAO upgrades
+	RenderFn          RenderFn          // Rendering function for Gnoweb
+	CrossFn           daokit.CrossFn    // Cross-realm communication function for multi-realm DAOs
+	CallerID          CallerIDFn        // Custom function to identify the current caller, defaults to realmid.Previous
+
+	// Internal configuration
+	PrivateVarName string // Name of the private DAO variable for member querying extensions
 }
 
 type ProfileStringSetter func(cur realm, field string, value string) bool

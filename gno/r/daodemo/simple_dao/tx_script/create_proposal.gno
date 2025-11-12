@@ -6,7 +6,9 @@ import (
 	"gno.land/r/samcrew/daodemo/simple_dao"
 )
 
-// Proposal to add a new member in the DAO
+// Proposal function to add a new member in the DAO
+// To execute this function, you must use a MsgRun `gnokey maketx run“
+// See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func main() {
 	// Create payload for adding a new member with finance officer role
 	payload := basedao.ActionAddMember{

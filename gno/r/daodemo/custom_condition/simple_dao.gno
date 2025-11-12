@@ -18,9 +18,9 @@ func init() {
 		{Name: "Role", Description: "Has a role", Color: "#329175"},
 	}
 	initialMembers := []basedao.Member{
-		{Address: "g1j9zh3ce7a5tg2esjzherfrx7m3n842k2vmj395", Roles: []string{"Role"}},
-		{Address: "g1qkm0xhj8nsm2l3g50ttazxhlq7fs47myhxqk79", Roles: []string{}},
-		{Address: "g1nqsjex9aguqy062wdrryvvg9u6dn6e9u44dmkm", Roles: []string{}},
+		{Address: "g1demo1234567890abcdefghijklmnopqrstuvwxy1", Roles: []string{"Role"}},
+		{Address: "g1demo1234567890abcdefghijklmnopqrstuvwxy2", Roles: []string{}},
+		{Address: "g1demo1234567890abcdefghijklmnopqrstuvwxy3", Roles: []string{}},
 	}
 	memberStore := basedao.NewMembersStore(initialRoles, initialMembers)
 
@@ -48,6 +48,14 @@ func init() {
 		CrossFn: crossFn,
 	})
 	DAO = daokit.NewCrossing(localDAO, crossFn)
+	initDemoProposals()
+}
+
+// Propose creates a new proposal
+// To execute this function, you must use a MsgRun (maketx run)
+// See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
+func Propose(cur realm, req daokit.ProposalRequest) {
+	localDAO.Propose(req)
 }
 
 // Vote allows DAO members to cast their vote on a specific proposal
@@ -60,22 +68,19 @@ func Execute(cur realm, proposalID uint64) {
 	localDAO.Execute(proposalID)
 }
 
-// Propose creates a new proposal
-// To execute this function, you must use a MsgRun (maketx run)
-// See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
-func Propose(cur realm, req daokit.ProposalRequest) {
-	localDAO.Propose(req)
-}
-
 // Render generates a UI representation of the DAO's state
 func Render(path string) string {
 	return localDAO.Render(path)
 }
 
+// Enables cross-realm calls for multi-realm DAO operations.
+// It receives a callback function and executes it in the current realm context.
 func crossFn(_ realm, cb func()) {
 	cb()
 }
 
+// Updates the DAO implementation when governance proposals change it.
+// This allows the DAO to upgrade itself through proposals that modify its core logic.
 func setImplem(newLocalDAO daokit.DAO, newDAO daokit.DAO) {
 	localDAO, DAO = newLocalDAO, newDAO
 }

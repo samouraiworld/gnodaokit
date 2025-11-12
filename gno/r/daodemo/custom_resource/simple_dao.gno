@@ -19,10 +19,10 @@ func init() {
 		{Name: "Role", Description: "Has a role", Color: "#329175"},
 	}
 	initialMembers := []basedao.Member{
-		{Address: "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh", Roles: []string{}},
-		{Address: "g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld65", Roles: []string{}},
-		{Address: "g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld64", Roles: []string{}},
-		{Address: "g1q87ppukjx8mp7n70fal8ept6ajwr0dttafld69", Roles: []string{}},
+		{Address: "g1demo1234567890abcdefghijklmnopqrstuvw1", Roles: []string{}},
+		{Address: "g1demo1234567890abcdefghijklmnopqrstuvw2", Roles: []string{}},
+		{Address: "g1demo1234567890abcdefghijklmnopqrstuvw3", Roles: []string{}},
+		{Address: "g1demo1234567890abcdefghijklmnopqrstuvw4", Roles: []string{}},
 	}
 	memberStore := basedao.NewMembersStore(initialRoles, initialMembers)
 	membersMajority := daocond.MembersThreshold(0.1, memberStore.IsMember, memberStore.MembersCount)
@@ -55,14 +55,21 @@ func init() {
 	resource := daokit.Resource{
 		Handler:     NewPostHandler(&myblog),
 		Condition:   membersMajority,
-		DisplayName: "Hello",
-		Description: "Description",
+		DisplayName: "Create Blog Post",
+		Description: "Allows DAO members to create and publish new blog posts",
 	}
 	// Add it to our DAO
 	daoPrivate.Core.Resources.Set(&resource)
 
 	// Add some demo blog post proposals to showcase custom resource
 	initBlogProposals()
+}
+
+// Propose creates a new proposal
+// To execute this function, you must use a MsgRun (maketx run)
+// See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
+func Propose(cur realm, req daokit.ProposalRequest) {
+	localDAO.Propose(req)
 }
 
 // Vote allows DAO members to cast their vote on a specific proposal
@@ -75,22 +82,19 @@ func Execute(cur realm, proposalID uint64) {
 	localDAO.Execute(proposalID)
 }
 
-// Propose creates a new proposal
-// To execute this function, you must use a MsgRun (maketx run)
-// See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
-func Propose(cur realm, req daokit.ProposalRequest) {
-	localDAO.Propose(req)
-}
-
 // Render generates a UI representation of the DAO's state
 func Render(path string) string {
 	return localDAO.Render(path)
 }
 
+// Enables cross-realm calls for multi-realm DAO operations.
+// It receives a callback function and executes it in the current realm context.
 func crossFn(_ realm, cb func()) {
 	cb()
 }
 
+// Updates the DAO implementation when governance proposals change it.
+// This allows the DAO to upgrade itself through proposals that modify its core logic.
 func setImplem(newLocalDAO daokit.DAO, newDAO daokit.DAO) {
 	localDAO, DAO = newLocalDAO, newDAO
 }

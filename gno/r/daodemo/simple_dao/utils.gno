@@ -12,11 +12,11 @@ import (
 	"gno.land/p/samcrew/daokit"
 )
 
-// initProposals creates a number of initial proposals and votes.
+// Creates a number of initial proposals and votes.
 // It divides the proposals into 4 parts: AddMember, RemoveMember, AssignRole, EditProfile.
 // It initializes votes for each proposal type.
 func initProposals(nb int) {
-	const financeOfficer = "g126gx6p6d3da4ymef35ury6874j6kys044r7zlg"
+	const financeOfficer = "g1demo1234567890abcdefghijklmnopqrstuvwxyz"
 	const nbTypes = 4
 	proposalsPerType := nb / nbTypes
 	offsets := []int{0, proposalsPerType, 2 * proposalsPerType, 3 * proposalsPerType, nb} // AddMember, Remove, AssignRole, EditProfile
@@ -26,30 +26,35 @@ func initProposals(nb int) {
 	for t, start := range offsets[:nbTypes] {
 		end := offsets[t+1]
 		for i := start; i < end; i++ {
-			addr := ufmt.Sprintf("g1memberxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%02d", i)
+			addr := ufmt.Sprintf("g1fakemember000000000000000000000000000%02d", i)
 			var action daokit.Action
 			var title string
+			var description string
 
 			// CREATE
 			switch t {
 			case 0: // AddMember
 				action = basedao.NewAddMemberAction(&basedao.ActionAddMember{Address: address(addr), Roles: []string{}})
-				title = ufmt.Sprintf("Add member %s with no role", basedao.TruncateMiddle(addr))
+				title = ufmt.Sprintf("Add member %s with no role", addr)
+				description = ufmt.Sprintf("This proposal will add %s as a new member of the DAO without any specific roles. They will be able to participate in governance and vote on proposals.", addr)
 			case 1: // RemoveMember
 				action = basedao.NewRemoveMemberAction(address(addr))
-				title = ufmt.Sprintf("Remove member %s", basedao.TruncateMiddle(addr))
+				title = ufmt.Sprintf("Remove member %s", addr)
+				description = ufmt.Sprintf("This proposal will remove %s from the DAO membership. They will no longer be able to participate in governance or vote on proposals.", addr)
 			case 2: // AssignRole
 				role := "public-relationships"
 				action = basedao.NewAssignRoleAction(&basedao.ActionAssignRole{Address: address(financeOfficer), Role: role})
-				title = ufmt.Sprintf("Assign role %s for %s", role, basedao.TruncateMiddle(addr))
+				title = ufmt.Sprintf("Assign role %s for %s", role, addr)
+				description = ufmt.Sprintf("This proposal will assign the '%s' role to the finance officer. This role grants additional responsibilities and permissions within the DAO.", role)
 			case 3: // EditProfile
-				action = basedao.NewEditProfileAction([2]string{"Bio", "Simple DAO to the moon!"})
+				action = basedao.NewEditProfileAction([2]string{"Bio", "A demo DAO showcasing governance and community decision-making."})
 				title = "Edit the DAO's profile"
+				description = "This proposal will update the DAO's bio with a simple description of our purpose as a demonstration DAO."
 			}
 			req := daokit.ProposalRequest{
 				Title:       title,
 				Action:      action,
-				Description: "Random description",
+				Description: description,
 			}
 			id := daoPrivate.Core.Propose(lastAddr, req)
 
@@ -107,15 +112,16 @@ func renderDemo() string {
 	s += "## ℹ️ How it Works\n\n"
 	s += "1. **Join the DAO** using the " + md.Link("AddMember", txlink.Call("AddMember")) + " function.\n\n"
 	s += "2. **Create a pre-made Proposal** using " + md.Link("ProposeAddMember", txlink.Call("ProposeAddMember")) + "  function using this parameters:\n\n"
-	s += "- `address`: The std.Address of the member to add\n"
+	s += "- `address`: The address of the member to add\n"
 	s += "- `roles`: Comma-separated roles (e.g., \"public-relationships,finance-officer\" or \"finance-officer\")\n\n"
 	s += "3. " + md.Link("Vote", txlink.Call("Vote")) + " on proposals using their ID.\n\n"
+	s += "4. " + md.Link("Execute", txlink.Call("Execute")) + " proposals that have passed (met the required voting conditions).\n\n"
+	s += "   📝 **Note**: Only proposals that have met the governance conditions can be executed. You need both **40% of member approval** AND at least **1 finance-officer** to execute a proposal.\n\n"
 	s += "## 📋 Available Actions\n\n"
 	s += "### Member Management\n"
 	s += "- " + md.Link("🔗 Add Yourself as Member", txlink.Call("AddMember")) + " - Join the DAO to participate in governance\n"
 	s += "- " + md.Link("🔗 Propose Add Member", txlink.Call("ProposeAddMember")) + " - Create a proposal to add a new member with specific roles\n\n"
-	s += "## 🛠️ Custom Resource & Condition Demo\n\n"
-	s += "Explore how to extend your DAO with custom resources and conditions:\n\n"
+	s += "### Other Demos\n"
 	s += "- " + md.Link("🔗 Custom Resource Example", "/r/samcrew/daodemo/custom_resource") + " - See a demo of custom resource implementation\n"
 	s += "- " + md.Link("🔗 Custom Condition Example", "/r/samcrew/daodemo/custom_condition") + " - See a demo of custom condition implementation\n\n"
 	s += "*This is a demonstration DAO built with gno.land and daokit*"

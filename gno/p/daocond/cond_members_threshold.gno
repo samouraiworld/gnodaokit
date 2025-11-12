@@ -13,6 +13,10 @@ type membersThresholdCond struct {
 	threshold      float64
 }
 
+// Creates a condition requiring a percentage of members to vote yes.
+//
+// Example: MembersThreshold(0.6, isMemberFn, countFn)
+// Requires 60% member approval.
 func MembersThreshold(threshold float64, isMemberFn func(memberId string) bool, membersCountFn func() uint64) Condition {
 	if threshold <= 0 || threshold > 1 {
 		panic(errors.New("invalid threshold"))
@@ -30,22 +34,24 @@ func MembersThreshold(threshold float64, isMemberFn func(memberId string) bool, 
 	}
 }
 
-// Eval implements Condition.
+// Checks if enough members voted yes to meet the threshold.
 func (c *membersThresholdCond) Eval(ballot Ballot) bool {
 	return c.voteRatio(ballot, VoteYes) >= c.threshold
 }
 
-// Signal implements Condition.
+// Returns progress toward meeting the threshold between 0.0 and 1.0.
 func (c *membersThresholdCond) Signal(ballot Ballot) float64 {
 	return math.Min(c.voteRatio(ballot, VoteYes)/c.threshold, 1)
 }
 
-// Render implements Condition.
+// Displays the condition as text.
+// Example output: "60% of members"
 func (c *membersThresholdCond) Render() string {
 	return ufmt.Sprintf("%g%% of members", c.threshold*100)
 }
 
-// RenderWithVotes implements Condition.
+// Displays the condition with current vote counts.
+// Example output: "60% of members must vote yes\n\nYes: 3/5 = 60%"
 func (c *membersThresholdCond) RenderWithVotes(ballot Ballot) string {
 	s := ""
 	s += ufmt.Sprintf("%g%% of members must vote yes\n\n", c.threshold*100)

@@ -18,7 +18,9 @@ type gnolovDaoCondThreshold struct {
 
 var roleWeights = []float64{3.0, 2.0, 1.0}
 
-// This is our implementation of the govdao codition following Jae Kwon's specification: https://gist.github.com/jaekwon/918ad325c4c8f7fb5d6e022e33cb7eb3
+// Creates a weighted voting condition based on role tiers with dynamic power calculation.
+// Example: GnoloveDAOCondThreshold(0.5, ["admin", "mod", "user"], hasRoleFn, countFn)
+// This is our implementation of the govdao condition following Jae Kwon's specification: https://gist.github.com/jaekwon/918ad325c4c8f7fb5d6e022e33cb7eb3
 func GnoloveDAOCondThreshold(threshold float64, roles []string, hasRoleFn func(memberId string, role string) bool, usersWithRoleCountFn func(role string) uint32) Condition {
 	if threshold <= 0 || threshold > 1 {
 		panic(errors.New("invalid threshold"))
@@ -40,17 +42,18 @@ func GnoloveDAOCondThreshold(threshold float64, roles []string, hasRoleFn func(m
 	}
 }
 
-// Eval implements Condition.
+// Checks if weighted voting power meets the threshold.
 func (c *gnolovDaoCondThreshold) Eval(ballot Ballot) bool {
 	return c.voteRatio(ballot, VoteYes) >= c.threshold
 }
 
-// Signal implements Condition.
+// Returns progress toward meeting the weighted threshold between 0.0 and 1.0.
 func (c *gnolovDaoCondThreshold) Signal(ballot Ballot) float64 {
 	return math.Min(c.voteRatio(ballot, VoteYes)/c.threshold, 1)
 }
 
-// Render implements Condition.
+// Displays the condition with role weights as text.
+// Example output: "50% of total voting power | admin => 3.00 power | mod => 2.00 power"
 func (c *gnolovDaoCondThreshold) Render() string {
 	rolePowers := []string{}
 	for i, role := range c.roles {
@@ -60,7 +63,8 @@ func (c *gnolovDaoCondThreshold) Render() string {
 	return ufmt.Sprintf("%g%% of total voting power | %s", c.threshold*100, strings.Join(rolePowers, " | "))
 }
 
-// RenderWithVotes implements Condition.
+// Displays the condition with current weighted vote counts and breakdown.
+// Shows detailed voting power analysis and vote distribution across roles.
 func (c *gnolovDaoCondThreshold) RenderWithVotes(ballot Ballot) string {
 	vPowers, totalPower := c.computeVotingPowers()
 	rolePowers := []string{}

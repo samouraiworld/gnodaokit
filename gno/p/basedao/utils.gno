@@ -13,7 +13,7 @@ import (
 	"gno.land/p/samcrew/daokit"
 )
 
-// TruncateMiddle truncates a string to a maximum length, adding "..." in the middle if it exceeds the limit.
+// Truncates a string to a maximum length, adding "..." in the middle if it exceeds the limit.
 func TruncateMiddle(s string, max ...int) string {
 	defMax := 12
 	if len(max) > 0 {
@@ -30,12 +30,12 @@ func TruncateMiddle(s string, max ...int) string {
 	return ufmt.Sprintf("%s...%s", string(runes[:half]), string(runes[len(runes)-half:]))
 }
 
-// RenderAddressLink formats an address as a clickable link in Markdown.
+// Formats an address as a clickable link in Markdown.
 func RenderAddressLink(addr string) string {
 	return md.Link(TruncateMiddle(addr), ufmt.Sprintf("/u/%s", addr))
 }
 
-// RenderWithRolesLinks replaces all occurrences of roles in the given string with clickable links in Markdown.
+// Replaces all occurrences of roles in the given string with clickable links in Markdown.
 func (d *DAOPrivate) RenderWithRolesLinks(s string) string {
 	roles := d.Members.GetRoles()
 	for _, role := range roles {
@@ -44,7 +44,7 @@ func (d *DAOPrivate) RenderWithRolesLinks(s string) string {
 	return s
 }
 
-// RenderRoleLink formats a role as a clickable link in Markdown.
+// Formats a role as a clickable link in Markdown.
 func (d *DAOPrivate) RenderRoleLink(role string) string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
@@ -56,7 +56,7 @@ func (d *DAOPrivate) RenderRoleLink(role string) string {
 	return ufmt.Sprintf("[%s](%s:%s/%s)", roleName, linkPath, "role", role)
 }
 
-// RenderRoleLinkWithChip formats a role as a clickable link in Markdown, with colored chip at left.
+// Formats a role as a clickable link in Markdown, with colored chip at left.
 func (d *DAOPrivate) RenderRoleLinkWithChip(role string) string {
 	pkgPath := d.Realm.PkgPath()
 	linkPath := getLinkPath(pkgPath)
@@ -67,7 +67,7 @@ func (d *DAOPrivate) RenderRoleLinkWithChip(role string) string {
 	return ufmt.Sprintf("[%s %s](%s:%s/%s)", d.RoleColoredChip(role), role, linkPath, "role", role)
 }
 
-// FormatDateTimeWithUTCOffset formats a time.Time object as a string with UTC offset.
+// Formats a time.Time object as a string with UTC offset.
 func FormatDateTimeWithUTCOffset(t time.Time) string {
 	_, offsetSeconds := t.Zone()
 	hours := offsetSeconds / 3600
@@ -83,7 +83,7 @@ func FormatDateTimeWithUTCOffset(t time.Time) string {
 		sign, hours, minutes)
 }
 
-// RoleColoredChip returns a colored chip svg for the given role. If no role is given, a gray chip is returned.
+// Returns a colored chip svg for the given role. If no role is given, a gray chip is returned.
 // It can optionally take a custom svg.Canvas to define the size and style of the chip.
 func (d *DAOPrivate) RoleColoredChip(role string, canvas ...*svg.Canvas) string {
 	roleName := ""
@@ -118,7 +118,7 @@ func (d *DAOPrivate) RoleColoredChip(role string, canvas ...*svg.Canvas) string 
 	return chipCanvas.Render(roleName + " colored chip")
 }
 
-// RenderMembersTable renders a table of members with their display name, address, roles, and profile link.
+// Renders a table of members with their display name, address, roles, and profile link.
 // It supports pagination.
 func (d *DAOPrivate) RenderMembersTable(path string, members *avl.Tree) string {
 	pkgPath := d.Realm.PkgPath()

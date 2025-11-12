@@ -7,18 +7,28 @@ import (
 )
 
 type DAO interface {
+	// Creates a new proposal and returns its ID.
 	Propose(req ProposalRequest) uint64
+	// Casts a vote on a specific proposal.
 	Vote(id uint64, vote daocond.Vote)
+	// Executes a proposal if it meets the required conditions.
 	Execute(id uint64)
 
+	// Generates a web interface representation for the given path.
 	Render(path string) string
 
+	// Gets an extension by path, returns nil if not found.
 	Extension(path string) Extension
+	// Lists all available extensions.
 	ExtensionsList() ExtensionsList
 }
 
+// Function type for updating DAO implementation during governance upgrades.
 type SetImplemFn = func(implem DAO)
 
+// Creates, votes yes, and immediately executes a proposal in one operation.
+// Useful when you have enough permission to execute an action directly.
+// Examples: migrations, adding members
 func InstantExecute(d DAO, req ProposalRequest) uint64 {
 	id := d.Propose(req)
 	d.Vote(id, daocond.VoteYes)
@@ -26,12 +36,14 @@ func InstantExecute(d DAO, req ProposalRequest) uint64 {
 	return id
 }
 
+// Manages the essential components of a DAO: resources, proposals, and extensions.
 type Core struct {
-	Resources  *ResourcesStore
-	Proposals  *ProposalsStore
-	Extensions *ExtensionsStore
+	Resources  *ResourcesStore  // Available actions and their conditions
+	Proposals  *ProposalsStore  // All proposals and their voting state
+	Extensions *ExtensionsStore // Pluggable functionality modules
 }
 
+// Creates a new DAO core with empty stores.
 func NewCore() *Core {
 	return &Core{
 		Resources:  NewResourcesStore(),
@@ -40,6 +52,7 @@ func NewCore() *Core {
 	}
 }
 
+// Records a vote for a specific proposal from a voter.
 func (d *Core) Vote(voterID string, proposalID uint64, vote daocond.Vote) {
 	proposal := d.Proposals.GetProposal(proposalID)
 	if proposal == nil {
@@ -53,6 +66,7 @@ func (d *Core) Vote(voterID string, proposalID uint64, vote daocond.Vote) {
 	proposal.Ballot.Vote(voterID, daocond.Vote(vote))
 }
 
+// Executes a proposal if it meets the required voting conditions.
 func (d *Core) Execute(proposalID uint64) {
 	proposal := d.Proposals.GetProposal(proposalID)
 	if proposal == nil {
@@ -77,6 +91,7 @@ func (d *Core) Execute(proposalID uint64) {
 	proposal.ExecutedAt = time.Now()
 }
 
+// Creates a new proposal for voting and returns its ID.
 func (d *Core) Propose(proposerID string, req ProposalRequest) uint64 {
 	actionType := req.Action.Type()
 
