@@ -3,8 +3,8 @@ package basedao
 import (
 	"chain"
 
-	"gno.land/p/nt/avl"
-	"gno.land/p/onbloc/json"
+	"gno.land/p/nt/avl/v0"
+	"gno.land/p/samcrew/_deps/onbloc/json"
 )
 
 type MembersStore struct {

@@ -8,7 +8,7 @@ import (
 	"gno.land/p/samcrew/basedao"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
-	"gno.land/r/demo/profile"
+	"gno.land/r/samcrew/_deps/demo/profile"
 )
 
 var (
