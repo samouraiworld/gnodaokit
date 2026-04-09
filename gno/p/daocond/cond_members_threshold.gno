@@ -64,7 +64,11 @@ func (c *membersThresholdCond) RenderWithVotes(ballot Ballot) string {
 var _ Condition = (*membersThresholdCond)(nil)
 
 func (c *membersThresholdCond) voteRatio(ballot Ballot, vote Vote) float64 {
-	return float64(c.totalVote(ballot, vote)) / float64(c.membersCountFn())
+	total := c.membersCountFn()
+	if total == 0 {
+		return 0.0
+	}
+	return float64(c.totalVote(ballot, vote)) / float64(total)
 }
 
 func (c *membersThresholdCond) totalVote(ballot Ballot, vote Vote) uint64 {

@@ -57,7 +57,7 @@ func (c *crossingDAO) ExtensionsList() ExtensionsList {
 }
 
 func (c *crossingDAO) Render(path string) string {
-	return c.Render(path)
+	return c.dao.Render(path)
 }
 
 var _ DAO = (*crossingDAO)(nil)
