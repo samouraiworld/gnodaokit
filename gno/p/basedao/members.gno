@@ -207,6 +207,9 @@ func (m *MembersStore) RemoveMember(member string) {
 	if !m.IsMember(member) {
 		panic("member does not exist")
 	}
+	if m.Members.Size() <= 1 {
+		panic("cannot remove last member — DAO would be permanently bricked")
+	}
 
 	memberRolesRaw, ok := m.Members.Get(member)
 	if !ok {

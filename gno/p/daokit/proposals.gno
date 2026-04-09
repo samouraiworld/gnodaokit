@@ -22,6 +22,7 @@ const (
 	ProposalStatusOpen     ProposalStatus = iota // Currently accepting votes
 	ProposalStatusPassed                         // Met conditions, ready for execution
 	ProposalStatusExecuted                       // Successfully executed
+	ProposalStatusExpired                        // Expired without passing
 )
 
 func (s ProposalStatus) String() string {
@@ -32,10 +33,17 @@ func (s ProposalStatus) String() string {
 		return "Passed"
 	case ProposalStatusExecuted:
 		return "Executed"
+	case ProposalStatusExpired:
+		return "Expired"
 	default:
 		return "Unknown"
 	}
 }
+
+const (
+	MaxOpenProposals  = 50            // Maximum concurrent open proposals
+	ProposalTTLBlocks = int64(864000) // ~30 days at 3s/block — proposals expire after this
+)
 
 type Proposal struct {
 	ID            seqid.ID
@@ -43,6 +51,7 @@ type Proposal struct {
 	Description   string
 	CreatedAt     time.Time
 	CreatedHeight int64
+	ExpiresHeight int64 // Block height at which the proposal expires (0 = no expiry for legacy)
 	ProposerID    string
 
 	Action     Action            // What to execute if passed
@@ -55,8 +64,9 @@ type Proposal struct {
 }
 
 type ProposalsStore struct {
-	Tree  *avl.Tree // int -> Proposal
-	genID seqid.ID
+	Tree      *avl.Tree // int -> Proposal
+	genID     seqid.ID
+	openCount int // Track open proposals for spam prevention
 }
 
 // Data needed to create a new proposal.
@@ -98,10 +108,17 @@ func (p *ProposalsStore) GetProposals(filter func(Proposal) bool) *ProposalsStor
 	return proposals
 }
 
-// Updates proposal status based on current voting condition results.
+// Updates proposal status based on current voting condition results and expiry.
 func (p *Proposal) UpdateStatus() {
-	conditionsAreMet := p.Condition.Eval(p.Ballot)
-	if p.Status == ProposalStatusOpen && conditionsAreMet {
+	if p.Status != ProposalStatusOpen {
+		return
+	}
+	// Check expiry first
+	if p.ExpiresHeight > 0 && runtime.ChainHeight() > p.ExpiresHeight {
+		p.Status = ProposalStatusExpired
+		return
+	}
+	if p.Condition.Eval(p.Ballot) {
 		p.Status = ProposalStatusPassed
 	}
 }
@@ -134,7 +151,17 @@ func (p *ProposalsStore) GetProposalsJSON() string {
 	return string(bz)
 }
 
+func (p *ProposalsStore) decrementOpen() {
+	if p.openCount > 0 {
+		p.openCount--
+	}
+}
+
 func (p *ProposalsStore) newProposal(proposer string, req ProposalRequest, condition daocond.Condition) *Proposal {
+	if p.openCount >= MaxOpenProposals {
+		panic("too many open proposals — wait for existing proposals to pass, execute, or expire")
+	}
+
 	id := p.genID.Next()
 	proposal := &Proposal{
 		ID:            id,
@@ -147,7 +174,9 @@ func (p *ProposalsStore) newProposal(proposer string, req ProposalRequest, condi
 		Ballot:        daocond.NewBallot(),
 		CreatedAt:     time.Now(),
 		CreatedHeight: runtime.ChainHeight(),
+		ExpiresHeight: runtime.ChainHeight() + ProposalTTLBlocks,
 	}
 	p.Tree.Set(id.String(), proposal)
+	p.openCount++
 	return proposal
 }
