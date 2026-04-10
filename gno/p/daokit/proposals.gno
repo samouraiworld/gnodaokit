@@ -92,6 +92,7 @@ func (p *ProposalsStore) GetProposal(id uint64) *Proposal {
 }
 
 // Returns all proposals that match the given filter function.
+// Also updates status (expiry/passable) as a side effect, keeping openCount in sync.
 func (p *ProposalsStore) GetProposals(filter func(Proposal) bool) *ProposalsStore {
 	proposals := NewProposalsStore()
 	p.Tree.Iterate("", "", func(key string, value interface{}) bool {
@@ -99,7 +100,12 @@ func (p *ProposalsStore) GetProposals(filter func(Proposal) bool) *ProposalsStor
 		if !ok {
 			panic(errors.New("unexpected invalid proposal type"))
 		}
-		prop.UpdateStatus() // XXX: costly and probably insecure
+		wasOpen := prop.Status == ProposalStatusOpen
+		prop.UpdateStatus()
+		// Decrement openCount if proposal transitioned out of Open state
+		if wasOpen && prop.Status != ProposalStatusOpen {
+			p.decrementOpen()
+		}
 		if filter(*prop) {
 			proposals.Tree.Set(key, prop)
 		}
@@ -109,6 +115,8 @@ func (p *ProposalsStore) GetProposals(filter func(Proposal) bool) *ProposalsStor
 }
 
 // Updates proposal status based on current voting condition results and expiry.
+// NOTE: Callers that care about openCount tracking must use the store-level
+// helper UpdateProposalStatus, which handles the decrement on transitions.
 func (p *Proposal) UpdateStatus() {
 	if p.Status != ProposalStatusOpen {
 		return
@@ -123,6 +131,39 @@ func (p *Proposal) UpdateStatus() {
 	}
 }
 
+// UpdateProposalStatus is a store-level helper that calls UpdateStatus and
+// tracks openCount transitions. Use this from code paths that must keep the
+// openCount in sync (Vote, Execute, Render paths).
+func (p *ProposalsStore) UpdateProposalStatus(prop *Proposal) {
+	wasOpen := prop.Status == ProposalStatusOpen
+	prop.UpdateStatus()
+	if wasOpen && prop.Status != ProposalStatusOpen {
+		p.decrementOpen()
+	}
+}
+
+// CleanExpired iterates all proposals and transitions expired ones to
+// ProposalStatusExpired, freeing openCount slots. Anyone can call.
+func (p *ProposalsStore) CleanExpired() int {
+	cleaned := 0
+	p.Tree.Iterate("", "", func(key string, value interface{}) bool {
+		prop, ok := value.(*Proposal)
+		if !ok {
+			return false
+		}
+		if prop.Status != ProposalStatusOpen {
+			return false
+		}
+		if prop.ExpiresHeight > 0 && runtime.ChainHeight() > prop.ExpiresHeight {
+			prop.Status = ProposalStatusExpired
+			p.decrementOpen()
+			cleaned++
+		}
+		return false
+	})
+	return cleaned
+}
+
 // Returns all proposals as a JSON string.
 func (p *ProposalsStore) GetProposalsJSON() string {
 	props := make([]*json.Node, 0, p.Tree.Size())
@@ -132,7 +173,11 @@ func (p *ProposalsStore) GetProposalsJSON() string {
 		if !ok {
 			panic(errors.New("unexpected invalid proposal type"))
 		}
+		wasOpen := prop.Status == ProposalStatusOpen
 		prop.UpdateStatus()
+		if wasOpen && prop.Status != ProposalStatusOpen {
+			p.decrementOpen()
+		}
 		props = append(props, json.ObjectNode("", map[string]*json.Node{
 			"id":          json.NumberNode("", float64(prop.ID)),
 			"title":       json.StringNode("", prop.Title),

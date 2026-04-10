@@ -59,12 +59,8 @@ func (d *Core) Vote(voterID string, proposalID uint64, vote daocond.Vote) {
 		panic("proposal not found")
 	}
 
-	// Check expiry before allowing vote
-	proposal.UpdateStatus()
-	if proposal.Status == ProposalStatusExpired {
-		d.Proposals.decrementOpen()
-		panic("proposal has expired")
-	}
+	// Check expiry before allowing vote (this decrements openCount if expired)
+	d.Proposals.UpdateProposalStatus(proposal)
 	if proposal.Status != ProposalStatusOpen {
 		panic("proposal is not open")
 	}

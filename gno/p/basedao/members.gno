@@ -149,8 +149,19 @@ func (m *MembersStore) GetMembersWithRole(role string) []string {
 	return res
 }
 
+// CountMembersWithRole returns the count of members holding a role in O(1).
+// Previously this allocated and returned a slice of all members to call len() —
+// now it uses the role's Members AVL tree Size() directly.
 func (m *MembersStore) CountMembersWithRole(role string) uint32 {
-	return uint32(len(m.GetMembersWithRole(role)))
+	roleDataRaw, ok := m.Roles.Get(role)
+	if !ok {
+		return 0
+	}
+	roleData, ok := roleDataRaw.(*Role)
+	if !ok {
+		return 0
+	}
+	return uint32(roleData.Members.Size())
 }
 
 func (m *MembersStore) GetMembersWithoutRole() []string {
