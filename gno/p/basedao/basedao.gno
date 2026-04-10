@@ -82,7 +82,8 @@ type Config struct {
 	NoCreationEvent    bool // Skips emitting the DAO creation event
 
 	// Governance configuration
-	InitialCondition daocond.Condition // Default condition for all built-in actions, defaults to 60% member majority
+	InitialCondition       daocond.Condition // Default condition for non-constitutional actions (default 60%)
+	SupermajorityCondition daocond.Condition // Condition for constitutional actions (RemoveMember, ChangeDAOImplementation) — default 75%
 
 	// Profile integration (optional)
 	SetProfileString ProfileStringSetter // Function to update profile fields (DisplayName, Bio, Avatar)
@@ -154,6 +155,13 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 		if conf.InitialCondition == nil {
 			conf.InitialCondition = daocond.MembersThreshold(0.6, members.IsMember, members.MembersCount)
 		}
+		// Constitutional condition: higher threshold (75%) for actions that
+		// can permanently change the DAO (implementation upgrade, member removal).
+		// Falls back to InitialCondition if no SupermajorityCondition was set.
+		constitutionalCondition := conf.SupermajorityCondition
+		if constitutionalCondition == nil {
+			constitutionalCondition = daocond.MembersThreshold(0.75, members.IsMember, members.MembersCount)
+		}
 
 		if conf.SetProfileString != nil {
 			dao.Core.Resources.Set(&daokit.Resource{
@@ -181,9 +189,9 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 
 			dao.Core.Resources.Set(&daokit.Resource{
 				Handler:     NewChangeDAOImplementationHandler(dao, setImplemFn, conf.MigrationParamsFn),
-				Condition:   conf.InitialCondition,
+				Condition:   constitutionalCondition,
 				DisplayName: "Change DAO Implementation",
-				Description: "Change the underlying DAO implementation.",
+				Description: "Change the underlying DAO implementation. Requires supermajority (default 75%).",
 			})
 		}
 
@@ -196,9 +204,9 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 			},
 			{
 				Handler:     NewRemoveMemberHandler(dao),
-				Condition:   conf.InitialCondition,
+				Condition:   constitutionalCondition,
 				DisplayName: "Remove Member",
-				Description: "This proposal allows you to remove a member from the DAO.",
+				Description: "This proposal allows you to remove a member from the DAO. Requires supermajority (default 75%).",
 			},
 			{
 				Handler:     NewAssignRoleHandler(dao),

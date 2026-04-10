@@ -94,6 +94,18 @@ func (c *roleThresholdCond) RenderWithVotes(ballot Ballot) string {
 
 var _ Condition = (*roleThresholdCond)(nil)
 
+// Snapshot freezes the current role member count at proposal creation time.
+// Prevents minority takeover via role assignment/removal between vote and execution.
+func (c *roleThresholdCond) Snapshot() Condition {
+	frozenTotal := c.usersRoleCountFn(c.role)
+	return &roleThresholdCond{
+		hasRoleFn:        c.hasRoleFn,
+		usersRoleCountFn: func(_ string) uint32 { return frozenTotal },
+		thresholdBps:     c.thresholdBps,
+		role:             c.role,
+	}
+}
+
 func (c *roleThresholdCond) totalVote(ballot Ballot, vote Vote) uint32 {
 	total := uint32(0)
 	ballot.Iterate(func(voter string, v Vote) bool {

@@ -207,6 +207,13 @@ func (p *ProposalsStore) newProposal(proposer string, req ProposalRequest, condi
 		panic("too many open proposals — wait for existing proposals to pass, execute, or expire")
 	}
 
+	// Snapshot the condition if it supports freezing its denominator.
+	// This prevents governance attacks where members are added/removed between
+	// voting and execution to retroactively change whether a proposal passes.
+	if snap, ok := condition.(daocond.Snapshottable); ok {
+		condition = snap.Snapshot()
+	}
+
 	id := p.genID.Next()
 	proposal := &Proposal{
 		ID:            id,

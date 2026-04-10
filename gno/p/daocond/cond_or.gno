@@ -59,4 +59,17 @@ func (c *orCond) RenderWithVotes(ballot Ballot) string {
 	return "**[** " + strings.Join(renders, " **OR** ") + " **]**"
 }
 
+// Snapshot propagates the snapshot call to any child condition that supports it.
+func (c *orCond) Snapshot() Condition {
+	snapshotted := make([]Condition, len(c.conditions))
+	for i, cond := range c.conditions {
+		if s, ok := cond.(Snapshottable); ok {
+			snapshotted[i] = s.Snapshot()
+		} else {
+			snapshotted[i] = cond
+		}
+	}
+	return &orCond{conditions: snapshotted}
+}
+
 var _ Condition = (*orCond)(nil)

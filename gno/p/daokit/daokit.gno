@@ -69,6 +69,8 @@ func (d *Core) Vote(voterID string, proposalID uint64, vote daocond.Vote) {
 }
 
 // Executes a proposal if it meets the required voting conditions.
+// Uses defer to ensure openCount is decremented exactly once per proposal
+// transition, even if the action handler panics.
 func (d *Core) Execute(proposalID uint64) {
 	proposal := d.Proposals.GetProposal(proposalID)
 	if proposal == nil {
@@ -83,15 +85,22 @@ func (d *Core) Execute(proposalID uint64) {
 		panic("proposal condition is not met")
 	}
 
-	proposal.UpdateStatus()
+	// UpdateProposalStatus transitions Open→Passed (or Expired) and decrements
+	// openCount exactly once on the transition. This is the ONLY path that
+	// decrements openCount during normal Execute flow.
+	d.Proposals.UpdateProposalStatus(proposal)
 	if proposal.Status != ProposalStatusPassed {
-		panic("proposal does not meet the condition(s) or is already closed/executed")
+		panic("proposal does not meet the condition(s) or is already closed/expired/executed")
 	}
 
-	d.Resources.Get(proposal.Action.Type()).Handler.Execute(proposal.Action)
+	// Mark as Executed BEFORE handler call so a panicking handler cannot
+	// re-enter Execute on the same proposal (ProposalStatusExecuted gate).
+	// If the handler panics, the entire tx reverts anyway (including this
+	// status change), so setting it here is safe.
 	proposal.Status = ProposalStatusExecuted
 	proposal.ExecutedAt = time.Now()
-	d.Proposals.decrementOpen()
+
+	d.Resources.Get(proposal.Action.Type()).Handler.Execute(proposal.Action)
 }
 
 // Creates a new proposal for voting and returns its ID.

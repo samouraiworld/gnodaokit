@@ -95,6 +95,20 @@ func (c *membersThresholdCond) RenderWithVotes(ballot Ballot) string {
 
 var _ Condition = (*membersThresholdCond)(nil)
 
+// Snapshot freezes the current member count at proposal creation time.
+// The snapshotted condition uses the frozen total forever, preventing
+// minority takeover via member removal between vote and execution.
+// The isMemberFn is preserved to filter votes from members who existed
+// at snapshot time but may have been removed since.
+func (c *membersThresholdCond) Snapshot() Condition {
+	frozenTotal := c.membersCountFn()
+	return &membersThresholdCond{
+		isMemberFn:   c.isMemberFn,
+		membersCountFn: func() uint64 { return frozenTotal },
+		thresholdBps: c.thresholdBps,
+	}
+}
+
 func (c *membersThresholdCond) totalVote(ballot Ballot, vote Vote) uint64 {
 	total := uint64(0)
 	ballot.Iterate(func(voter string, v Vote) bool {

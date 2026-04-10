@@ -21,6 +21,17 @@ type Condition interface {
 	RenderWithVotes(ballot Ballot) string
 }
 
+// Snapshottable is implemented by conditions whose denominator should be
+// frozen at proposal creation time. This prevents governance attacks where
+// members are added or removed between voting and execution, retroactively
+// changing whether a proposal passes.
+//
+// If a Condition implements this interface, the proposals store calls
+// Snapshot() at newProposal time and uses the returned Condition thereafter.
+type Snapshottable interface {
+	Snapshot() Condition
+}
+
 // Represents a collection of votes that can be evaluated against conditions.
 type Ballot interface {
 	// Records a vote from a specific voter.

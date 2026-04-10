@@ -59,4 +59,18 @@ func (c *andCond) RenderWithVotes(ballot Ballot) string {
 	return "**[** " + strings.Join(renders, " **AND** ") + " **]**"
 }
 
+// Snapshot propagates the snapshot call to any child condition that supports it.
+// Children that don't implement Snapshottable are kept as-is.
+func (c *andCond) Snapshot() Condition {
+	snapshotted := make([]Condition, len(c.conditions))
+	for i, cond := range c.conditions {
+		if s, ok := cond.(Snapshottable); ok {
+			snapshotted[i] = s.Snapshot()
+		} else {
+			snapshotted[i] = cond
+		}
+	}
+	return &andCond{conditions: snapshotted}
+}
+
 var _ Condition = (*andCond)(nil)
