@@ -1,7 +1,6 @@
 package daocond
 
 import (
-	"math"
 	"strings"
 )
 
@@ -31,10 +30,14 @@ func (c *orCond) Eval(ballot Ballot) bool {
 }
 
 // Returns highest signal among all conditions between 0.0 and 1.0.
+// Display-only — Signal is never used in consensus paths (only Eval is).
 func (c *orCond) Signal(ballot Ballot) float64 {
 	maxSignal := 0.0
 	for _, condition := range c.conditions {
-		maxSignal = math.Max(maxSignal, condition.Signal(ballot))
+		s := condition.Signal(ballot)
+		if s > maxSignal {
+			maxSignal = s
+		}
 	}
 	return maxSignal
 }
