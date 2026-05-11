@@ -1,4 +1,4 @@
-GNOVERSION=4e80c37e8d1870aa5d3b01966ed4c5dfa18a7566
+GNOVERSION=5111dbc2287377990a1366cd369971cb299a1c43
 GNO=go run github.com/gnolang/gno/gnovm/cmd/gno@${GNOVERSION}
 
 .PHONY: dev
