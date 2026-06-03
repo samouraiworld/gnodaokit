@@ -121,9 +121,9 @@ Interface functions for creating proposals, voting, and executing actions.
 
 ```go
 type DAO interface {
-	Propose(req ProposalRequest) uint64  // Create a new proposal, returns proposal ID
-	Vote(id uint64, vote daocond.Vote)   // Cast a vote on an existing proposal
-	Execute(id uint64)                   // Execute a passed proposal
+	Propose(req ProposalRequest) uint64    // Create a new proposal, returns proposal ID
+	Vote(id uint64, vote daocond.Vote)     // Cast a vote on an existing proposal
+	Execute(id uint64, rlm realm)          // Execute a passed proposal (threads the realm for cross-calls)
 }
 ```
 
@@ -158,13 +158,13 @@ members := []basedao.Member{
 
 store := basedao.NewMembersStore(roles, members)
 
-// Create DAO
+// Create DAO (cur is the realm received by init/the calling crossing function)
 DAO, daoPrivate := basedao.New(&basedao.Config{
 	Name:             "My DAO",
 	Description:      "A sample DAO",
 	Members:          store,
 	InitialCondition: memberMajority,
-})
+}, cur)
 ```
 
 ### 2.3.2 Built-in Actions
@@ -221,7 +221,6 @@ type Config struct {
 	SetImplemFn       SetImplemRaw      // Function called when DAO implementation changes via governance
 	MigrationParamsFn MigrationParamsFn // Function providing parameters for DAO upgrades
 	RenderFn          RenderFn          // Rendering function for Gnoweb
-	CrossFn           daokit.CrossFn    // Cross-realm communication function for multi-realm DAOs
 	CallerID          CallerIDFn        // Custom function to identify the current caller, defaults to realmid.Previous
 
 	// Internal configuration
@@ -247,7 +246,7 @@ var (
 	daoPrivate *basedao.DAOPrivate // Full access to internal DAO state
 )
 
-func init() {
+func init(cur realm) {
     // Set up roles
     roles := []basedao.RoleInfo{
         {Name: "admin", Description: "Administrators", Color: "#329175"},
@@ -266,30 +265,30 @@ func init() {
     // Require 60% of members to approve proposals
     condition := daocond.MembersThreshold(0.6, store.IsMember, store.MembersCount)
 
-    // Create the DAO
+    // Create the DAO (cur is threaded so the DAO can perform cross-realm calls)
     DAO, daoPrivate = basedao.New(&basedao.Config{
         Name:             "My DAO",
         Description:      "A simple DAO example",
         Members:          store,
         InitialCondition: condition,
-    })
+    }, cur)
 }
 
 // Create a new Proposal to be voted on
 // To execute this function, you must use a MsgRun (maketx run)
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
-func Propose(req daokit.ProposalRequest) {
+func Propose(cur realm, req daokit.ProposalRequest) {
 	DAO.Propose(req)
 }
 
 // Allows DAO members to cast their vote on a specific proposal
-func Vote(proposalID uint64, vote daocond.Vote) {
+func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
     DAO.Vote(proposalID, vote)
 }
 
 // Triggers the implementation of a proposal's actions
-func Execute(proposalID uint64) {
-	DAO.Execute(proposalID)
+func Execute(cur realm, proposalID uint64) {
+	DAO.Execute(proposalID, cur)
 }
 
 // Render generates a UI representation of the DAO's state
@@ -347,7 +346,7 @@ type Action interface {
 
 type ActionHandler interface {
 	Type() string // return the type of the action. e.g.: "gno.land/p/samcrew/blog.NewPost"
-	Execute(action Action) // executes logic associated with the action
+	Execute(action Action, rlm realm) // executes logic associated with the action (rlm is threaded for cross-calls)
 }
 ```
 
@@ -379,8 +378,8 @@ func NewPostAction(title, content string) daokit.Action {
 }
 
 func NewPostHandler(blog *Blog) daokit.ActionHandler {
-	// def: daoKit.NewActionHandler(kind: String, payload: func(interface{}))
-	return daokit.NewActionHandler(ActionNewPostKind, func(payload interface{}) {
+	// def: daoKit.NewActionHandler(kind: String, executor: func(interface{}, realm))
+	return daokit.NewActionHandler(ActionNewPostKind, func(payload interface{}, _ realm) {
 		action, ok := payload.(*ActionNewPost)
 		if !ok {
 			panic(errors.New("invalid action type"))

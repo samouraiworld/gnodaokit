@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/mason/md"
 	"gno.land/p/moul/txlink"
-	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/ufmt/v0"
 	"gno.land/p/samcrew/basedao"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
@@ -15,7 +15,7 @@ import (
 // Creates a number of initial proposals and votes.
 // It divides the proposals into 4 parts: AddMember, RemoveMember, AssignRole, EditProfile.
 // It initializes votes for each proposal type.
-func initProposals(nb int) {
+func initProposals(cur realm, nb int) {
 	const financeOfficer = "g1demo1234567890abcdefghijklmnopqrstuvwxyz"
 	const nbTypes = 4
 	proposalsPerType := nb / nbTypes
@@ -69,7 +69,7 @@ func initProposals(nb int) {
 				daoPrivate.Core.Vote(financeOfficer, id, daocond.VoteAbstain)
 			case 3: // VoteYes + Execute
 				daoPrivate.Core.Vote(financeOfficer, id, daocond.VoteYes)
-				daoPrivate.Core.Execute(id)
+				daoPrivate.Core.Execute(id, cur)
 			}
 
 			lastAddr = addr

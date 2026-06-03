@@ -3,7 +3,7 @@ package custom_resource
 import (
 	"errors"
 
-	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/ufmt/v0"
 	"gno.land/p/samcrew/daokit"
 )
 
@@ -32,7 +32,7 @@ func NewPostAction(title, content string) daokit.Action {
 
 func NewPostHandler(blog *Blog) daokit.ActionHandler {
 	// def: daoKit.NewActionHandler(kind: String, payload: func(interface{}))
-	return daokit.NewActionHandler(ActionNewPostKind, func(payload interface{}) {
+	return daokit.NewActionHandler(ActionNewPostKind, func(payload interface{}, _ realm) {
 		action, ok := payload.(*ActionNewPost)
 		if !ok {
 			panic(errors.New("invalid action type"))

@@ -9,7 +9,7 @@ import (
 	"errors"
 
 	"gno.land/p/moul/md"
-	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/ufmt/v0"
 )
 
 // Interface storing Action's data.
@@ -22,8 +22,9 @@ type Action interface {
 
 // Interface storing executable function that processes Action's data.
 type ActionHandler interface {
-	// Executes the given action's logic.
-	Execute(action Action)
+	// Executes the given action's logic. The rlm realm is threaded so
+	// handlers can perform cross-realm calls during execution.
+	Execute(action Action, rlm realm)
 	// Returns the action type this handler processes.
 	Type() string
 }
@@ -41,7 +42,7 @@ type genericAction struct {
 // {kind="transfer", executor=transferFunds}
 type genericActionHandler struct {
 	kind     string
-	executor func(payload interface{})
+	executor func(payload interface{}, rlm realm)
 }
 
 func NewAction(kind string, payload interface{}) Action {
@@ -58,17 +59,17 @@ func (g *genericAction) Type() string {
 	return g.kind
 }
 
-func NewActionHandler(kind string, executor func(interface{})) ActionHandler {
+func NewActionHandler(kind string, executor func(interface{}, realm)) ActionHandler {
 	return &genericActionHandler{kind: kind, executor: executor}
 }
 
 // Executes the action by calling the executor function with the payload.
-func (g *genericActionHandler) Execute(iaction Action) {
+func (g *genericActionHandler) Execute(iaction Action, rlm realm) {
 	action, ok := iaction.(*genericAction)
 	if !ok {
 		panic(errors.New("invalid action type"))
 	}
-	g.executor(action.payload)
+	g.executor(action.payload, rlm)
 }
 
 // Returns the action's type identifier.
@@ -90,7 +91,7 @@ func (g *genericActionHandler) Instantiate() Action {
 const ActionExecuteLambdaKind = "gno.land/p/samcrew/daokit.ExecuteLambda"
 
 func NewExecuteLambdaHandler() ActionHandler {
-	return NewActionHandler(ActionExecuteLambdaKind, func(i interface{}) {
+	return NewActionHandler(ActionExecuteLambdaKind, func(i interface{}, _ realm) {
 		cb, ok := i.(func())
 		if !ok {
 			panic(errors.New("invalid action type"))
@@ -123,12 +124,12 @@ func (a *actionInstantExecute) String() string {
 }
 
 func NewInstantExecuteHandler() ActionHandler {
-	return NewActionHandler(ActionInstantExecuteKind, func(i interface{}) {
+	return NewActionHandler(ActionInstantExecuteKind, func(i interface{}, rlm realm) {
 		action, ok := i.(*actionInstantExecute)
 		if !ok {
 			panic(errors.New("invalid action type"))
 		}
-		InstantExecute(action.dao, action.req)
+		InstantExecute(action.dao, action.req, rlm)
 	})
 }
 

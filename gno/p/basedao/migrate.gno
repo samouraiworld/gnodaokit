@@ -9,7 +9,7 @@ import (
 // Making this action name extra explicit.
 const ActionChangeDAOImplementationKind = "gno.land/p/samcrew/basedao.ChangeDAOImplementation"
 
-type MigrateFn = func(prev *DAOPrivate, params []any) daokit.DAO
+type MigrateFn = func(prev *DAOPrivate, params []any, rlm realm) daokit.DAO
 
 type MigrationParamsFn = func() []any
 
@@ -25,13 +25,13 @@ func NewChangeDAOImplementationHandler(dao *DAOPrivate, setImplem daokit.SetImpl
 	if dao == nil || setImplem == nil || paramsFn == nil {
 		panic("nil arg")
 	}
-	return daokit.NewActionHandler(ActionChangeDAOImplementationKind, func(i interface{}) {
+	return daokit.NewActionHandler(ActionChangeDAOImplementationKind, func(i interface{}, rlm realm) {
 		action, ok := i.(*actionChangeDAOImplementation)
 		if !ok {
 			panic(errors.New("invalid action type"))
 		}
 
-		migrated := action.migrate(dao, paramsFn())
+		migrated := action.migrate(dao, paramsFn(), rlm)
 		setImplem(migrated)
 	})
 }

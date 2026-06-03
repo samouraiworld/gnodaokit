@@ -12,7 +12,9 @@ type DAO interface {
 	// Casts a vote on a specific proposal.
 	Vote(id uint64, vote daocond.Vote)
 	// Executes a proposal if it meets the required conditions.
-	Execute(id uint64)
+	// The rlm realm is threaded so action handlers can perform
+	// cross-realm calls (e.g. editing the DAO profile).
+	Execute(id uint64, rlm realm)
 
 	// Generates a web interface representation for the given path.
 	Render(path string) string
@@ -29,10 +31,10 @@ type SetImplemFn = func(implem DAO)
 // Creates, votes yes, and immediately executes a proposal in one operation.
 // Useful when you have enough permission to execute an action directly.
 // Examples: migrations, adding members
-func InstantExecute(d DAO, req ProposalRequest) uint64 {
+func InstantExecute(d DAO, req ProposalRequest, rlm realm) uint64 {
 	id := d.Propose(req)
 	d.Vote(id, daocond.VoteYes)
-	d.Execute(id)
+	d.Execute(id, rlm)
 	return id
 }
 
@@ -67,7 +69,7 @@ func (d *Core) Vote(voterID string, proposalID uint64, vote daocond.Vote) {
 }
 
 // Executes a proposal if it meets the required voting conditions.
-func (d *Core) Execute(proposalID uint64) {
+func (d *Core) Execute(proposalID uint64, rlm realm) {
 	proposal := d.Proposals.GetProposal(proposalID)
 	if proposal == nil {
 		panic("proposal not found")
@@ -86,7 +88,7 @@ func (d *Core) Execute(proposalID uint64) {
 		panic("proposal does not meet the condition(s) or is already closed/executed")
 	}
 
-	d.Resources.Get(proposal.Action.Type()).Handler.Execute(proposal.Action)
+	d.Resources.Get(proposal.Action.Type()).Handler.Execute(proposal.Action, rlm)
 	proposal.Status = ProposalStatusExecuted
 	proposal.ExecutedAt = time.Now()
 }

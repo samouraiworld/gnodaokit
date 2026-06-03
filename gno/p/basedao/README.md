@@ -161,10 +161,11 @@ Vote(3, daocond.VoteAbstain) // Vote abstain on proposal #3
 
 #### Executing Proposals  
 ```go
-// Execute a proposal that has passed its voting requirements
-func Execute(proposalID uint64) {...}
+// Execute a proposal that has passed its voting requirements.
+// cur is threaded down to the action handler so it can perform cross-realm calls.
+func Execute(cur realm, proposalID uint64) {...}
 
-Execute(1) // Execute proposal #1 -- only works if it has enough votes
+Execute(cross(cur), 1) // Execute proposal #1 -- only works if it has enough votes
 ```
 
 #### Instant Execution
@@ -173,7 +174,7 @@ Skip the voting process and execute a proposal immediately if you have the requi
 
 ```go
 // This performs: Propose() -> Vote(VoteYes) -> Execute()
-proposalID := daokit.InstantExecute(DAO, proposal)
+proposalID := daokit.InstantExecute(DAO, proposal, cur)
 ```
 
 Useful for admin actions, migrations, and emergency procedures.
@@ -208,7 +209,7 @@ var (
 	daoPrivate *basedao.DAOPrivate // Full access to internal DAO state
 )
 
-func init() {
+func init(cur realm) {
     // Set up roles
     roles := []basedao.RoleInfo{
         {Name: "admin", Description: "Administrators", Color: "#329175"},
@@ -227,30 +228,30 @@ func init() {
     // Require 60% of members to approve proposals
     condition := daocond.MembersThreshold(0.6, store.IsMember, store.MembersCount)
 
-    // Create the DAO
+    // Create the DAO (cur is threaded so the DAO can perform cross-realm calls)
     DAO, daoPrivate = basedao.New(&basedao.Config{
         Name:             "My DAO",
         Description:      "A simple DAO example",
         Members:          store,
         InitialCondition: condition,
-    })
+    }, cur)
 }
 
 // Create a new Proposal to be voted on
 // To execute this function, you must use a MsgRun (maketx run)
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
-func Propose(req daokit.ProposalRequest) {
+func Propose(cur realm, req daokit.ProposalRequest) {
 	DAO.Propose(req)
 }
 
 // Allows DAO members to cast their vote on a specific proposal
-func Vote(proposalID uint64, vote daocond.Vote) {
+func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
     DAO.Vote(proposalID, vote)
 }
 
 // Triggers the implementation of a proposal's actions
-func Execute(proposalID uint64) {
-	DAO.Execute(proposalID)
+func Execute(cur realm, proposalID uint64) {
+	DAO.Execute(proposalID, cur)
 }
 
 // Render generates a UI representation of the DAO's state
@@ -287,7 +288,6 @@ type Config struct {
 	SetImplemFn       SetImplemRaw      // Function called when DAO implementation changes via governance
 	MigrationParamsFn MigrationParamsFn // Function providing parameters for DAO upgrades
 	RenderFn          RenderFn          // Rendering function for Gnoweb
-	CrossFn           daokit.CrossFn    // Cross-realm communication function for multi-realm DAOs
 	CallerID          CallerIDFn        // Custom function to identify the current caller, defaults to realmid.Previous
 
 	// Internal configuration
@@ -306,33 +306,27 @@ DAO, daoPrivate = basedao.New(&basedao.Config{
     // ... other config
     MigrationParamsFn: func() []any { return nil }, // Parameters passed to migration function
 
-    SetImplemFn:      setImplem,           
-    CrossFn:          crossFn,             
-})
+    SetImplemFn: setImplem,
+}, cur)
 
-// Update DAO variables after migration
-func setImplem(newLocalDAO daokit.DAO, newDAO daokit.DAO) {
-    localDAO, DAO = newLocalDAO, newDAO
-}
-
-// Necessary due to crossing constraint
-func crossFn(_ realm, callback func()) {
-	callback()
+// Update DAO variable after migration
+func setImplem(newDAO daokit.DAO) {
+    DAO = newDAO
 }
 ```
 
 ### 5.2 Migration Process
 
 ```go
-// Migration function signature
-type MigrateFn = func(prev *DAOPrivate, params []any) daokit.DAO
+// Migration function signature (rlm is threaded so the migration can create a new DAO)
+type MigrateFn = func(prev *DAOPrivate, params []any, rlm realm) daokit.DAO
 
 // Parameters function signature  
 type MigrationParamsFn = func() []any
 
 // 1. Define migration function
 // params contains data from MigrationParamsFn - use for config, settings, etc.
-func migrateTo2_0(prev *basedao.DAOPrivate, params []any) daokit.DAO {
+func migrateTo2_0(prev *basedao.DAOPrivate, params []any, rlm realm) daokit.DAO {
     // Preserve existing member store
     memberStore := prev.Members
     
@@ -349,7 +343,7 @@ func migrateTo2_0(prev *basedao.DAOPrivate, params []any) daokit.DAO {
         Members:          memberStore,
         InitialCondition: prev.InitialConfig.InitialCondition,
         // ... other configuration
-    })
+    }, rlm)
     
     return newLocalDAO
 }
@@ -364,11 +358,11 @@ proposal := daokit.ProposalRequest{
 proposalID := DAO.Propose(proposal)
 
 // 3. Execute Migration
-DAO.Execute(proposalID)
+DAO.Execute(proposalID, cur)
 
 // Alternatively, you can use InstantExecute to skip the voting process
 // if you have sufficient permissions to execute the action directly
-daokit.InstantExecute(DAO, proposal) 
+daokit.InstantExecute(DAO, proposal, cur) 
 ```
 
 ## 6. Event System
@@ -406,12 +400,14 @@ if ext.IsMember("g1user...") {
 package my_content
 
 import (
+    "chain/runtime/unsafe"
+
     "gno.land/p/samcrew/basedao"
     "gno.land/r/some/dao"
 )
 
 func Post(title, content string) {
-    caller := std.PrevRealm().Addr()
+    caller := unsafe.PreviousRealm().Address()
     ext := basedao.MustGetMembersViewExtension(dao.DAO)
     
     if !ext.IsMember(caller.String()) {

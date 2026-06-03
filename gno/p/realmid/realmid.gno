@@ -1,13 +1,13 @@
 package realmid
 
 import (
-	"chain/runtime"
+	"chain/runtime/unsafe"
 	"strings"
 )
 
 // Returns the identifier of the previous realm in the call chain.
 func Previous() string {
-	r := runtime.PreviousRealm()
+	r := unsafe.PreviousRealm()
 	if r.IsUser() {
 		return r.Address().String()
 	}
@@ -16,7 +16,7 @@ func Previous() string {
 
 // Returns the identifier of the current realm.
 func Current() string {
-	r := runtime.CurrentRealm()
+	r := unsafe.CurrentRealm()
 	if r.IsUser() {
 		return r.Address().String()
 	}

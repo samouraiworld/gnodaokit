@@ -3,9 +3,10 @@ package basedao
 import (
 	"chain"
 	"chain/runtime"
+	"chain/runtime/unsafe"
 	"errors"
 
-	"gno.land/p/nt/mux"
+	"gno.land/p/nt/mux/v0"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
 	"gno.land/p/samcrew/realmid"
@@ -15,7 +16,7 @@ type daoPublic struct {
 	impl *DAOPrivate
 }
 
-type SetImplemRaw func(newLocalDAO daokit.DAO, newDAO daokit.DAO)
+type SetImplemRaw func(newDAO daokit.DAO)
 
 type RenderFn func(path string, dao *DAOPrivate) string
 
@@ -24,7 +25,7 @@ func (d *daoPublic) Extension(path string) daokit.Extension {
 	if !ok {
 		return nil
 	}
-	if ext.Info().Private && runtime.CurrentRealm().PkgPath() != d.impl.Realm.PkgPath() {
+	if ext.Info().Private && unsafe.CurrentRealm().PkgPath() != d.impl.Realm.PkgPath() {
 		panic("attempt to get private extension outside of DAO realm")
 	}
 	return ext
@@ -38,8 +39,8 @@ func (d *daoPublic) Propose(req daokit.ProposalRequest) uint64 {
 	return d.impl.Propose(req)
 }
 
-func (d *daoPublic) Execute(id uint64) {
-	d.impl.Execute(id)
+func (d *daoPublic) Execute(id uint64, rlm realm) {
+	d.impl.Execute(id, rlm)
 }
 
 func (d *daoPublic) Vote(id uint64, vote daocond.Vote) {
@@ -92,7 +93,6 @@ type Config struct {
 	SetImplemFn       SetImplemRaw      // Function called when DAO implementation changes via governance
 	MigrationParamsFn MigrationParamsFn // Function providing parameters for DAO upgrades
 	RenderFn          RenderFn          // Rendering function for Gnoweb
-	CrossFn           daokit.CrossFn    // Cross-realm communication function for multi-realm DAOs
 	CallerID          CallerIDFn        // Custom function to identify the current caller, defaults to realmid.Previous
 
 	// Internal configuration
@@ -104,7 +104,7 @@ type ProfileStringGetter func(addr address, field string, def string) string
 
 const EventBaseDAOCreated = "BaseDAOCreated"
 
-func New(conf *Config) (daokit.DAO, *DAOPrivate) {
+func New(conf *Config, rlm realm) (daokit.DAO, *DAOPrivate) {
 	// XXX: emit events from memberstore
 
 	members := conf.Members
@@ -125,7 +125,7 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 		Core:             core,
 		Members:          members,
 		GetProfileString: conf.GetProfileString,
-		Realm:            runtime.CurrentRealm(),
+		Realm:            unsafe.CurrentRealm(),
 		RenderFn:         conf.RenderFn,
 		CallerID:         conf.CallerID,
 		InitialConfig:    conf,
@@ -145,9 +145,9 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 	}
 
 	if conf.SetProfileString != nil {
-		conf.SetProfileString(cross, "DisplayName", conf.Name)
-		conf.SetProfileString(cross, "Bio", conf.Description)
-		conf.SetProfileString(cross, "Avatar", conf.ImageURI)
+		conf.SetProfileString(cross(rlm), "DisplayName", conf.Name)
+		conf.SetProfileString(cross(rlm), "Bio", conf.Description)
+		conf.SetProfileString(cross(rlm), "Avatar", conf.ImageURI)
 	}
 
 	if !conf.NoDefaultHandlers {
@@ -165,13 +165,8 @@ func New(conf *Config) (daokit.DAO, *DAOPrivate) {
 		}
 
 		if conf.SetImplemFn != nil {
-			if conf.CrossFn == nil {
-				panic("nil cross function")
-			}
-
 			setImplemFn := func(dao daokit.DAO) {
-				crossingDAO := daokit.NewCrossing(dao, conf.CrossFn)
-				conf.SetImplemFn(dao, crossingDAO)
+				conf.SetImplemFn(dao)
 			}
 			setImplemFn(pubdao)
 
@@ -236,9 +231,9 @@ func (d *DAOPrivate) Vote(proposalID uint64, vote daocond.Vote) {
 	d.Core.Vote(voterID, proposalID, vote)
 }
 
-func (d *DAOPrivate) Execute(proposalID uint64) {
+func (d *DAOPrivate) Execute(proposalID uint64, rlm realm) {
 	_ = d.assertCallerIsMember()
-	d.Core.Execute(proposalID)
+	d.Core.Execute(proposalID, rlm)
 }
 
 func (d *DAOPrivate) Propose(req daokit.ProposalRequest) uint64 {
