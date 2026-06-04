@@ -5,12 +5,9 @@ GNO=go run github.com/gnolang/gno/gnovm/cmd/gno@${GNOVERSION}
 dev: gnobuild/${GNOVERSION}/gnodev
 	gnodev staging $$(find gno -name gnomod.toml -type f -exec dirname {} \;)
 
-# lint/test run against a deterministic overlay built from the pinned gno
-# version (see scripts/gno-overlay.sh) so dependencies resolve from the gno
-# examples tree rather than the gno.land chain, which lags master.
 .PHONY: lint
 lint:
-	GNOVERSION=${GNOVERSION} ./scripts/gno-overlay.sh lint -v
+	${GNO} lint ./gno/... -v
 
 .PHONY: fmt
 fmt:
@@ -18,7 +15,7 @@ fmt:
 
 .PHONY: test
 test:
-	GNOVERSION=${GNOVERSION} ./scripts/gno-overlay.sh test -v
+	${GNO} test ./gno/... -v
 
 .PHONY: gno-mod-tidy
 gno-mod-tidy:
