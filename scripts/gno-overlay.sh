@@ -22,8 +22,15 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 overlay="${OVERLAY:-${root}/gnobuild/overlay/${GNOVERSION}}"
 gno=(go run "github.com/gnolang/gno/gnovm/cmd/gno@${GNOVERSION}")
 
-# Resolve the gno module source (downloads into the module cache if absent).
-moddir="$(go list -m -f '{{.Dir}}' "github.com/gnolang/gno@${GNOVERSION}")"
+# Resolve the gno module source, downloading and extracting it into the module
+# cache if absent. `go mod download` (unlike `go list -m`) guarantees the source
+# is extracted on disk, and reports its directory without touching go.mod/go.sum.
+moddir="$(go mod download -json "github.com/gnolang/gno@${GNOVERSION}" |
+	sed -n 's/.*"Dir": "\(.*\)".*/\1/p')"
+if [ -z "${moddir}" ] || [ ! -d "${moddir}/gnovm/stdlibs" ]; then
+	echo "gno-overlay: could not resolve gno module source for ${GNOVERSION}" >&2
+	exit 1
+fi
 
 # Assemble the overlay once per version (stdlibs, test stdlibs, examples). The
 # module cache is read-only, so copy then make it writable.
