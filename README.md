@@ -242,7 +242,7 @@ import (
 )
 
 var (
-	DAO        daokit.DAO          // External interface for DAO interaction
+	localDAO   daokit.DAO          // Local interface for DAO interaction
 	daoPrivate *basedao.DAOPrivate // Full access to internal DAO state
 )
 
@@ -266,7 +266,7 @@ func init(cur realm) {
     condition := daocond.MembersThreshold(0.6, store.IsMember, store.MembersCount)
 
     // Create the DAO (cur is threaded so the DAO can perform cross-realm calls)
-    DAO, daoPrivate = basedao.New(&basedao.Config{
+    localDAO, daoPrivate = basedao.New(&basedao.Config{
         Name:             "My DAO",
         Description:      "A simple DAO example",
         Members:          store,
@@ -278,22 +278,22 @@ func init(cur realm) {
 // To execute this function, you must use a MsgRun (maketx run)
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
-	DAO.Propose(req)
+	localDAO.Propose(req)
 }
 
 // Allows DAO members to cast their vote on a specific proposal
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
-    DAO.Vote(proposalID, vote)
+    localDAO.Vote(proposalID, vote)
 }
 
 // Triggers the implementation of a proposal's actions
 func Execute(cur realm, proposalID uint64) {
-	DAO.Execute(proposalID, cur)
+	localDAO.Execute(proposalID, cur)
 }
 
 // Render generates a UI representation of the DAO's state
 func Render(path string) string {
-	return DAO.Render(path)
+	return localDAO.Render(path)
 }
 ```
 

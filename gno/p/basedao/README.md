@@ -205,7 +205,7 @@ import (
 )
 
 var (
-	DAO        daokit.DAO          // External interface for DAO interaction
+	localDAO   daokit.DAO          // Local interface for DAO interaction
 	daoPrivate *basedao.DAOPrivate // Full access to internal DAO state
 )
 
@@ -229,7 +229,7 @@ func init(cur realm) {
     condition := daocond.MembersThreshold(0.6, store.IsMember, store.MembersCount)
 
     // Create the DAO (cur is threaded so the DAO can perform cross-realm calls)
-    DAO, daoPrivate = basedao.New(&basedao.Config{
+    localDAO, daoPrivate = basedao.New(&basedao.Config{
         Name:             "My DAO",
         Description:      "A simple DAO example",
         Members:          store,
@@ -241,22 +241,22 @@ func init(cur realm) {
 // To execute this function, you must use a MsgRun (maketx run)
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
-	DAO.Propose(req)
+	localDAO.Propose(req)
 }
 
 // Allows DAO members to cast their vote on a specific proposal
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
-    DAO.Vote(proposalID, vote)
+    localDAO.Vote(proposalID, vote)
 }
 
 // Triggers the implementation of a proposal's actions
 func Execute(cur realm, proposalID uint64) {
-	DAO.Execute(proposalID, cur)
+	localDAO.Execute(proposalID, cur)
 }
 
 // Render generates a UI representation of the DAO's state
 func Render(path string) string {
-	return DAO.Render(path)
+	return localDAO.Render(path)
 }
 ```
 
@@ -388,7 +388,7 @@ Allows other packages and realms to check if an address is a member of your DAO.
 import "gno.land/p/samcrew/basedao"
 
 // Check if someone is a DAO member
-ext := basedao.MustGetMembersViewExtension(dao)
+ext := basedao.MustGetMembersViewExtension(localDAO)
 if ext.IsMember("g1user...") {
     // User is a member
 }
@@ -396,24 +396,35 @@ if ext.IsMember("g1user...") {
 
 ### Example: Member-Only action
 
+The DAO value is kept unexported in the DAO realm, so expose a read-only membership check for other realms:
+
+```go
+package my_dao
+
+// IsMember reports whether addr is a member of this DAO.
+func IsMember(addr string) bool {
+    return basedao.MustGetMembersViewExtension(localDAO).IsMember(addr)
+}
+```
+
+Other realms can then gate actions on membership:
+
 ```go
 package my_content
 
 import (
     "chain/runtime/unsafe"
 
-    "gno.land/p/samcrew/basedao"
     "gno.land/r/some/dao"
 )
 
 func Post(title, content string) {
     caller := unsafe.PreviousRealm().Address()
-    ext := basedao.MustGetMembersViewExtension(dao.DAO)
-    
-    if !ext.IsMember(caller.String()) {
+
+    if !dao.IsMember(caller.String()) {
         panic("Only DAO members can post")
     }
-    
+
     createPost(title, content)
 }
 ```
