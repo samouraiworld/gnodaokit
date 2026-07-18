@@ -6,10 +6,11 @@ import (
 
 	"gno.land/p/demo/svg"
 	"gno.land/p/moul/md"
-	"gno.land/p/nt/avl/v0"
-	"gno.land/p/nt/avl/v0/pager"
+	ntavl "gno.land/p/nt/avl/v0" // svg.Canvas.Style is a *nt/avl/v0.Tree — keep that ABI at the svg boundary
 	"gno.land/p/nt/seqid/v0"
 	"gno.land/p/nt/ufmt/v0"
+	"gno.land/p/samcrew/avl"
+	"gno.land/p/samcrew/avl/pager"
 	"gno.land/p/samcrew/daokit"
 )
 
@@ -91,7 +92,7 @@ func (d *DAOPrivate) RoleColoredChip(role string, canvas ...*svg.Canvas) string 
 	canvasWidth := 16
 	canvasHeight := 16
 	canvasElem := []svg.Elem{}
-	canvasStyle := avl.NewTree()
+	canvasStyle := ntavl.NewTree()
 
 	if canvas != nil && len(canvas) > 0 {
 		canvasWidth = canvas[0].Width

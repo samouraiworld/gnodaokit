@@ -1,7 +1,7 @@
 package daocond
 
 import (
-	"gno.land/p/nt/avl/v0"
+	"gno.land/p/samcrew/avl"
 )
 
 type BallotAVL struct {
