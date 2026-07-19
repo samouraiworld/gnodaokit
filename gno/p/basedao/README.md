@@ -400,23 +400,29 @@ if ext.IsMember("g1user...") {
 package my_content
 
 import (
-    "chain/runtime/unsafe"
-
     "gno.land/p/samcrew/basedao"
     "gno.land/r/some/dao"
 )
 
-func Post(title, content string) {
-    caller := unsafe.PreviousRealm().Address()
+func Post(cur realm, title, content string) {
+    if !cur.IsCurrent() {
+        panic("spoofed realm")
+    }
+    caller := cur.Previous().Address()
     ext := basedao.MustGetMembersViewExtension(dao.DAO)
-    
+
     if !ext.IsMember(caller.String()) {
         panic("Only DAO members can post")
     }
-    
+
     createPost(title, content)
 }
 ```
+
+`Post` is a crossing function so that `cur.Previous()` names the realm or
+account that actually called it. Reading the caller from
+`unsafe.PreviousRealm()` in a non-crossing function walks the stack instead,
+which names the outermost crossing realm rather than the immediate caller.
 
 The extension is automatically registered when you create a DAO with `basedao.New()`.
 

@@ -125,7 +125,7 @@ func New(conf *Config, rlm realm) (daokit.DAO, *DAOPrivate) {
 		Core:             core,
 		Members:          members,
 		GetProfileString: conf.GetProfileString,
-		Realm:            unsafe.CurrentRealm(),
+		Realm:            runtime.NewRealm(rlm.Address(), rlm.PkgPath()),
 		RenderFn:         conf.RenderFn,
 		CallerID:         conf.CallerID,
 		InitialConfig:    conf,
