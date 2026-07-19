@@ -419,10 +419,9 @@ func Post(cur realm, title, content string) {
 }
 ```
 
-`Post` is a crossing function so that `cur.Previous()` names the realm or
-account that actually called it. Reading the caller from
-`unsafe.PreviousRealm()` in a non-crossing function walks the stack instead,
-which names the outermost crossing realm rather than the immediate caller.
+`Post` is a crossing function so `cur.Previous()` names its immediate caller.
+`unsafe.PreviousRealm()` in a non-crossing function names the outermost
+crossing realm instead.
 
 The extension is automatically registered when you create a DAO with `basedao.New()`.
 

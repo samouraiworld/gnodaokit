@@ -6,8 +6,7 @@ import (
 	"gno.land/p/nt/urequire/v0"
 )
 
-// An empty member id is what CallerID resolves to when it cannot name the
-// caller, so storing one would let unidentified callers pass the member gate.
+// "" is what CallerID resolves to when it cannot name the caller.
 func TestAddMemberRejectsEmptyID(cur realm, t *testing.T) {
 	store := NewMembersStore(nil, nil)
 
