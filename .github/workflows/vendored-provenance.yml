@@ -132,14 +132,15 @@ jobs:
             exit 1
           fi
 
-      # The gate that actually keeps a green build meaningful for topaz-1.
+      # Keeps the two avl roles from being confused.
       #
-      # GNOVERSION is NOT topaz-1's ref, so ~15 vendored packages differ from what
-      # the chain hosts — including p/nt/avl/v0, whose on-chain Get is SINGLE-value
-      # while the vendored copy is two-value. That is safe today for exactly one
-      # reason: gnodaokit crosses that boundary only via ntavl.NewTree(), whose
-      # signature is identical in both. Nothing else enforced that, so a single new
-      # ntavl.Get() call would compile green here and fail AddPackage on-chain.
+      # The stdlib p/nt/avl/v0 is here only because svg.Canvas.Style is a
+      # *nt/avl/v0.Tree; the data-structure role belongs to the p/samcrew/avl fork,
+      # whose Get is two-value. GNOVERSION is now topaz-1's own ref, so the vendored
+      # stdlib copy matches the chain and a misuse fails the build directly — this
+      # gate exists to say WHY it failed, and to keep the boundary from widening by
+      # accident. When the pin was older than the chain, this was the only thing
+      # standing between a green build and a failed AddPackage.
       - name: The stdlib-avl boundary must stay limited to NewTree
         run: |
           set -euo pipefail
@@ -153,9 +154,9 @@ jobs:
           if [[ -n "$unexpected" ]]; then
             echo "ERROR: gnodaokit uses the stdlib avl beyond NewTree:"
             printf '%s\n' "$unexpected"
-            echo "topaz-1's p/nt/avl/v0 Get is SINGLE-value while the vendored copy is"
-            echo "two-value, so this would compile here and fail AddPackage on-chain."
-            echo "Use gno.land/p/samcrew/avl instead, or re-verify against topaz-1."
+            echo "The stdlib avl is vendored only for the svg.Canvas.Style ABI; its Get"
+            echo "is single-value on topaz-1 and here. Use gno.land/p/samcrew/avl for"
+            echo "data structures — that is the fork with the two-value Get."
             exit 1
           fi
           echo "stdlib avl boundary is limited to NewTree, as required"
