@@ -6,7 +6,11 @@ type MembersViewExtension interface {
 	IsMember(memberId string) bool
 }
 
-const MembersViewExtensionPath = "gno.land/p/demo/basedao.MembersView"
+// The extension registry key. It names this package, so it has to match the
+// path this package is published at — third-party lookups are pinned to this
+// literal once published, and it named gno.land/p/demo/basedao, which does not
+// exist.
+const MembersViewExtensionPath = "gno.land/p/samcrew/basedao.MembersView"
 
 func MustGetMembersViewExtension(dao daokit.DAO) MembersViewExtension {
 	ext := dao.Extension(MembersViewExtensionPath)

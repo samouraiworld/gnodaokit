@@ -41,8 +41,14 @@ type Ballot interface {
 type Vote string
 
 // Available vote options.
+//
+// Typed as Vote, not as untyped strings: an untyped constant assigns to a plain
+// string without complaint, so a caller could hold one in a string variable and
+// only discover the mismatch at a conversion. Typing them is a source-breaking
+// change for any such caller, which is why it has to happen before publication
+// rather than after.
 const (
-	VoteYes     = "yes"
-	VoteNo      = "no"
-	VoteAbstain = "abstain"
+	VoteYes     Vote = "yes"
+	VoteNo      Vote = "no"
+	VoteAbstain Vote = "abstain"
 )

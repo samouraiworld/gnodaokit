@@ -81,7 +81,7 @@ governance := daocond.And(
     daocond.RoleCount(2, "core-contributor", store.HasRole),
     daocond.Or(
         daocond.RoleCount(1, "CTO", store.HasRole),
-        daocond.RoleThreshold(0.5, "finance", store.HasRole, store.RoleCount),
+        daocond.RoleThreshold(0.5, "finance", store.HasRole, store.CountMembersWithRole),
     ),
 )
 ```
@@ -121,11 +121,16 @@ Interface functions for creating proposals, voting, and executing actions.
 
 ```go
 type DAO interface {
-	Propose(req ProposalRequest) uint64    // Create a new proposal, returns proposal ID
-	Vote(id uint64, vote daocond.Vote)     // Cast a vote on an existing proposal
-	Execute(id uint64, rlm realm)          // Execute a passed proposal (threads the realm for cross-calls)
+	Propose(req ProposalRequest, rlm realm) uint64  // Create a new proposal, returns proposal ID
+	Vote(id uint64, vote daocond.Vote, rlm realm)   // Cast a vote on an existing proposal
+	Execute(id uint64, rlm realm)                   // Execute a passed proposal
 }
 ```
+
+Every entry point threads the DAO realm's own realm value. The implementation
+requires it to be the DAO's own and to be current, which is what lets it name
+the DAO's immediate caller — and what stops a realm holding this handle from
+making the DAO act under the caller's identity.
 
 ### 2.2.3 Proposal Lifecycle
 
@@ -164,6 +169,8 @@ DAO, daoPrivate := basedao.New(&basedao.Config{
 	Description:      "A sample DAO",
 	Members:          store,
 	InitialCondition: memberMajority,
+	// Required: New() panics without it.
+	GetProfileString: profile.GetStringField,
 }, cur)
 ```
 
@@ -221,7 +228,7 @@ type Config struct {
 	SetImplemFn       SetImplemRaw      // Function called when DAO implementation changes via governance
 	MigrationParamsFn MigrationParamsFn // Function providing parameters for DAO upgrades
 	RenderFn          RenderFn          // Rendering function for Gnoweb
-	CallerID          CallerIDFn        // Custom function to identify the current caller, defaults to realmid.Previous
+	CallerID          CallerIDFn        // Custom function to identify the current caller, defaults to the DAO's immediate caller
 
 	// Internal configuration
 	PrivateVarName string // Name of the private DAO variable for member querying extensions
@@ -239,10 +246,13 @@ import (
     "gno.land/p/samcrew/basedao"
     "gno.land/p/samcrew/daocond"
     "gno.land/p/samcrew/daokit"
+    "gno.land/r/demo/profile"
 )
 
 var (
-	DAO        daokit.DAO          // External interface for DAO interaction
+	// Unexported deliberately: anything that can reach this value can call the
+	// DAO's entry points directly, bypassing this realm's crossing functions.
+	localDAO   daokit.DAO
 	daoPrivate *basedao.DAOPrivate // Full access to internal DAO state
 )
 
@@ -266,11 +276,14 @@ func init(cur realm) {
     condition := daocond.MembersThreshold(0.6, store.IsMember, store.MembersCount)
 
     // Create the DAO (cur is threaded so the DAO can perform cross-realm calls)
-    DAO, daoPrivate = basedao.New(&basedao.Config{
+    localDAO, daoPrivate = basedao.New(&basedao.Config{
         Name:             "My DAO",
         Description:      "A simple DAO example",
         Members:          store,
         InitialCondition: condition,
+        // Required: New() panics without it.
+        GetProfileString: profile.GetStringField,
+        SetProfileString: profile.SetStringField,
     }, cur)
 }
 
@@ -278,22 +291,22 @@ func init(cur realm) {
 // To execute this function, you must use a MsgRun (maketx run)
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
-	DAO.Propose(req)
+	localDAO.Propose(req, cur)
 }
 
 // Allows DAO members to cast their vote on a specific proposal
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
-    DAO.Vote(proposalID, vote)
+    localDAO.Vote(proposalID, vote, cur)
 }
 
 // Triggers the implementation of a proposal's actions
 func Execute(cur realm, proposalID uint64) {
-	DAO.Execute(proposalID, cur)
+	localDAO.Execute(proposalID, cur)
 }
 
 // Render generates a UI representation of the DAO's state
 func Render(path string) string {
-	return DAO.Render(path)
+	return localDAO.Render(path)
 }
 ```
 
@@ -392,7 +405,7 @@ func NewPostHandler(blog *Blog) daokit.ActionHandler {
 4. Register the resource
 ```go
 resource := daokit.Resource{
-    Condition: daocond.NewRoleCount(1, "CEO", daoPrivate.Members.HasRole),
+    Condition: daocond.RoleCount(1, "CEO", daoPrivate.Members.HasRole),
     Handler: blog.NewPostHandler(blog),
 }
 daoPrivate.Core.Resources.Set(&resource)
@@ -420,7 +433,7 @@ type Extension interface {
 }
 
 type ExtensionInfo struct {
-    Path      string // Unique extension identifier (e.g., "gno.land/p/demo/basedao.MembersView")
+    Path      string // Unique extension identifier (e.g., "gno.land/p/samcrew/basedao.MembersView")
     Version   string // Extension version (e.g., "1", "2.0", etc.)
     QueryPath string // Path for external queries to access this extension's data
     Private   bool   // If true, extension is only accessible from the same realm
@@ -431,7 +444,7 @@ type ExtensionInfo struct {
 
 ```go
 // Get a specific extension by path
-ext := dao.Extension("gno.land/p/demo/basedao.MembersView")
+ext := dao.Extension("gno.land/p/samcrew/basedao.MembersView")
 
 // List all available extensions
 extList := dao.ExtensionsList()
@@ -453,12 +466,13 @@ if extIndex != nil {
     fmt.Printf("First extension: %s\n", extIndex.Path)
 }
 
-// Use your extension
-ext, ok := extIndex.(*MembersViewExtension)
+// Use your extension. Get(i) returns an *ExtensionInfo — metadata, not the
+// extension itself — so fetch the extension by path and assert the interface.
+ext, ok := dao.Extension(extIndex.Path).(basedao.MembersViewExtension)
 if !ok {
     panic("Invalid extension type")
 }
-ext.IsMember()
+ext.IsMember("g1user...")
 ```
 
 ## 7.3 Creating Custom Extensions
@@ -517,7 +531,7 @@ message := customExt.SayHello("Alice")
 Built-in [`basedao.MembersViewExtension`](./gno/p/basedao/README.md#7-membership-extension) allows external packages to check DAO membership from any realm:
 
 ```go
-const MembersViewExtensionPath = "gno.land/p/demo/basedao.MembersView"
+const MembersViewExtensionPath = "gno.land/p/samcrew/basedao.MembersView"
 
 // Check if someone is a DAO member
 ext := basedao.MustGetMembersViewExtension(dao)

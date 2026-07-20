@@ -48,7 +48,6 @@ type Proposal struct {
 	Action     Action            // What to execute if passed
 	Condition  daocond.Condition // Voting conditions for this proposal
 	Status     ProposalStatus
-	ExecutorID string
 	ExecutedAt time.Time
 
 	Ballot daocond.Ballot // All votes cast on this proposal

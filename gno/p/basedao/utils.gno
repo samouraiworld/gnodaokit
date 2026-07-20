@@ -40,6 +40,13 @@ func RenderAddressLink(addr string) string {
 func (d *DAOPrivate) RenderWithRolesLinks(s string) string {
 	roles := d.Members.GetRoles()
 	for _, role := range roles {
+		// AddRole refuses an empty name, but Roles is an exported avl.Tree that
+		// a same-realm write or a MigrateFn can seed directly. An empty needle
+		// makes ReplaceAll match between every character, so skipping here keeps
+		// the render path safe however the store was filled.
+		if role == "" {
+			continue
+		}
 		s = strings.ReplaceAll(s, role, d.RenderRoleLink(role))
 	}
 	return s
@@ -141,6 +148,13 @@ func (d *DAOPrivate) RenderMembersTable(path string, members *avl.Tree) string {
 			rolesStr = d.RenderRoleLinkWithChip("")
 		}
 		for _, role := range roles {
+			// Same empty-needle hazard as RenderWithRolesLinks: an empty role
+			// name matches between every character. AddRole refuses one, but
+			// Roles is an exported avl.Tree that can be seeded around it — and
+			// once it holds "", AddRoleToMember will happily assign it.
+			if role == "" {
+				continue
+			}
 			rolesStr = strings.Replace(rolesStr, role, d.RenderRoleLinkWithChip(role), -1)
 		}
 
