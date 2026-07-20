@@ -80,7 +80,7 @@ func initProposals(cur realm, nb int) {
 // Bypass limitation by adding yourself to the DAO.
 // It is necessary to be part of the DAO to create a Proposal.
 func AddMember(cur realm) {
-	id := daoPrivate.CallerID()
+	id := daoPrivate.CallerID(daoPrivate, cur)
 	daoPrivate.Members.AddMember(id, make([]string, 0))
 }
 
@@ -102,7 +102,7 @@ func ProposeAddMember(cur realm, address address, roles string) {
 			Roles:   rs,
 		}),
 	}
-	localDAO.Propose(req)
+	localDAO.Propose(req, cur)
 }
 
 func renderDemo() string {

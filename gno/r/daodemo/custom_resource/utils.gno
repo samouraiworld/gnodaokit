@@ -35,7 +35,7 @@ func initBlogProposals() {
 // Bypass limitation by adding yourself to the DAO.
 // It is necessary to be part of the DAO to create a Proposal.
 func AddMember(cur realm) {
-	id := daoPrivate.CallerID()
+	id := daoPrivate.CallerID(daoPrivate, cur)
 	daoPrivate.Members.AddMember(id, make([]string, 0))
 }
 
