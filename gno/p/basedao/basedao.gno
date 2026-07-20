@@ -45,6 +45,11 @@ func (d *daoPublic) Extension(path string, rlm realm) daokit.Extension {
 	return ext
 }
 
+// Not gated, deliberately. It exposes ExtensionInfo — paths and versions — and
+// not extension values, so it grants no capability; and realm state is
+// world-readable over ABCI anyway, so gating it would suggest a confidentiality
+// this cannot provide. Getting the VALUE of a private extension goes through
+// Extension, which is gated.
 func (d *daoPublic) ExtensionsList() daokit.ExtensionsList {
 	return d.impl.Core.Extensions.List()
 }

@@ -19,7 +19,13 @@ type ExtensionInfo struct {
 	Path      string // Unique extension identifier (e.g., "gno.land/p/samcrew/basedao.MembersView")
 	Version   string // Extension version (e.g., "1", "2.0", etc.)
 	QueryPath string // Path for external queries to access this extension's data
-	Private   bool   // If true, extension is only accessible from the same realm that registered it
+	// If true, only the registering realm can obtain the extension VALUE
+	// through DAO.Extension — which is a capability, not a secret. Realm state
+	// on a public chain is world-readable over ABCI regardless, and this
+	// ExtensionInfo (including QueryPath) is listed by ExtensionsList without a
+	// check. Private restricts who can call the extension's methods under the
+	// DAO's authority; it does not hide anything.
+	Private bool
 }
 
 type ExtensionsList interface {
