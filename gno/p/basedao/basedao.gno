@@ -123,8 +123,13 @@ type Config struct {
 	// Condition for replacing the DAO's implementation. A passing migration
 	// hands proposer-authored code the DAO's live realm and its full private
 	// state, so it is a takeover in the general case — it should not be as easy
-	// as adding a member. Defaults to an 80% member majority, deliberately
-	// stricter than InitialCondition's 60%; set it explicitly for anything else.
+	// as adding a member.
+	//
+	// Defaults to InitialCondition AND an 80% member majority, so it is strictly
+	// harder than every ordinary action in every dimension. Set it explicitly to
+	// choose something else — but note that anything not conjoined with
+	// InitialCondition can end up WEAKER along a dimension InitialCondition
+	// covers, which is the trap this default exists to avoid.
 	MigrationCondition daocond.Condition
 	RenderFn          RenderFn          // Rendering function for Gnoweb
 	CallerID          CallerIDFn        // Resolves the immediate caller from the DAO's threaded realm; defaults to defaultCallerID
@@ -209,7 +214,17 @@ func New(conf *Config, rlm realm) (daokit.DAO, *DAOPrivate) {
 			}
 
 			if conf.MigrationCondition == nil {
-				conf.MigrationCondition = daocond.MembersThreshold(0.8, members.IsMember, members.MembersCount)
+				// Conjoined with the DAO's ordinary condition, never replacing
+				// it. A Condition is opaque, so there is no way to "raise" one —
+				// and substituting a members threshold for a role-gated
+				// condition would DROP the role gate, making a takeover easier
+				// than adding a member rather than harder. Measured: with
+				// And(MembersThreshold(0.4), RoleCount(1,"officer")), a ballot
+				// that fails the ordinary action passed a bare 0.8 migration.
+				conf.MigrationCondition = daocond.And(
+					conf.InitialCondition,
+					daocond.MembersThreshold(0.8, members.IsMember, members.MembersCount),
+				)
 			}
 
 			dao.Core.Resources.Set(&daokit.Resource{
