@@ -28,6 +28,11 @@ const (
 	// ActionCrossOut is an action whose handler crosses out of the DAO, as
 	// the built-in EditProfile action does.
 	ActionCrossOut = "gno.land/r/samcrew/daoidentity/dao.CrossOut"
+
+	// ActionReenter is an action whose handler calls back into this realm's own
+	// Execute, which is the one re-entrancy shape the realm gate cannot refuse:
+	// the realm is genuinely this one's, and genuinely live.
+	ActionReenter = "gno.land/r/samcrew/daoidentity/dao.Reenter"
 )
 
 var (
@@ -37,7 +42,27 @@ var (
 	// seenByCallerID records the realm a custom CallerIDFn was handed, so a
 	// test can show the entry gate ran before it.
 	seenByCallerID string
+
+	reenterTarget uint64
+	// ReenterAttempted records that the re-entrant handler ran at all, so a
+	// test can tell a refusal apart from the action never firing.
+	ReenterAttempted bool
+	// ReenterSucceeded records that the re-entrant Execute returned.
+	ReenterSucceeded bool
 )
+
+// NewReenterRequest builds a proposal whose execution re-enters Execute on the
+// proposal id given, through this realm's own crossing function.
+func ArmReenter(id uint64) { reenterTarget = id }
+
+// NewReenterRequest builds the re-entrant proposal.
+func NewReenterRequest() daokit.ProposalRequest {
+	return daokit.ProposalRequest{
+		Title:       "reenter",
+		Description: "calls back into Execute while executing",
+		Action:      daokit.NewAction(ActionReenter, nil),
+	}
+}
 
 // SeenByCallerID reports the realm the DAO's CallerIDFn last observed.
 func SeenByCallerID() string { return seenByCallerID }
@@ -51,6 +76,9 @@ func init(cur realm) {
 	members := basedao.NewMembersStore(nil, []basedao.Member{
 		{Address: RelayID},
 		{Address: SuiteID},
+		// The DAO is a member of itself so a re-entrant call reaches the
+		// proposal machinery instead of stopping at the membership check.
+		{Address: Self},
 	})
 
 	// Any single member can carry a proposal, so nothing in these tests turns
@@ -86,6 +114,18 @@ func init(cur realm) {
 		Description: "Crosses out of the DAO, handing a callee the DAO's realm.",
 	})
 
+	daoPrivate.Core.Resources.Set(&daokit.Resource{
+		Handler: daokit.NewActionHandler(ActionReenter, func(payload interface{}, rlm realm) {
+			ReenterAttempted = true
+			// Straight back through this realm's own crossing entry point.
+			Execute(cross(rlm), reenterTarget)
+			ReenterSucceeded = true
+		}),
+		Condition:   cond,
+		DisplayName: "Reenter",
+		Description: "Calls back into this realm's own Execute while executing.",
+	})
+
 	callback.SetTarget(cross(cur), localDAO)
 }
 
@@ -111,6 +151,12 @@ func Execute(cur realm, id uint64) {
 // crossing functions entirely.
 func Handle() daokit.DAO {
 	return localDAO
+}
+
+// PersistStatus writes the status implied by the current votes, which is what
+// UpdateStatus is for. A realm may legitimately do this.
+func PersistStatus(id uint64) {
+	daoPrivate.Core.Proposals.GetProposal(id).UpdateStatus()
 }
 
 // ProposerOf reports the identity the DAO resolved for a proposal's creator.

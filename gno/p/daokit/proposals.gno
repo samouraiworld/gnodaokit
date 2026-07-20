@@ -88,7 +88,6 @@ func (p *ProposalsStore) GetProposals(filter func(Proposal) bool) *ProposalsStor
 		if !ok {
 			panic(errors.New("unexpected invalid proposal type"))
 		}
-		prop.UpdateStatus() // XXX: costly and probably insecure
 		if filter(*prop) {
 			proposals.Tree.Set(key, prop)
 		}
@@ -97,12 +96,27 @@ func (p *ProposalsStore) GetProposals(filter func(Proposal) bool) *ProposalsStor
 	return proposals
 }
 
-// Updates proposal status based on current voting condition results.
-func (p *Proposal) UpdateStatus() {
-	conditionsAreMet := p.Condition.Eval(p.Ballot)
-	if p.Status == ProposalStatusOpen && conditionsAreMet {
-		p.Status = ProposalStatusPassed
+// Reports the status a proposal should be displayed as, without writing it.
+//
+// Reading must never move a proposal. Render is on the cross-realm DAO
+// interface, so anything it touches is reachable by any realm holding the
+// handle: this used to be UpdateStatus, called on every proposal walked, and a
+// single Render flipped every condition-met proposal from Open to Passed.
+func (p *Proposal) DisplayStatus() ProposalStatus {
+	if p.Status == ProposalStatusOpen && p.Condition.Eval(p.Ballot) {
+		return ProposalStatusPassed
 	}
+	return p.Status
+}
+
+// Persists the status implied by the current votes.
+//
+// Nothing in this package needs it: Execute evaluates the condition itself, and
+// the render paths use DisplayStatus. It remains because persisting the passed
+// state is a legitimate thing for a realm to want. Do not call it from a read
+// path — it writes.
+func (p *Proposal) UpdateStatus() {
+	p.Status = p.DisplayStatus()
 }
 
 // Returns all proposals as a JSON string.
@@ -114,13 +128,12 @@ func (p *ProposalsStore) GetProposalsJSON() string {
 		if !ok {
 			panic(errors.New("unexpected invalid proposal type"))
 		}
-		prop.UpdateStatus()
 		props = append(props, json.ObjectNode("", map[string]*json.Node{
 			"id":          json.NumberNode("", float64(prop.ID)),
 			"title":       json.StringNode("", prop.Title),
 			"description": json.StringNode("", prop.Description),
 			"proposer":    json.StringNode("", prop.ProposerID),
-			"status":      json.StringNode("", prop.Status.String()),
+			"status":      json.StringNode("", prop.DisplayStatus().String()),
 			"startHeight": json.NumberNode("", float64(prop.CreatedHeight)),
 			"signal":      json.NumberNode("", prop.Condition.Signal(prop.Ballot)),
 		}))

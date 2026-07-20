@@ -198,7 +198,7 @@ func (d *DAOPrivate) RenderProposalsTable(path string, proposals *daokit.Proposa
 			resource.DisplayName,
 			RenderAddressLink(proposal.ProposerID),
 			FormatDateTimeWithUTCOffset(proposal.CreatedAt),
-			proposal.Status.String())
+			proposal.DisplayStatus().String())
 	}
 
 	s += "\n" + page.Picker(path) + "\n"

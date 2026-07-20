@@ -90,22 +90,29 @@ func (d *Core) Execute(proposalID uint64, rlm realm) {
 		panic("proposal not found")
 	}
 
-	if proposal.Status != ProposalStatusOpen {
-		panic("proposal is not open")
+	// Executed is the only status that disqualifies a proposal. It used to be
+	// "anything but Open", which made the status a second, weaker gate on top of
+	// the condition — and any realm holding the DAO handle could trip it by
+	// rendering, since the read paths wrote Open -> Passed as they walked.
+	// Whether a proposal may execute is decided by its condition, below, and
+	// nothing else.
+	if proposal.Status == ProposalStatusExecuted {
+		panic("proposal is already executed")
 	}
 
 	if !proposal.Condition.Eval(proposal.Ballot) {
 		panic("proposal condition is not met")
 	}
 
-	proposal.UpdateStatus()
-	if proposal.Status != ProposalStatusPassed {
-		panic("proposal does not meet the condition(s) or is already closed/executed")
-	}
-
-	d.Resources.Get(proposal.Action.Type()).Handler.Execute(proposal.Action, rlm)
+	// Marked BEFORE the handler runs, not after. The handler crosses out of the
+	// DAO, so a callee can re-enter here within the same transaction; marking
+	// afterwards would let it execute the same proposal again. The old code was
+	// protected from this only incidentally, by the "must be Open" test above —
+	// removing that test without moving this line would have opened it.
 	proposal.Status = ProposalStatusExecuted
 	proposal.ExecutedAt = time.Now()
+
+	d.Resources.Get(proposal.Action.Type()).Handler.Execute(proposal.Action, rlm)
 }
 
 // Creates a new proposal for voting and returns its ID.

@@ -26,7 +26,8 @@ func (d *DAOPrivate) ProposalHistoryHeaderView() string {
 func (d *DAOPrivate) ProposalHistoryView(path string) string {
 	inactiveProposals := d.Core.Proposals.GetProposals(
 		func(p daokit.Proposal) bool {
-			return p.Status != daokit.ProposalStatusOpen && p.Status != daokit.ProposalStatusPassed
+			st := p.DisplayStatus()
+			return st != daokit.ProposalStatusOpen && st != daokit.ProposalStatusPassed
 		},
 	)
 	s := ""
