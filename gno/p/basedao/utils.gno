@@ -148,6 +148,13 @@ func (d *DAOPrivate) RenderMembersTable(path string, members *avl.Tree) string {
 			rolesStr = d.RenderRoleLinkWithChip("")
 		}
 		for _, role := range roles {
+			// Same empty-needle hazard as RenderWithRolesLinks: an empty role
+			// name matches between every character. AddRole refuses one, but
+			// Roles is an exported avl.Tree that can be seeded around it — and
+			// once it holds "", AddRoleToMember will happily assign it.
+			if role == "" {
+				continue
+			}
 			rolesStr = strings.Replace(rolesStr, role, d.RenderRoleLinkWithChip(role), -1)
 		}
 

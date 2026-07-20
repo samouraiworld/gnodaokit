@@ -162,8 +162,10 @@ localDAO.Vote(3, daocond.VoteAbstain, cur) // Vote abstain on proposal #3
 #### Executing Proposals  
 ```go
 // Execute a proposal that has passed its voting requirements.
-// cur is threaded down to the action handler so it can perform cross-realm calls.
-func Execute(cur realm, proposalID uint64) {...}
+// The realm is threaded down to the action handler so it can perform
+// cross-realm calls. It is last: a leading realm parameter is read as a
+// crossing function, which /p/ packages may not declare.
+func Execute(proposalID uint64, rlm realm) {...}
 
 localDAO.Execute(1, cur) // Execute proposal #1 -- only works if it has enough votes
 ```
@@ -202,6 +204,7 @@ import (
     "gno.land/p/samcrew/basedao"
     "gno.land/p/samcrew/daocond"
     "gno.land/p/samcrew/daokit"
+    "gno.land/r/demo/profile"
 )
 
 var (
@@ -236,6 +239,9 @@ func init(cur realm) {
         Description:      "A simple DAO example",
         Members:          store,
         InitialCondition: condition,
+        // Required: New() panics without it.
+        GetProfileString: profile.GetStringField,
+        SetProfileString: profile.SetStringField,
     }, cur)
 }
 
@@ -253,12 +259,19 @@ func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
 
 // Triggers the implementation of a proposal's actions
 func Execute(cur realm, proposalID uint64) {
-	locallocalDAO.Execute(proposalID, cur)
+	localDAO.Execute(proposalID, cur)
 }
 
 // Render generates a UI representation of the DAO's state
 func Render(path string) string {
 	return localDAO.Render(path)
+}
+
+// Handle exposes the DAO to other realms. Note it is a function, not an
+// exported variable: it is the only intentional way out, and anything holding
+// this value can call the entry points directly.
+func Handle() daokit.DAO {
+	return localDAO
 }
 ```
 
@@ -304,7 +317,7 @@ Supports upgrading DAO implementations through governance proposals, allowing DA
 ### 5.1 Configuration for Upgrades
 
 ```go
-DAO, daoPrivate = basedao.New(&basedao.Config{
+localDAO, daoPrivate = basedao.New(&basedao.Config{
     // ... other config
     MigrationParamsFn: func() []any { return nil }, // Parameters passed to migration function
 
@@ -313,7 +326,7 @@ DAO, daoPrivate = basedao.New(&basedao.Config{
 
 // Update DAO variable after migration
 func setImplem(newDAO daokit.DAO) {
-    DAO = newDAO
+    localDAO = newDAO
 }
 ```
 
@@ -344,6 +357,7 @@ func migrateTo2_0(prev *basedao.DAOPrivate, params []any, rlm realm) daokit.DAO 
         Description:      "Upgraded DAO with audit capabilities",
         Members:          memberStore,
         InitialCondition: prev.InitialConfig.InitialCondition,
+        GetProfileString: prev.GetProfileString,
         // ... other configuration
     }, rlm)
     
@@ -364,7 +378,7 @@ localDAO.Execute(proposalID, cur)
 
 // Alternatively, you can use InstantExecute to skip the voting process
 // if you have sufficient permissions to execute the action directly
-daokit.InstantExecute(DAO, proposal, cur) 
+daokit.InstantExecute(localDAO, proposal, cur) 
 ```
 
 ## 6. Event System

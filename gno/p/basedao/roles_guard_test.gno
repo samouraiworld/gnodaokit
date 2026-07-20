@@ -46,6 +46,33 @@ func TestRenderSkipsAnEmptyRoleSeededPastTheGuard(cur realm, t *testing.T) {
 		"an empty role must not be substituted into rendered prose")
 }
 
+// The members table substitutes role names the same way, and an empty role
+// reaches it through the ordinary API: once "" is in Roles, AddRoleToMember
+// assigns it like any other role.
+func TestMembersTableSkipsAnEmptyRole(cur realm, t *testing.T) {
+	conf := &Config{
+		Name:             "d",
+		Description:      "d",
+		Members:          NewMembersStore([]RoleInfo{{Name: "admin", Description: "a", Color: "#000"}}, []Member{{alice.String(), []string{"admin"}}}),
+		GetProfileString: func(addr address, field, def string) string { return "" },
+	}
+	testing.SetOriginCaller(alice)
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/testing/daorealm3"))
+	_, d := New(conf, cur)
+
+	before := len(d.RenderMembersTable("", d.Members.Members))
+
+	d.Members.Roles.Set("", &Role{Name: "", Members: avl.NewTree()})
+	d.Members.AddRoleToMember(alice.String(), "")
+
+	// The empty role legitimately adds a separator to the joined list, so the
+	// table grows by a couple of characters. Without the skip it grows by 4.4x:
+	// measured 585 -> 2578, against 585 -> 587 with it.
+	after := len(d.RenderMembersTable("", d.Members.Members))
+	urequire.True(t, after < before+16,
+		"an empty role must not be substituted into the members table")
+}
+
 // A real role still renders, so the skip does not disable the feature.
 func TestRenderStillLinksRealRoles(cur realm, t *testing.T) {
 	conf := &Config{

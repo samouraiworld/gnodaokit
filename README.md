@@ -81,7 +81,7 @@ governance := daocond.And(
     daocond.RoleCount(2, "core-contributor", store.HasRole),
     daocond.Or(
         daocond.RoleCount(1, "CTO", store.HasRole),
-        daocond.RoleThreshold(0.5, "finance", store.HasRole, store.RoleCount),
+        daocond.RoleThreshold(0.5, "finance", store.HasRole, store.CountMembersWithRole),
     ),
 )
 ```
@@ -169,6 +169,8 @@ DAO, daoPrivate := basedao.New(&basedao.Config{
 	Description:      "A sample DAO",
 	Members:          store,
 	InitialCondition: memberMajority,
+	// Required: New() panics without it.
+	GetProfileString: profile.GetStringField,
 }, cur)
 ```
 
@@ -244,6 +246,7 @@ import (
     "gno.land/p/samcrew/basedao"
     "gno.land/p/samcrew/daocond"
     "gno.land/p/samcrew/daokit"
+    "gno.land/r/demo/profile"
 )
 
 var (
@@ -278,6 +281,9 @@ func init(cur realm) {
         Description:      "A simple DAO example",
         Members:          store,
         InitialCondition: condition,
+        // Required: New() panics without it.
+        GetProfileString: profile.GetStringField,
+        SetProfileString: profile.SetStringField,
     }, cur)
 }
 
@@ -399,7 +405,7 @@ func NewPostHandler(blog *Blog) daokit.ActionHandler {
 4. Register the resource
 ```go
 resource := daokit.Resource{
-    Condition: daocond.NewRoleCount(1, "CEO", daoPrivate.Members.HasRole),
+    Condition: daocond.RoleCount(1, "CEO", daoPrivate.Members.HasRole),
     Handler: blog.NewPostHandler(blog),
 }
 daoPrivate.Core.Resources.Set(&resource)
@@ -460,12 +466,13 @@ if extIndex != nil {
     fmt.Printf("First extension: %s\n", extIndex.Path)
 }
 
-// Use your extension
-ext, ok := extIndex.(*MembersViewExtension)
+// Use your extension. Get(i) returns an *ExtensionInfo — metadata, not the
+// extension itself — so fetch the extension by path and assert the interface.
+ext, ok := dao.Extension(extIndex.Path).(basedao.MembersViewExtension)
 if !ok {
     panic("Invalid extension type")
 }
-ext.IsMember()
+ext.IsMember("g1user...")
 ```
 
 ## 7.3 Creating Custom Extensions
