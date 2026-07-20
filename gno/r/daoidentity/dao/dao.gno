@@ -193,6 +193,12 @@ func ReadPublicExtension(cur realm) bool {
 	return ext != nil
 }
 
+// PersistStatus writes the status implied by the current votes — what
+// UpdateStatus is for. Exposed so a test can prove doing it is harmless.
+func PersistStatus(id uint64) {
+	daoPrivate.Core.Proposals.GetProposal(id).UpdateStatus()
+}
+
 // ProposerOf reports the identity the DAO resolved for a proposal's creator.
 func ProposerOf(id uint64) string {
 	return daoPrivate.Core.Proposals.GetProposal(id).ProposerID

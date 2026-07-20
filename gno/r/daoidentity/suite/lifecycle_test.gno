@@ -173,3 +173,37 @@ func TestAPrivateExtensionResistsADeadFrameRealm(cur realm, t *testing.T) {
 	urequire.Equal(t, "", callback.StolenSecret(),
 		"the private extension must never have been opened")
 }
+
+// Persisting Passed must be harmless — this is the invariant that makes exported
+// UpdateStatus safe to ship at all.
+//
+// When Vote and Execute demanded status Open, calling it was destructive twice
+// over: the ballot froze, so support could not be withdrawn, and the proposal
+// became permanently unexecutable. Both now key on Executed alone, so persisting
+// the passed state changes nothing about what the proposal can still do.
+//
+// If this test ever fails, UpdateStatus has been re-armed and must come out
+// rather than be worked around.
+func TestPersistingPassedNeitherFreezesNorBricksAProposal(cur realm, t *testing.T) {
+	id := dao.Propose(cross(cur), addDistinctMemberReq("g1v9kxjcm9ta047h6lta047h6lta047h6lzd40g5"))
+	dao.Vote(cross(cur), id, daocond.VoteYes)
+
+	dao.PersistStatus(id)
+	urequire.Equal(t, "Passed", dao.StatusOf(id), "the status really is persisted")
+
+	// The ballot is still live.
+	urequire.NotAborts(t, cur, func() {
+		dao.Vote(cross(cur), id, daocond.VoteNo)
+	})
+	// And withdrawing support really does block execution, so Execute is
+	// evaluating the votes rather than trusting the stored status.
+	urequire.AbortsWithMessage(t, cur, "proposal condition is not met", func() {
+		dao.Execute(cross(cur), id)
+	})
+
+	dao.Vote(cross(cur), id, daocond.VoteYes)
+	urequire.NotAborts(t, cur, func() {
+		dao.Execute(cross(cur), id)
+	})
+	urequire.Equal(t, "Executed", dao.StatusOf(id))
+}

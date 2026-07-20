@@ -98,21 +98,37 @@ func (p *ProposalsStore) GetProposals(filter func(Proposal) bool) *ProposalsStor
 
 // Reports the status a proposal should be displayed as, without writing it.
 //
-// Status is only ever WRITTEN by Execute, so a stored proposal is Open until it
-// is Executed and Passed exists purely as a computed display state. That is
-// deliberate: an exported way to persist Passed used to exist, and it made the
-// stored status disagree with the votes — a proposal whose support was later
-// withdrawn still read Passed, and Vote refused it while Execute accepted it.
-//
 // Reading must never move a proposal. Render is on the cross-realm DAO
 // interface, so anything it touches is reachable by any realm holding the
-// handle: this used to be UpdateStatus, called on every proposal walked, and a
-// single Render flipped every condition-met proposal from Open to Passed.
+// handle: every read path used to call UpdateStatus on each proposal it walked,
+// and a single Render flipped every condition-met proposal from Open to Passed —
+// which, back when Execute demanded Open, bricked it permanently.
 func (p *Proposal) DisplayStatus() ProposalStatus {
 	if p.Status == ProposalStatusOpen && p.Condition.Eval(p.Ballot) {
 		return ProposalStatusPassed
 	}
 	return p.Status
+}
+
+// Persists the status implied by the current votes: Open becomes Passed once the
+// condition is met.
+//
+// Nothing in this package calls it. Execute evaluates the condition itself and
+// the read paths use DisplayStatus, so a proposal that is never passed through
+// here stays Open until it is Executed. It exists for a realm that wants the
+// passed state on-chain rather than computed.
+//
+// SAFE ONLY BECAUSE Vote and Execute both key on Executed alone. When they
+// demanded Open, calling this was destructive twice over: it froze the ballot,
+// so support could not be withdrawn, and it made the proposal permanently
+// unexecutable. Do not narrow either of those checks without removing this.
+//
+// It is also a READ path hazard — do not call it while rendering. And once
+// persisted the status no longer tracks the votes: withdraw support afterwards
+// and this still reads Passed, though Execute re-evaluates the condition and
+// will refuse.
+func (p *Proposal) UpdateStatus() {
+	p.Status = p.DisplayStatus()
 }
 
 // Returns all proposals as a JSON string.
