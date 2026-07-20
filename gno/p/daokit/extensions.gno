@@ -16,7 +16,7 @@ type Extension interface {
 }
 
 type ExtensionInfo struct {
-	Path      string // Unique extension identifier (e.g., "gno.land/p/demo/basedao.MembersView")
+	Path      string // Unique extension identifier (e.g., "gno.land/p/samcrew/basedao.MembersView")
 	Version   string // Extension version (e.g., "1", "2.0", etc.)
 	QueryPath string // Path for external queries to access this extension's data
 	Private   bool   // If true, extension is only accessible from the same realm that registered it
