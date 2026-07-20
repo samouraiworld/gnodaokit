@@ -1,0 +1,103 @@
+name: Vendored Provenance
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  merge_group:
+
+# vendored/ removes the network from the build, but only helps if what is vendored
+# is genuinely the upstream source at the pinned compiler version. This job proves
+# that byte-for-byte, so vendored/ cannot drift from GNOVERSION unnoticed — which
+# would reintroduce exactly the version skew vendoring exists to eliminate.
+jobs:
+  vendored-provenance:
+    name: Vendored matches gno@GNOVERSION
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # GNOVERSION comes from the checked-out tree, so on a fork PR it is
+      # attacker-controlled. Validate it is a bare hex sha and pass it through the
+      # environment — never interpolate it into a run: block, where a value
+      # containing a quote could break out of the command.
+      - name: Read and validate the pinned GNOVERSION
+        id: pin
+        run: |
+          set -euo pipefail
+          ref="$(sed -n 's/^GNOVERSION=//p' Makefile | head -1 | tr -d '[:space:]')"
+          if [[ ! "$ref" =~ ^[0-9a-f]{7,40}$ ]]; then
+            echo "ERROR: GNOVERSION is not a bare hex sha: '$ref'"
+            exit 1
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          echo "GNOVERSION=$ref"
+
+      - name: Fetch gnolang/gno at the pinned ref
+        env:
+          GNO_REF: ${{ steps.pin.outputs.ref }}
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout https://github.com/gnolang/gno /tmp/gno
+          git -C /tmp/gno checkout --quiet "$GNO_REF" -- examples
+
+      - name: Every vendored file must be byte-identical to upstream
+        run: |
+          set -euo pipefail
+          drift=0
+          checked=0
+          skipped=0
+          while IFS= read -r f; do
+            rel="${f#vendored/}"
+            # The fork is deliberately NOT upstream: topaz-1's stdlib avl Get is
+            # single-value while this codebase calls the two-value form. Its own
+            # provenance is guarded in samouraiworld/samcrew-deployer against
+            # upstream f3d5a5d13. See vendored/README.md.
+            case "$rel" in
+              gno.land/p/samcrew/avl/*) skipped=$((skipped + 1)); continue ;;
+              README.md)                skipped=$((skipped + 1)); continue ;;
+            esac
+            checked=$((checked + 1))
+            if [[ ! -f "/tmp/gno/examples/$rel" ]]; then
+              echo "MISSING UPSTREAM: $rel is not in examples/ at the pinned ref"
+              drift=$((drift + 1))
+            elif ! cmp -s "$f" "/tmp/gno/examples/$rel"; then
+              echo "DRIFT: $rel differs from upstream"
+              diff -u "/tmp/gno/examples/$rel" "$f" | head -20 || true
+              drift=$((drift + 1))
+            fi
+          done < <(find vendored -type f)
+
+          # A vacuous pass would be worse than a failure: if the find ever stops
+          # matching, this job would go green while checking nothing at all.
+          if [[ $checked -eq 0 ]]; then
+            echo "ERROR: no vendored files were checked — the layout or the glob changed"
+            exit 1
+          fi
+
+          echo "checked $checked file(s), skipped $skipped (fork + docs), drift $drift"
+          if [[ $drift -gt 0 ]]; then
+            echo "ERROR: vendored/ has drifted from gno@${{ steps.pin.outputs.ref }}"
+            echo "Either regenerate vendored/ (see vendored/README.md) or revert the edit."
+            exit 1
+          fi
+
+      - name: The fork must match the deployer's guarded copy in shape
+        run: |
+          set -euo pipefail
+          # We cannot read the private deployer repo here, so assert the invariant
+          # that matters locally: the fork must expose the TWO-value Get that this
+          # codebase calls. If it ever becomes single-value, every avl call site
+          # breaks on-chain, which is the failure vendoring exists to prevent.
+          tree="vendored/gno.land/p/samcrew/avl/tree.gno"
+          if [[ ! -f "$tree" ]]; then
+            echo "ERROR: the vendored p/samcrew/avl fork is missing"
+            exit 1
+          fi
+          if ! grep -qE 'func \(tree \*Tree\) Get\(key string\) \(value any, exists bool\)' "$tree"; then
+            echo "ERROR: vendored p/samcrew/avl no longer exposes the two-value Get:"
+            grep -nE 'func \(tree \*Tree\) Get\(' "$tree" || true
+            exit 1
+          fi
+          echo "p/samcrew/avl exposes the two-value Get, as this codebase requires"

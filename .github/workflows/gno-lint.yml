@@ -19,8 +19,20 @@ jobs:
           go-version-file: go.mod
           cache-key-suffix: gno
 
-      - name: Lint gno
-        run: make lint
+      # The build must resolve every dependency from vendored/ — see vendored/README.md.
+      # A `gno: downloading` line means the closure is incomplete and the build has
+      # silently gone back to fetching from a mutable testnet, which is what kept CI
+      # red from 2026-06-04. Fail loudly rather than depend on the network again.
+      - name: Lint gno (and assert the build is hermetic)
+        run: |
+          set -o pipefail
+          make lint 2>&1 | tee /tmp/lint.out
+          if grep -q 'gno: downloading' /tmp/lint.out; then
+            echo "ERROR: the build fetched dependencies from the network:"
+            grep 'gno: downloading' /tmp/lint.out
+            echo "Add the missing packages to vendored/ (see vendored/README.md)."
+            exit 1
+          fi
 
       - name: gno mod tidy
         run: make gno-mod-tidy
