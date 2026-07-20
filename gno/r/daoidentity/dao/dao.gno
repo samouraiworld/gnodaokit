@@ -126,6 +126,9 @@ func init(cur realm) {
 		Description: "Calls back into this realm's own Execute while executing.",
 	})
 
+	// A private extension, to show the gate does real work.
+	daoPrivate.Core.Extensions.Set(&secretExtension{})
+
 	callback.SetTarget(cross(cur), localDAO)
 }
 
@@ -151,6 +154,30 @@ func Execute(cur realm, id uint64) {
 // crossing functions entirely.
 func Handle() daokit.DAO {
 	return localDAO
+}
+
+// SecretPath is a private extension only this realm may fetch.
+const SecretPath = "gno.land/r/samcrew/daoidentity/dao.Secret"
+
+type secretExtension struct{}
+
+func (s *secretExtension) Info() daokit.ExtensionInfo {
+	return daokit.ExtensionInfo{Path: SecretPath, Version: "1", Private: true}
+}
+
+func (s *secretExtension) Secret() string { return "TOP-SECRET" }
+
+// ReadSecret fetches the private extension using this realm's own live realm,
+// which is the only thing allowed to.
+func ReadSecret(cur realm) string {
+	ext := localDAO.Extension(SecretPath, cur)
+	return ext.(*secretExtension).Secret()
+}
+
+// ReadPublicExtension shows a public extension ignores the realm.
+func ReadPublicExtension(cur realm) bool {
+	ext := localDAO.Extension(basedao.MembersViewExtensionPath, cur)
+	return ext != nil
 }
 
 // PersistStatus writes the status implied by the current votes, which is what

@@ -19,13 +19,28 @@ type SetImplemRaw func(newDAO daokit.DAO)
 
 type RenderFn func(path string, dao *DAOPrivate) string
 
-func (d *daoPublic) Extension(path string) daokit.Extension {
+func (d *daoPublic) Extension(path string, rlm realm) daokit.Extension {
 	ext, ok := d.impl.Core.Extensions.Get(path)
 	if !ok {
 		return nil
 	}
-	if ext.Info().Private && unsafe.CurrentRealm().PkgPath() != d.impl.Realm.PkgPath() {
-		panic("attempt to get private extension outside of DAO realm")
+	// Only private extensions are gated; a public one is readable by anyone and
+	// ignores the realm entirely.
+	//
+	// This used to ask unsafe.CurrentRealm(), which is a stack walk and answers
+	// a different question: "is a DAO frame the innermost live one", not "is my
+	// caller the DAO". It was wrong in both directions. Too lax, because
+	// anything the DAO invoked WITHOUT crossing inherited the DAO's realm —
+	// including a proposer-authored ExecuteLambda callback, which could read a
+	// private extension. And too strict, because a DAO-realm helper that is not
+	// itself a crossing function had no frame of its own for the walk to find.
+	//
+	// Requiring the DAO's own live realm answers the intended question directly.
+	// It also closes the lambda case by construction rather than by check: a
+	// callback that receives no realm cannot produce one, and realm values
+	// cannot be persisted or forged.
+	if ext.Info().Private {
+		assertRealmIsOwn(d.impl, rlm)
 	}
 	return ext
 }

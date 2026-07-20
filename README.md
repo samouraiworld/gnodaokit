@@ -444,7 +444,7 @@ type ExtensionInfo struct {
 
 ```go
 // Get a specific extension by path
-ext := dao.Extension("gno.land/p/samcrew/basedao.MembersView")
+ext := dao.Extension("gno.land/p/samcrew/basedao.MembersView", cur)
 
 // List all available extensions
 extList := dao.ExtensionsList()
@@ -468,7 +468,7 @@ if extIndex != nil {
 
 // Use your extension. Get(i) returns an *ExtensionInfo — metadata, not the
 // extension itself — so fetch the extension by path and assert the interface.
-ext, ok := dao.Extension(extIndex.Path).(basedao.MembersViewExtension)
+ext, ok := dao.Extension(extIndex.Path, cur).(basedao.MembersViewExtension)
 if !ok {
     panic("Invalid extension type")
 }
@@ -513,7 +513,7 @@ removed, ok := daoPrivate.Core.Extensions.Remove("gno.land/p/mydao/custom.Custom
 ### Using Your Custom Extension
 
 ```go
-ext := dao.Extension("gno.land/p/mydao/custom.CustomView")
+ext := dao.Extension("gno.land/p/mydao/custom.CustomView", cur)
 if ext == nil {
     panic("Extension not found")
 }
@@ -534,7 +534,7 @@ Built-in [`basedao.MembersViewExtension`](./gno/p/basedao/README.md#7-membership
 const MembersViewExtensionPath = "gno.land/p/samcrew/basedao.MembersView"
 
 // Check if someone is a DAO member
-ext := basedao.MustGetMembersViewExtension(dao)
+ext := basedao.MustGetMembersViewExtension(dao, cur)
 isMember := ext.IsMember("g1user...")
 ```
 

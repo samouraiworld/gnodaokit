@@ -34,8 +34,10 @@ type DAO interface {
 	// Generates a web interface representation for the given path.
 	Render(path string) string
 
-	// Gets an extension by path, returns nil if not found.
-	Extension(path string) Extension
+	// Gets an extension by path, returns nil if not found. A PRIVATE extension
+	// additionally requires the DAO realm's own live realm, on the same terms
+	// as the entry points above; a public one ignores it.
+	Extension(path string, rlm realm) Extension
 	// Lists all available extensions.
 	ExtensionsList() ExtensionsList
 }

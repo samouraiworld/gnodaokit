@@ -12,8 +12,11 @@ type MembersViewExtension interface {
 // exist.
 const MembersViewExtensionPath = "gno.land/p/samcrew/basedao.MembersView"
 
-func MustGetMembersViewExtension(dao daokit.DAO) MembersViewExtension {
-	ext := dao.Extension(MembersViewExtensionPath)
+// The realm is threaded because daokit.DAO.Extension takes one. This extension
+// is public, so any realm may fetch it and the realm is not checked — pass your
+// own cur.
+func MustGetMembersViewExtension(dao daokit.DAO, rlm realm) MembersViewExtension {
+	ext := dao.Extension(MembersViewExtensionPath, rlm)
 	if ext == nil {
 		panic("no such extension: " + MembersViewExtensionPath)
 	}

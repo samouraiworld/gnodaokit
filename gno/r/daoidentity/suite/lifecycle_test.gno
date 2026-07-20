@@ -8,6 +8,7 @@ import (
 	"gno.land/p/samcrew/basedao"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
+	"gno.land/r/samcrew/daoidentity/attacker"
 	"gno.land/r/samcrew/daoidentity/dao"
 )
 
@@ -99,4 +100,27 @@ func TestAPersistedPassedProposalStillExecutes(cur realm, t *testing.T) {
 		dao.Execute(cross(cur), id)
 	})
 	urequire.Equal(t, "Executed", dao.StatusOf(id))
+}
+
+// A private extension is readable only by the DAO's own realm.
+//
+// The check used to be a stack walk, which answers "is a DAO frame innermost",
+// not "is my caller the DAO". That let anything the DAO invoked without crossing
+// read a private extension — including a proposer-authored ExecuteLambda
+// callback. Requiring the DAO's own live realm closes that by construction: a
+// callback given no realm cannot produce one.
+func TestAPrivateExtensionIsReadableOnlyByItsOwnRealm(cur realm, t *testing.T) {
+	urequire.Equal(t, "TOP-SECRET", dao.ReadSecret(cross(cur)),
+		"the DAO's own realm must be able to read it")
+
+	urequire.AbortsWithMessage(t, cur, realmMismatch, func() {
+		attacker.ReadSecret(cross(cur))
+	})
+}
+
+// A public extension ignores the realm, so cross-realm membership checks — the
+// documented use of MembersViewExtension — keep working.
+func TestAPublicExtensionIsReadableByAnyRealm(cur realm, t *testing.T) {
+	urequire.True(t, dao.ReadPublicExtension(cross(cur)), "own realm")
+	urequire.True(t, attacker.ReadPublicExtension(cross(cur)), "any other realm")
 }
