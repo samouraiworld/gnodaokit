@@ -182,6 +182,10 @@ func (m *MembersStore) setMembers(members []Member) {
 }
 
 func (m *MembersStore) AddMember(member string, roles []string) {
+	// "" is what CallerID resolves to when it cannot name the caller.
+	if member == "" {
+		panic("member id must not be empty")
+	}
 	if m.IsMember(member) {
 		panic("member already exists")
 	}
