@@ -247,6 +247,14 @@ func (m *MembersStore) RemoveMember(member string) {
 }
 
 func (m *MembersStore) AddRole(role RoleInfo) {
+	// An empty role name is not merely useless, it is destructive. Role names
+	// are substituted into rendered prose by RenderWithRolesLinks, and
+	// strings.ReplaceAll with an empty needle matches between every character:
+	// "hello world" comes back as 227 characters of repeated link. Once a DAO is
+	// published there is no way to remove the role from a render path.
+	if role.Name == "" {
+		panic("role name must not be empty")
+	}
 	if m.Roles.Has(role.Name) {
 		panic("role already exists")
 	}
