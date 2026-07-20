@@ -120,6 +120,12 @@ type Config struct {
 	// Advanced customization hooks
 	SetImplemFn       SetImplemRaw      // Function called when DAO implementation changes via governance
 	MigrationParamsFn MigrationParamsFn // Function providing parameters for DAO upgrades
+	// Condition for replacing the DAO's implementation. A passing migration
+	// hands proposer-authored code the DAO's live realm and its full private
+	// state, so it is a takeover in the general case — it should not be as easy
+	// as adding a member. Defaults to an 80% member majority, deliberately
+	// stricter than InitialCondition's 60%; set it explicitly for anything else.
+	MigrationCondition daocond.Condition
 	RenderFn          RenderFn          // Rendering function for Gnoweb
 	CallerID          CallerIDFn        // Resolves the immediate caller from the DAO's threaded realm; defaults to defaultCallerID
 
@@ -202,11 +208,15 @@ func New(conf *Config, rlm realm) (daokit.DAO, *DAOPrivate) {
 				conf.MigrationParamsFn = func() []any { return nil }
 			}
 
+			if conf.MigrationCondition == nil {
+				conf.MigrationCondition = daocond.MembersThreshold(0.8, members.IsMember, members.MembersCount)
+			}
+
 			dao.Core.Resources.Set(&daokit.Resource{
 				Handler:     NewChangeDAOImplementationHandler(dao, setImplemFn, conf.MigrationParamsFn),
-				Condition:   conf.InitialCondition,
+				Condition:   conf.MigrationCondition,
 				DisplayName: "Change DAO Implementation",
-				Description: "Change the underlying DAO implementation.",
+				Description: "Replaces the DAO implementation. The migration receives the DAO's live realm and private state.",
 			})
 		}
 

@@ -365,7 +365,7 @@ func migrateTo2_0(prev *basedao.DAOPrivate, params []any, rlm realm) daokit.DAO 
 }
 
 // 2. Create and submit upgrade proposal
-action := basedao.NewChangeDAOImplementationAction(migrateTo2_0)
+action := basedao.NewChangeDAOImplementationAction("v2.0 — adds audit capabilities", migrateTo2_0)
 proposal := daokit.ProposalRequest{
     Title:       "Upgrade to DAO v2.0",
     Description: "Adds auditor role and enhanced governance",

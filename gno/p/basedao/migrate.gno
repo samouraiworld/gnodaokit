@@ -14,11 +14,16 @@ type MigrateFn = func(prev *DAOPrivate, params []any, rlm realm) daokit.DAO
 type MigrationParamsFn = func() []any
 
 type actionChangeDAOImplementation struct {
+	label   string
 	migrate MigrateFn
 }
 
 func (a *actionChangeDAOImplementation) String() string {
-	return "WARNING: thoroughly check the migration code before approving this"
+	return "WARNING: this replaces the DAO's implementation.\n\n" +
+		"The migration function receives the DAO's live realm and full private\n" +
+		"state, so approving it grants whoever wrote it the DAO's authority.\n" +
+		"Read the code it refers to before voting.\n\n" +
+		"Migration: " + a.label
 }
 
 func NewChangeDAOImplementationHandler(dao *DAOPrivate, setImplem daokit.SetImplemFn, paramsFn MigrationParamsFn) daokit.ActionHandler {
@@ -36,6 +41,21 @@ func NewChangeDAOImplementationHandler(dao *DAOPrivate, setImplem daokit.SetImpl
 	})
 }
 
-func NewChangeDAOImplementationAction(migrate MigrateFn) daokit.Action {
-	return daokit.NewAction(ActionChangeDAOImplementationKind, &actionChangeDAOImplementation{migrate: migrate})
+// The label is required and appears in the proposal a member votes on.
+//
+// Without it every migration renders as the same fixed sentence, so a voter
+// sees nothing distinguishing a routine upgrade from a takeover. A function
+// value cannot be rendered, so the caller has to say what it is — name the
+// version, the commit, or the change.
+func NewChangeDAOImplementationAction(label string, migrate MigrateFn) daokit.Action {
+	if label == "" {
+		panic("migration label must not be empty")
+	}
+	if migrate == nil {
+		panic("migration function must not be nil")
+	}
+	return daokit.NewAction(ActionChangeDAOImplementationKind, &actionChangeDAOImplementation{
+		label:   label,
+		migrate: migrate,
+	})
 }
