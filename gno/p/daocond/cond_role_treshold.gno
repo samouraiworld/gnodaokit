@@ -66,7 +66,17 @@ func (c *roleThresholdCond) RenderWithVotes(ballot Ballot) string {
 var _ Condition = (*roleThresholdCond)(nil)
 
 func (c *roleThresholdCond) voteRatio(ballot Ballot, vote Vote) float64 {
-	return float64(c.totalVote(ballot, vote)) / float64(c.usersRoleCountFn(c.role))
+	// The role can reachably have zero holders while the DAO still has members
+	// (RemoveRoleFromMember, RemoveRole, or removing the last holder), so the
+	// minimum-member guard does not cover this. gno's float64 divide has no
+	// zero guard, so 0/0 would yield NaN and leak into Eval, Signal and Render.
+	// Zero must read as 0.0, never 1.0 — a vacuous-truth reading would let a
+	// proposal pass with nobody entitled to vote on it.
+	roleCount := c.usersRoleCountFn(c.role)
+	if roleCount == 0 {
+		return 0
+	}
+	return float64(c.totalVote(ballot, vote)) / float64(roleCount)
 }
 
 func (c *roleThresholdCond) totalVote(ballot Ballot, vote Vote) uint32 {
