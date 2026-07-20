@@ -21,3 +21,8 @@ jobs:
 
       - name: Test gno
         run: make test
+
+      # The READMEs ship with the frozen package, so a sample that does not
+      # build is as permanent as a wrong signature. See the script for why.
+      - name: README examples match their compiled fixtures
+        run: ./.github/scripts/check-readme-examples.sh

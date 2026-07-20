@@ -4,7 +4,7 @@ package daokit
 // accessed by other packages or realms. It provides a secure way to make
 // specific DAO capabilities available without exposing internal implementation details.
 
-import "gno.land/p/nt/avl"
+import "gno.land/p/samcrew/avl"
 
 // Interface must be implemented by any object that wants to be
 // registered as a DAO extension. Extensions expose functionality through
@@ -16,10 +16,16 @@ type Extension interface {
 }
 
 type ExtensionInfo struct {
-	Path      string // Unique extension identifier (e.g., "gno.land/p/demo/basedao.MembersView")
+	Path      string // Unique extension identifier (e.g., "gno.land/p/samcrew/basedao.MembersView")
 	Version   string // Extension version (e.g., "1", "2.0", etc.)
 	QueryPath string // Path for external queries to access this extension's data
-	Private   bool   // If true, extension is only accessible from the same realm that registered it
+	// If true, only the registering realm can obtain the extension VALUE
+	// through DAO.Extension — which is a capability, not a secret. Realm state
+	// on a public chain is world-readable over ABCI regardless, and this
+	// ExtensionInfo (including QueryPath) is listed by ExtensionsList without a
+	// check. Private restricts who can call the extension's methods under the
+	// DAO's authority; it does not hide anything.
+	Private bool
 }
 
 type ExtensionsList interface {

@@ -8,13 +8,12 @@ import (
 )
 
 var (
-	DAO        daokit.DAO
 	localDAO   daokit.DAO
 	daoPrivate *basedao.DAOPrivate
 	myblog     Blog
 )
 
-func init() {
+func init(cur realm) {
 	initialRoles := []basedao.RoleInfo{
 		{Name: "Role", Description: "Has a role", Color: "#329175"},
 	}
@@ -47,9 +46,7 @@ func init() {
 			return s
 		},
 		SetImplemFn: setImplem,
-		CrossFn:     crossFn,
-	})
-	DAO = daokit.NewCrossing(localDAO, crossFn)
+	}, cur)
 
 	// Create a new custom resource
 	resource := daokit.Resource{
@@ -69,17 +66,17 @@ func init() {
 // To execute this function, you must use a MsgRun (maketx run)
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
-	localDAO.Propose(req)
+	localDAO.Propose(req, cur)
 }
 
 // Vote allows DAO members to cast their vote on a specific proposal
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
-	localDAO.Vote(proposalID, vote)
+	localDAO.Vote(proposalID, vote, cur)
 }
 
 // Execute triggers the implementation of a proposal's actions
 func Execute(cur realm, proposalID uint64) {
-	localDAO.Execute(proposalID)
+	localDAO.Execute(proposalID, cur)
 }
 
 // Render generates a UI representation of the DAO's state
@@ -87,14 +84,8 @@ func Render(path string) string {
 	return localDAO.Render(path)
 }
 
-// Enables cross-realm calls for multi-realm DAO operations.
-// It receives a callback function and executes it in the current realm context.
-func crossFn(_ realm, cb func()) {
-	cb()
-}
-
 // Updates the DAO implementation when governance proposals change it.
 // This allows the DAO to upgrade itself through proposals that modify its core logic.
-func setImplem(newLocalDAO daokit.DAO, newDAO daokit.DAO) {
-	localDAO, DAO = newLocalDAO, newDAO
+func setImplem(newLocalDAO daokit.DAO) {
+	localDAO = newLocalDAO
 }

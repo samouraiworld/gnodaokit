@@ -10,9 +10,9 @@ import (
 	"errors"
 	"time"
 
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/seqid"
+	"gno.land/p/nt/seqid/v0"
 	"gno.land/p/onbloc/json"
+	"gno.land/p/samcrew/avl"
 	"gno.land/p/samcrew/daocond"
 )
 
@@ -48,7 +48,6 @@ type Proposal struct {
 	Action     Action            // What to execute if passed
 	Condition  daocond.Condition // Voting conditions for this proposal
 	Status     ProposalStatus
-	ExecutorID string
 	ExecutedAt time.Time
 
 	Ballot daocond.Ballot // All votes cast on this proposal
@@ -89,7 +88,6 @@ func (p *ProposalsStore) GetProposals(filter func(Proposal) bool) *ProposalsStor
 		if !ok {
 			panic(errors.New("unexpected invalid proposal type"))
 		}
-		prop.UpdateStatus() // XXX: costly and probably insecure
 		if filter(*prop) {
 			proposals.Tree.Set(key, prop)
 		}
@@ -98,12 +96,39 @@ func (p *ProposalsStore) GetProposals(filter func(Proposal) bool) *ProposalsStor
 	return proposals
 }
 
-// Updates proposal status based on current voting condition results.
-func (p *Proposal) UpdateStatus() {
-	conditionsAreMet := p.Condition.Eval(p.Ballot)
-	if p.Status == ProposalStatusOpen && conditionsAreMet {
-		p.Status = ProposalStatusPassed
+// Reports the status a proposal should be displayed as, without writing it.
+//
+// Reading must never move a proposal. Render is on the cross-realm DAO
+// interface, so anything it touches is reachable by any realm holding the
+// handle: every read path used to call UpdateStatus on each proposal it walked,
+// and a single Render flipped every condition-met proposal from Open to Passed —
+// which, back when Execute demanded Open, bricked it permanently.
+func (p *Proposal) DisplayStatus() ProposalStatus {
+	if p.Status == ProposalStatusOpen && p.Condition.Eval(p.Ballot) {
+		return ProposalStatusPassed
 	}
+	return p.Status
+}
+
+// Persists the status implied by the current votes: Open becomes Passed once the
+// condition is met.
+//
+// Nothing in this package calls it. Execute evaluates the condition itself and
+// the read paths use DisplayStatus, so a proposal that is never passed through
+// here stays Open until it is Executed. It exists for a realm that wants the
+// passed state on-chain rather than computed.
+//
+// SAFE ONLY BECAUSE Vote and Execute both key on Executed alone. When they
+// demanded Open, calling this was destructive twice over: it froze the ballot,
+// so support could not be withdrawn, and it made the proposal permanently
+// unexecutable. Do not narrow either of those checks without removing this.
+//
+// It is also a READ path hazard — do not call it while rendering. And once
+// persisted the status no longer tracks the votes: withdraw support afterwards
+// and this still reads Passed, though Execute re-evaluates the condition and
+// will refuse.
+func (p *Proposal) UpdateStatus() {
+	p.Status = p.DisplayStatus()
 }
 
 // Returns all proposals as a JSON string.
@@ -115,13 +140,12 @@ func (p *ProposalsStore) GetProposalsJSON() string {
 		if !ok {
 			panic(errors.New("unexpected invalid proposal type"))
 		}
-		prop.UpdateStatus()
 		props = append(props, json.ObjectNode("", map[string]*json.Node{
 			"id":          json.NumberNode("", float64(prop.ID)),
 			"title":       json.StringNode("", prop.Title),
 			"description": json.StringNode("", prop.Description),
 			"proposer":    json.StringNode("", prop.ProposerID),
-			"status":      json.StringNode("", prop.Status.String()),
+			"status":      json.StringNode("", prop.DisplayStatus().String()),
 			"startHeight": json.NumberNode("", float64(prop.CreatedHeight)),
 			"signal":      json.NumberNode("", prop.Condition.Signal(prop.Ballot)),
 		}))

@@ -3,8 +3,8 @@ package basedao
 import (
 	"chain"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/onbloc/json"
+	"gno.land/p/samcrew/avl"
 )
 
 type MembersStore struct {
@@ -182,6 +182,10 @@ func (m *MembersStore) setMembers(members []Member) {
 }
 
 func (m *MembersStore) AddMember(member string, roles []string) {
+	// "" is what CallerID resolves to when it cannot name the caller.
+	if member == "" {
+		panic("member id must not be empty")
+	}
 	if m.IsMember(member) {
 		panic("member already exists")
 	}
@@ -206,6 +210,12 @@ func (m *MembersStore) AddMember(member string, roles []string) {
 func (m *MembersStore) RemoveMember(member string) {
 	if !m.IsMember(member) {
 		panic("member does not exist")
+	}
+
+	// A zero-member DAO is unrecoverable: assertCallerIsMember rejects every
+	// entry point, so not even AddMember can be proposed again.
+	if m.MembersCount() <= 1 {
+		panic("cannot remove the last member")
 	}
 
 	memberRolesRaw, ok := m.Members.Get(member)
@@ -237,6 +247,14 @@ func (m *MembersStore) RemoveMember(member string) {
 }
 
 func (m *MembersStore) AddRole(role RoleInfo) {
+	// An empty role name is not merely useless, it is destructive. Role names
+	// are substituted into rendered prose by RenderWithRolesLinks, and
+	// strings.ReplaceAll with an empty needle matches between every character:
+	// "hello world" comes back as 227 characters of repeated link. Once a DAO is
+	// published there is no way to remove the role from a render path.
+	if role.Name == "" {
+		panic("role name must not be empty")
+	}
 	if m.Roles.Has(role.Name) {
 		panic("role already exists")
 	}

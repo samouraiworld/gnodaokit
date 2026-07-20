@@ -2,7 +2,7 @@ package basedao
 
 import (
 	"gno.land/p/moul/md"
-	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/ufmt/v0"
 	"gno.land/p/samcrew/daokit"
 )
 
@@ -26,6 +26,9 @@ func (d *DAOPrivate) ProposalHistoryHeaderView() string {
 func (d *DAOPrivate) ProposalHistoryView(path string) string {
 	inactiveProposals := d.Core.Proposals.GetProposals(
 		func(p daokit.Proposal) bool {
+			// Raw status, for the reason in view_proposals_page.gno: this is
+			// exactly "already executed", and the display status would cost a
+			// second condition evaluation per proposal.
 			return p.Status != daokit.ProposalStatusOpen && p.Status != daokit.ProposalStatusPassed
 		},
 	)

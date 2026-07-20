@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math"
 
-	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/ufmt/v0"
 )
 
 type membersThresholdCond struct {
@@ -64,7 +64,13 @@ func (c *membersThresholdCond) RenderWithVotes(ballot Ballot) string {
 var _ Condition = (*membersThresholdCond)(nil)
 
 func (c *membersThresholdCond) voteRatio(ballot Ballot, vote Vote) float64 {
-	return float64(c.totalVote(ballot, vote)) / float64(c.membersCountFn())
+	// See roleThresholdCond.voteRatio: 0/0 is NaN in gno, and NaN leaks into
+	// Eval, Signal and Render. Zero members must read as 0.0, never 1.0.
+	membersCount := c.membersCountFn()
+	if membersCount == 0 {
+		return 0
+	}
+	return float64(c.totalVote(ballot, vote)) / float64(membersCount)
 }
 
 func (c *membersThresholdCond) totalVote(ballot Ballot, vote Vote) uint64 {

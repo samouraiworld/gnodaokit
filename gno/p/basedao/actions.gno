@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"gno.land/p/moul/md"
-	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/ufmt/v0"
 	"gno.land/p/samcrew/daokit"
 )
 
@@ -27,7 +27,7 @@ func (a *ActionAddMember) String() string {
 }
 
 func NewAddMemberHandler(dao *DAOPrivate) daokit.ActionHandler {
-	return daokit.NewActionHandler(ActionAddMemberKind, func(ipayload interface{}) {
+	return daokit.NewActionHandler(ActionAddMemberKind, func(ipayload interface{}, _ realm) {
 		payload, ok := ipayload.(*ActionAddMember)
 		if !ok {
 			panic(errors.New("invalid payload type"))
@@ -45,7 +45,7 @@ func NewAddMemberAction(payload *ActionAddMember) daokit.Action {
 const ActionRemoveMemberKind = "gno.land/p/samcrew/basedao.RemoveMember"
 
 func NewRemoveMemberHandler(dao *DAOPrivate) daokit.ActionHandler {
-	return daokit.NewActionHandler(ActionRemoveMemberKind, func(ipayload interface{}) {
+	return daokit.NewActionHandler(ActionRemoveMemberKind, func(ipayload interface{}, _ realm) {
 		addr, ok := ipayload.(address)
 		if !ok {
 			panic(errors.New("invalid payload type"))
@@ -72,7 +72,7 @@ func (a *ActionAssignRole) String() string {
 }
 
 func NewAssignRoleHandler(dao *DAOPrivate) daokit.ActionHandler {
-	return daokit.NewActionHandler(ActionAssignRoleKind, func(i interface{}) {
+	return daokit.NewActionHandler(ActionAssignRoleKind, func(i interface{}, _ realm) {
 		payload, ok := i.(*ActionAssignRole)
 		if !ok {
 			panic(errors.New("invalid payload type"))
@@ -99,7 +99,7 @@ func (a *ActionUnassignRole) String() string {
 }
 
 func NewUnassignRoleHandler(dao *DAOPrivate) daokit.ActionHandler {
-	return daokit.NewActionHandler(ActionUnassignRoleKind, func(i interface{}) {
+	return daokit.NewActionHandler(ActionUnassignRoleKind, func(i interface{}, _ realm) {
 		payload, ok := i.(*ActionUnassignRole)
 		if !ok {
 			panic(errors.New("invalid payload type"))
@@ -133,7 +133,7 @@ func NewEditProfileAction(kv ...[2]string) daokit.Action {
 }
 
 func NewEditProfileHandler(setter ProfileStringSetter, allowedFields []string) daokit.ActionHandler {
-	return daokit.NewActionHandler(ActionEditProfileKind, func(i interface{}) {
+	return daokit.NewActionHandler(ActionEditProfileKind, func(i interface{}, rlm realm) {
 		action, ok := i.(*ActionEditProfile)
 		if !ok {
 			panic(errors.New("invalid action type"))
@@ -143,7 +143,7 @@ func NewEditProfileHandler(setter ProfileStringSetter, allowedFields []string) d
 			if len(allowedFields) > 0 && !stringSliceContains(allowedFields, k) {
 				panic(ufmt.Errorf("unauthorized field %q", k))
 			}
-			setter(cross, k, v)
+			setter(cross(rlm), k, v)
 		}
 	})
 }

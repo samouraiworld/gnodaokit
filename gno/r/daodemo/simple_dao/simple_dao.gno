@@ -12,13 +12,12 @@ import (
 )
 
 var (
-	DAO        daokit.DAO          // Crossing interface for DAO interaction
 	localDAO   daokit.DAO          // Local interface for maketx call
 	daoPrivate *basedao.DAOPrivate // Full access to internal DAO state
 )
 
 // Initializes the DAO with predefined roles, members, and governance rules.
-func init() {
+func init(cur realm) {
 	// Define initial roles in the DAO
 	initialRoles := []basedao.RoleInfo{
 		{Name: "public-relationships", Description: "Responsible of communication with the public", Color: "#21577A"},
@@ -60,28 +59,26 @@ func init() {
 			s += dao.RenderRouter.Render(path)
 			return s
 		},
-		CrossFn: crossFn,
-	})
-	DAO = daokit.NewCrossing(localDAO, crossFn)
+	}, cur)
 
-	initProposals(25)
+	initProposals(cur, 25)
 }
 
 // Creates a new proposal
 // To execute this function, you must use a MsgRun `gnokey maketx run“
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
-	localDAO.Propose(req)
+	localDAO.Propose(req, cur)
 }
 
 // Allows DAO members to cast their vote on a specific proposal
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
-	localDAO.Vote(proposalID, vote)
+	localDAO.Vote(proposalID, vote, cur)
 }
 
 // Triggers the implementation of a proposal's actions
 func Execute(cur realm, proposalID uint64) {
-	localDAO.Execute(proposalID)
+	localDAO.Execute(proposalID, cur)
 }
 
 // Generates a UI representation of the DAO's state
@@ -89,14 +86,8 @@ func Render(path string) string {
 	return localDAO.Render(path)
 }
 
-// Enables cross-realm calls for multi-realm DAO operations.
-// It receives a callback function and executes it in the current realm context.
-func crossFn(_ realm, cb func()) {
-	cb()
-}
-
 // Updates the DAO implementation when governance proposals change it.
 // This allows the DAO to upgrade itself through proposals that modify its core logic.
-func setImplem(newLocalDAO daokit.DAO, newDAO daokit.DAO) {
-	localDAO, DAO = newLocalDAO, newDAO
+func setImplem(newLocalDAO daokit.DAO) {
+	localDAO = newLocalDAO
 }

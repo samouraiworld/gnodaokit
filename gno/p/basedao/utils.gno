@@ -6,10 +6,11 @@ import (
 
 	"gno.land/p/demo/svg"
 	"gno.land/p/moul/md"
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/avl/pager"
-	"gno.land/p/nt/seqid"
-	"gno.land/p/nt/ufmt"
+	ntavl "gno.land/p/nt/avl/v0" // svg.Canvas.Style is a *nt/avl/v0.Tree — keep that ABI at the svg boundary
+	"gno.land/p/nt/seqid/v0"
+	"gno.land/p/nt/ufmt/v0"
+	"gno.land/p/samcrew/avl"
+	"gno.land/p/samcrew/avl/pager"
 	"gno.land/p/samcrew/daokit"
 )
 
@@ -39,6 +40,13 @@ func RenderAddressLink(addr string) string {
 func (d *DAOPrivate) RenderWithRolesLinks(s string) string {
 	roles := d.Members.GetRoles()
 	for _, role := range roles {
+		// AddRole refuses an empty name, but Roles is an exported avl.Tree that
+		// a same-realm write or a MigrateFn can seed directly. An empty needle
+		// makes ReplaceAll match between every character, so skipping here keeps
+		// the render path safe however the store was filled.
+		if role == "" {
+			continue
+		}
 		s = strings.ReplaceAll(s, role, d.RenderRoleLink(role))
 	}
 	return s
@@ -91,7 +99,7 @@ func (d *DAOPrivate) RoleColoredChip(role string, canvas ...*svg.Canvas) string 
 	canvasWidth := 16
 	canvasHeight := 16
 	canvasElem := []svg.Elem{}
-	canvasStyle := avl.NewTree()
+	canvasStyle := ntavl.NewTree()
 
 	if canvas != nil && len(canvas) > 0 {
 		canvasWidth = canvas[0].Width
@@ -140,6 +148,13 @@ func (d *DAOPrivate) RenderMembersTable(path string, members *avl.Tree) string {
 			rolesStr = d.RenderRoleLinkWithChip("")
 		}
 		for _, role := range roles {
+			// Same empty-needle hazard as RenderWithRolesLinks: an empty role
+			// name matches between every character. AddRole refuses one, but
+			// Roles is an exported avl.Tree that can be seeded around it — and
+			// once it holds "", AddRoleToMember will happily assign it.
+			if role == "" {
+				continue
+			}
 			rolesStr = strings.Replace(rolesStr, role, d.RenderRoleLinkWithChip(role), -1)
 		}
 
@@ -183,7 +198,7 @@ func (d *DAOPrivate) RenderProposalsTable(path string, proposals *daokit.Proposa
 			resource.DisplayName,
 			RenderAddressLink(proposal.ProposerID),
 			FormatDateTimeWithUTCOffset(proposal.CreatedAt),
-			proposal.Status.String())
+			proposal.DisplayStatus().String())
 	}
 
 	s += "\n" + page.Picker(path) + "\n"

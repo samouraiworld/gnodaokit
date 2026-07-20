@@ -3,8 +3,8 @@ package basedao
 import (
 	"testing"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/urequire"
+	"gno.land/p/nt/testutils/v0"
+	"gno.land/p/nt/urequire/v0"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
 )
@@ -16,7 +16,17 @@ var (
 	dave  = testutils.TestAddress("dave")
 )
 
-func TestNewDAO(t *testing.T) {
+// The DAO under test is told who its caller is, rather than inferring one.
+//
+// testing.SetRealm fabricates a cur with no frame beneath it: cur.Previous()
+// resolves to gno.land/p/samcrew/basedao itself, so the harness cannot express
+// a caller chain in either direction. Leaning on it is what let the original
+// identity defect and #66's New() regression both pass CI.
+//
+// Caller resolution is therefore not asserted here. It is asserted across real
+// realm boundaries in gno/r/daoidentity, which is the only place it can be.
+
+func TestNewDAO(cur realm, t *testing.T) {
 	initialRoles := []RoleInfo{
 		{Name: "admin", Description: "Admin is the superuser", Color: "#329175"},
 	}
@@ -35,7 +45,7 @@ func TestNewDAO(t *testing.T) {
 	daoRealm := testing.NewCodeRealm("gno.land/r/testing/daorealm")
 	testing.SetOriginCaller(alice)
 	testing.SetRealm(daoRealm)
-	_, dao := New(conf)
+	_, dao := New(conf, cur)
 	roles := dao.Members.GetRoles()
 	if len(roles) != 1 {
 		t.Errorf("Expected 1 role, got %d", len(roles))
@@ -60,13 +70,13 @@ func TestNewDAO(t *testing.T) {
 	// XXX: check realm and profile
 }
 
-func TestPropose(t *testing.T) {
+func TestPropose(cur realm, t *testing.T) {
 	members := []Member{
 		{alice.String(), []string{"admin"}},
 		{bob.String(), []string{}},
 		{carol.String(), []string{}},
 	}
-	tdao := newTestingDAO(t, 0.6, members)
+	tdao := newTestingDAO(cur, t, 0.6, members)
 
 	type testNewProposalInput struct {
 		proposalReq daokit.ProposalRequest
@@ -133,9 +143,9 @@ func TestPropose(t *testing.T) {
 			}
 			*tdao.mockHandlerCalled = false
 			func() {
-				testing.SetOriginCaller(test.input.proposer)
+				tdao.setCaller(test.input.proposer)
 			}()
-			id := tdao.dao.Propose(test.input.proposalReq)
+			id := tdao.dao.Propose(test.input.proposalReq, cur)
 
 			urequire.False(t, *tdao.mockHandlerCalled, "execute should not be called")
 
@@ -156,15 +166,15 @@ func TestPropose(t *testing.T) {
 	}
 }
 
-func TestVote(t *testing.T) {
+func TestVote(cur realm, t *testing.T) {
 	members := []Member{
 		{alice.String(), []string{"admin"}},
 		{bob.String(), []string{}},
 		{carol.String(), []string{}},
 	}
-	tdao := newTestingDAO(t, 0.6, members)
+	tdao := newTestingDAO(cur, t, 0.6, members)
 
-	tdao.dao.Propose(tdao.mockProposalRequest)
+	tdao.dao.Propose(tdao.mockProposalRequest, cur)
 
 	type testVoteInput struct {
 		proposalID uint64
@@ -241,18 +251,18 @@ func TestVote(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			run := func() {
 				func() {
-					testing.SetOriginCaller(test.input.voter)
+					tdao.setCaller(test.input.voter)
 				}()
-				tdao.dao.Vote(test.input.proposalID, test.input.vote)
+				tdao.dao.Vote(test.input.proposalID, test.input.vote, cur)
 
 			}
 
 			*tdao.mockHandlerCalled = false
 
 			if test.expected.panic != "" {
-				urequire.PanicsWithMessage(t, test.expected.panic, run)
+				urequire.PanicsWithMessage(t, cur, test.expected.panic, run)
 			} else {
-				urequire.NotPanics(t, run)
+				urequire.NotPanics(t, cur, run)
 				urequire.False(t, *tdao.mockHandlerCalled, "execute should not be called")
 				proposal := tdao.privdao.Core.Proposals.GetProposal(test.input.proposalID)
 				eval := proposal.Condition.Eval(proposal.Ballot)
@@ -264,15 +274,15 @@ func TestVote(t *testing.T) {
 	}
 }
 
-func TestExecuteProposal(t *testing.T) {
+func TestExecuteProposal(cur realm, t *testing.T) {
 	members := []Member{
 		{alice.String(), []string{"admin"}},
 		{bob.String(), []string{}},
 		{carol.String(), []string{}},
 	}
-	tdao := newTestingDAO(t, 0.6, members)
+	tdao := newTestingDAO(cur, t, 0.6, members)
 
-	tdao.dao.Propose(tdao.mockProposalRequest)
+	tdao.dao.Propose(tdao.mockProposalRequest, cur)
 
 	type testExecuteInput struct {
 		proposalID uint64
@@ -351,16 +361,16 @@ func TestExecuteProposal(t *testing.T) {
 
 			if test.input.haveVote {
 				func() {
-					testing.SetOriginCaller(test.input.voter)
+					tdao.setCaller(test.input.voter)
 				}()
-				tdao.dao.Vote(test.input.proposalID, "yes")
+				tdao.dao.Vote(test.input.proposalID, "yes", cur)
 
 			}
 
 			func() {
-				testing.SetOriginCaller(test.input.executor)
+				tdao.setCaller(test.input.executor)
 			}()
-			tdao.dao.Execute(test.input.proposalID)
+			tdao.dao.Execute(test.input.proposalID, cur)
 
 			proposal := tdao.privdao.Core.Proposals.GetProposal(test.input.proposalID)
 
@@ -371,13 +381,13 @@ func TestExecuteProposal(t *testing.T) {
 	}
 }
 
-func TestInstantExecute(t *testing.T) {
+func TestInstantExecute(cur realm, t *testing.T) {
 	members := []Member{
 		{alice.String(), []string{"admin"}},
 		{bob.String(), []string{}},
 		{carol.String(), []string{}},
 	}
-	tdao := newTestingDAO(t, 0.6, members)
+	tdao := newTestingDAO(cur, t, 0.6, members)
 
 	type testInstantExecuteInput struct {
 		proposalReq daokit.ProposalRequest
@@ -436,20 +446,20 @@ func TestInstantExecute(t *testing.T) {
 			}
 
 			func() {
-				testing.SetOriginCaller(test.input.executor)
+				tdao.setCaller(test.input.executor)
 			}()
-			tdao.dao.Propose(test.input.proposalReq)
+			tdao.dao.Propose(test.input.proposalReq, cur)
 		})
 	}
 }
 
-func TestGetMembers(t *testing.T) {
+func TestGetMembers(cur realm, t *testing.T) {
 	members := []Member{
 		{alice.String(), []string{"admin"}},
 		{bob.String(), []string{}},
 		{carol.String(), []string{}},
 	}
-	tdao := newTestingDAO(t, 0.6, members)
+	tdao := newTestingDAO(cur, t, 0.6, members)
 
 	expectedMembers := []string{alice.String(), bob.String(), carol.String()}
 	m := tdao.privdao.Members.GetMembers()
@@ -464,11 +474,11 @@ func TestGetMembers(t *testing.T) {
 	}
 }
 
-func TestAddMemberProposal(t *testing.T) {
+func TestAddMemberProposal(cur realm, t *testing.T) {
 	members := []Member{
 		{alice.String(), []string{"admin"}},
 	}
-	tdao := newTestingDAO(t, 0.2, members)
+	tdao := newTestingDAO(cur, t, 0.2, members)
 
 	if tdao.privdao.Members.IsMember(bob.String()) {
 		t.Errorf("Expected member %s to not be a member", bob.String())
@@ -481,7 +491,7 @@ func TestAddMemberProposal(t *testing.T) {
 			Address: bob,
 			Roles:   []string{"admin"},
 		}),
-	})
+	}, cur)
 
 	if !tdao.privdao.Members.IsMember(bob.String()) {
 		t.Errorf("Expected member %s to be a member", bob.String())
@@ -505,15 +515,15 @@ func TestAddMemberProposal(t *testing.T) {
 			Roles:   []string{"unknown"},
 		}),
 	}
-	daokit.InstantExecute(tdao.dao, proposalWithUnknownRole)
+	daokit.InstantExecute(tdao.dao, proposalWithUnknownRole, cur)
 }
 
-func TestRemoveMemberProposal(t *testing.T) {
+func TestRemoveMemberProposal(cur realm, t *testing.T) {
 	members := []Member{
 		{alice.String(), []string{"admin"}},
 		{bob.String(), []string{"admin"}},
 	}
-	tdao := newTestingDAO(t, 0.2, members)
+	tdao := newTestingDAO(cur, t, 0.2, members)
 
 	if !tdao.privdao.Members.IsMember(bob.String()) {
 		t.Errorf("Expected member %s to be a member", bob.String())
@@ -526,7 +536,7 @@ func TestRemoveMemberProposal(t *testing.T) {
 		Title:       "My Proposal",
 		Description: "My Proposal Description",
 		Action:      NewRemoveMemberAction(bob),
-	})
+	}, cur)
 
 	if tdao.privdao.Members.IsMember(bob.String()) {
 		t.Errorf("Expected user %s to not be a member", bob.String())
@@ -537,12 +547,12 @@ func TestRemoveMemberProposal(t *testing.T) {
 	}
 }
 
-func TestAddRoleToUserProposal(t *testing.T) {
+func TestAddRoleToUserProposal(cur realm, t *testing.T) {
 	members := []Member{
 		{alice.String(), []string{"admin"}},
 		{bob.String(), []string{}},
 	}
-	tdao := newTestingDAO(t, 0.2, members)
+	tdao := newTestingDAO(cur, t, 0.2, members)
 
 	if tdao.privdao.Members.HasRole(bob.String(), "admin") {
 		t.Errorf("Expected member %s to not have role 'admin'", bob.String())
@@ -552,7 +562,7 @@ func TestAddRoleToUserProposal(t *testing.T) {
 		Title:       "My Proposal",
 		Description: "My Proposal Description",
 		Action:      NewAssignRoleAction(&ActionAssignRole{Address: bob, Role: "admin"}),
-	})
+	}, cur)
 	if !tdao.privdao.Members.HasRole(bob.String(), "admin") {
 		t.Errorf("Expected member %s to have role 'admin'", bob.String())
 	}
@@ -568,7 +578,7 @@ func TestAddRoleToUserProposal(t *testing.T) {
 		Title:       "My Proposal",
 		Description: "My Proposal Description",
 		Action:      NewAssignRoleAction(&ActionAssignRole{Address: alice, Role: "unknown"}),
-	})
+	}, cur)
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -580,7 +590,7 @@ func TestAddRoleToUserProposal(t *testing.T) {
 		Title:       "My Proposal",
 		Description: "My Proposal Description",
 		Action:      NewAssignRoleAction(&ActionAssignRole{Address: carol, Role: "admin"}),
-	})
+	}, cur)
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -592,10 +602,10 @@ func TestAddRoleToUserProposal(t *testing.T) {
 		Title:       "My Proposal",
 		Description: "My Proposal Description",
 		Action:      NewAssignRoleAction(&ActionAssignRole{Address: bob, Role: "admin"}),
-	})
+	}, cur)
 }
 
-func TestRemoveRoleFromUserProposal(t *testing.T) {
+func TestRemoveRoleFromUserProposal(cur realm, t *testing.T) {
 	members := []Member{
 		{
 			alice.String(),
@@ -606,7 +616,7 @@ func TestRemoveRoleFromUserProposal(t *testing.T) {
 			[]string{"admin"},
 		},
 	}
-	tdao := newTestingDAO(t, 0.2, members)
+	tdao := newTestingDAO(cur, t, 0.2, members)
 
 	if !tdao.privdao.Members.HasRole(bob.String(), "admin") {
 		t.Errorf("Expected member %s to have role 'admin'", bob.String())
@@ -615,7 +625,7 @@ func TestRemoveRoleFromUserProposal(t *testing.T) {
 		Title:       "My Proposal",
 		Description: "My Proposal Description",
 		Action:      NewUnassignRoleAction(&ActionUnassignRole{Address: bob, Role: "admin"}),
-	})
+	}, cur)
 
 	if tdao.privdao.Members.HasRole(bob.String(), "admin") {
 		t.Errorf("Expected member %s to not have role 'admin'", bob.String())
@@ -632,8 +642,8 @@ func TestRemoveRoleFromUserProposal(t *testing.T) {
 		Description: "My Proposal Description",
 		Action:      NewUnassignRoleAction(&ActionUnassignRole{Address: alice, Role: "unknown"}),
 	}
-	testing.SetOriginCaller(alice)
-	daokit.InstantExecute(tdao.dao, proposalWithUnknowkRole)
+	tdao.setCaller(alice)
+	daokit.InstantExecute(tdao.dao, proposalWithUnknowkRole, cur)
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -646,8 +656,8 @@ func TestRemoveRoleFromUserProposal(t *testing.T) {
 		Description: "My Proposal Description",
 		Action:      NewUnassignRoleAction(&ActionUnassignRole{Address: carol, Role: "admin"}),
 	}
-	testing.SetOriginCaller(alice)
-	daokit.InstantExecute(tdao.dao, proposalWithNonMember)
+	tdao.setCaller(alice)
+	daokit.InstantExecute(tdao.dao, proposalWithNonMember, cur)
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -660,11 +670,12 @@ func TestRemoveRoleFromUserProposal(t *testing.T) {
 		Description: "My Proposal Description",
 		Action:      NewUnassignRoleAction(&ActionUnassignRole{Address: bob, Role: "admin"}),
 	}
-	testing.SetOriginCaller(alice)
-	daokit.InstantExecute(tdao.dao, proposalWithNonRole)
+	tdao.setCaller(alice)
+	daokit.InstantExecute(tdao.dao, proposalWithNonRole, cur)
 }
 
 type testingDAOContext struct {
+	caller                 *string
 	dao                    daokit.DAO
 	privdao                *DAOPrivate
 	mockHandlerCalled      *bool
@@ -673,26 +684,28 @@ type testingDAOContext struct {
 	unknownProposalRequest daokit.ProposalRequest
 }
 
-func newTestingDAO(t *testing.T, threshold float64, members []Member) *testingDAOContext {
+func newTestingDAO(cur realm, t *testing.T, threshold float64, members []Member) *testingDAOContext {
 	roles := []RoleInfo{{Name: "admin", Description: "Admin is the superuser", Color: "#329175"}}
 	membersStore := NewMembersStore(roles, members)
 	initialCondition := daocond.MembersThreshold(threshold, membersStore.IsMember, membersStore.MembersCount)
 
+	caller := alice.String()
 	conf := &Config{
 		Name:             "My DAO",
 		Description:      "My DAO Description",
 		Members:          membersStore,
 		InitialCondition: initialCondition,
 		GetProfileString: func(addr address, field, def string) string { return "" },
+		CallerID:         func(dao *DAOPrivate, rlm realm) string { return caller },
 	}
 
 	daoRealm := testing.NewCodeRealm("gno.land/r/testing/daorealm")
 	testing.SetOriginCaller(alice)
 	testing.SetRealm(daoRealm)
-	pubdao, dao := New(conf)
+	pubdao, dao := New(conf, cur)
 
 	mockHandlerCalled := false
-	mockHandler := daokit.NewActionHandler("valid", func(_ interface{}) { mockHandlerCalled = true })
+	mockHandler := daokit.NewActionHandler("valid", func(_ interface{}, _ realm) { mockHandlerCalled = true })
 	dao.Core.Resources.Set(&daokit.Resource{
 		Handler:   mockHandler,
 		Condition: daocond.MembersThreshold(0.2, dao.Members.IsMember, dao.Members.MembersCount),
@@ -711,6 +724,7 @@ func newTestingDAO(t *testing.T, threshold float64, members []Member) *testingDA
 	}
 
 	return &testingDAOContext{
+		caller:                 &caller,
 		dao:                    pubdao,
 		privdao:                dao,
 		mockHandlerCalled:      &mockHandlerCalled,
@@ -718,4 +732,11 @@ func newTestingDAO(t *testing.T, threshold float64, members []Member) *testingDA
 		mockProposalRequest:    mockProposalRequest,
 		unknownProposalRequest: unknownProposalRequest,
 	}
+}
+
+// setCaller points both the transaction origin and the identity this DAO
+// resolves at the same account, so these tests read as they did before.
+func (c *testingDAOContext) setCaller(a address) {
+	testing.SetOriginCaller(a)
+	*c.caller = a.String()
 }

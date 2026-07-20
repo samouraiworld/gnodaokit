@@ -42,7 +42,7 @@ func TestDAOInitialization(t *testing.T) {
 	})
 }
 
-func TestBlogResource(t *testing.T) {
+func TestBlogResource(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm("g1demo1234567890abcdefghijklmnopqrstuvw1"))
 
 	action := NewPostAction("Test Title", "Test Content")
@@ -54,7 +54,7 @@ func TestBlogResource(t *testing.T) {
 	}
 
 	t.Run("Test proposal creation", func(t *testing.T) {
-		Propose(cross, req)
+		Propose(cross(cur), req)
 		// Should be 4 total proposals (3 initial + 1 test proposal)
 		if daoPrivate.Core.Proposals.Tree.Size() != 4 {
 			t.Fatalf("Expected 4 total proposals, got %d", daoPrivate.Core.Proposals.Tree.Size())
@@ -73,10 +73,10 @@ func TestBlogResource(t *testing.T) {
 		}
 
 		// Vote with 1 member (meets 10% threshold of 4 members)
-		Vote(cross, 4, daocond.VoteYes) // member1
+		Vote(cross(cur), 4, daocond.VoteYes) // member1
 
 		// Execute the proposal
-		Execute(cross, 4)
+		Execute(cross(cur), 4)
 
 		// Verify blog post was created
 		if len(myblog.Post) != 1 {
@@ -98,10 +98,10 @@ func TestBlogResource(t *testing.T) {
 
 		// Create new proposal
 		req.Action = NewPostAction("Should Not Create", "This shouldn't appear")
-		Propose(cross, req)
+		Propose(cross(cur), req)
 
 		// should panic
-		abort := revive(func() { Execute(cross, 2) })
+		abort := revive(func() { Execute(cross(cur), 2) })
 		if abort != "proposal condition is not met" {
 			t.Fatalf("Expected execute to panic with 'proposal condition is not met', but got: '%s'", abort)
 		}

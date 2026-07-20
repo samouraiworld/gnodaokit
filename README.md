@@ -81,7 +81,7 @@ governance := daocond.And(
     daocond.RoleCount(2, "core-contributor", store.HasRole),
     daocond.Or(
         daocond.RoleCount(1, "CTO", store.HasRole),
-        daocond.RoleThreshold(0.5, "finance", store.HasRole, store.RoleCount),
+        daocond.RoleThreshold(0.5, "finance", store.HasRole, store.CountMembersWithRole),
     ),
 )
 ```
@@ -121,11 +121,16 @@ Interface functions for creating proposals, voting, and executing actions.
 
 ```go
 type DAO interface {
-	Propose(req ProposalRequest) uint64  // Create a new proposal, returns proposal ID
-	Vote(id uint64, vote daocond.Vote)   // Cast a vote on an existing proposal
-	Execute(id uint64)                   // Execute a passed proposal
+	Propose(req ProposalRequest, rlm realm) uint64  // Create a new proposal, returns proposal ID
+	Vote(id uint64, vote daocond.Vote, rlm realm)   // Cast a vote on an existing proposal
+	Execute(id uint64, rlm realm)                   // Execute a passed proposal
 }
 ```
+
+Every entry point threads the DAO realm's own realm value. The implementation
+requires it to be the DAO's own and to be current, which is what lets it name
+the DAO's immediate caller — and what stops a realm holding this handle from
+making the DAO act under the caller's identity.
 
 ### 2.2.3 Proposal Lifecycle
 
@@ -158,13 +163,15 @@ members := []basedao.Member{
 
 store := basedao.NewMembersStore(roles, members)
 
-// Create DAO
+// Create DAO (cur is the realm received by init/the calling crossing function)
 DAO, daoPrivate := basedao.New(&basedao.Config{
 	Name:             "My DAO",
 	Description:      "A sample DAO",
 	Members:          store,
 	InitialCondition: memberMajority,
-})
+	// Required: New() panics without it.
+	GetProfileString: profile.GetStringField,
+}, cur)
 ```
 
 ### 2.3.2 Built-in Actions
@@ -221,8 +228,7 @@ type Config struct {
 	SetImplemFn       SetImplemRaw      // Function called when DAO implementation changes via governance
 	MigrationParamsFn MigrationParamsFn // Function providing parameters for DAO upgrades
 	RenderFn          RenderFn          // Rendering function for Gnoweb
-	CrossFn           daokit.CrossFn    // Cross-realm communication function for multi-realm DAOs
-	CallerID          CallerIDFn        // Custom function to identify the current caller, defaults to realmid.Previous
+	CallerID          CallerIDFn        // Custom function to identify the current caller, defaults to the DAO's immediate caller
 
 	// Internal configuration
 	PrivateVarName string // Name of the private DAO variable for member querying extensions
@@ -240,14 +246,17 @@ import (
     "gno.land/p/samcrew/basedao"
     "gno.land/p/samcrew/daocond"
     "gno.land/p/samcrew/daokit"
+    "gno.land/r/demo/profile"
 )
 
 var (
-	DAO        daokit.DAO          // External interface for DAO interaction
+	// Unexported deliberately: anything that can reach this value can call the
+	// DAO's entry points directly, bypassing this realm's crossing functions.
+	localDAO   daokit.DAO
 	daoPrivate *basedao.DAOPrivate // Full access to internal DAO state
 )
 
-func init() {
+func init(cur realm) {
     // Set up roles
     roles := []basedao.RoleInfo{
         {Name: "admin", Description: "Administrators", Color: "#329175"},
@@ -266,35 +275,38 @@ func init() {
     // Require 60% of members to approve proposals
     condition := daocond.MembersThreshold(0.6, store.IsMember, store.MembersCount)
 
-    // Create the DAO
-    DAO, daoPrivate = basedao.New(&basedao.Config{
+    // Create the DAO (cur is threaded so the DAO can perform cross-realm calls)
+    localDAO, daoPrivate = basedao.New(&basedao.Config{
         Name:             "My DAO",
         Description:      "A simple DAO example",
         Members:          store,
         InitialCondition: condition,
-    })
+        // Required: New() panics without it.
+        GetProfileString: profile.GetStringField,
+        SetProfileString: profile.SetStringField,
+    }, cur)
 }
 
 // Create a new Proposal to be voted on
 // To execute this function, you must use a MsgRun (maketx run)
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
-func Propose(req daokit.ProposalRequest) {
-	DAO.Propose(req)
+func Propose(cur realm, req daokit.ProposalRequest) {
+	localDAO.Propose(req, cur)
 }
 
 // Allows DAO members to cast their vote on a specific proposal
-func Vote(proposalID uint64, vote daocond.Vote) {
-    DAO.Vote(proposalID, vote)
+func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
+    localDAO.Vote(proposalID, vote, cur)
 }
 
 // Triggers the implementation of a proposal's actions
-func Execute(proposalID uint64) {
-	DAO.Execute(proposalID)
+func Execute(cur realm, proposalID uint64) {
+	localDAO.Execute(proposalID, cur)
 }
 
 // Render generates a UI representation of the DAO's state
 func Render(path string) string {
-	return DAO.Render(path)
+	return localDAO.Render(path)
 }
 ```
 
@@ -347,7 +359,7 @@ type Action interface {
 
 type ActionHandler interface {
 	Type() string // return the type of the action. e.g.: "gno.land/p/samcrew/blog.NewPost"
-	Execute(action Action) // executes logic associated with the action
+	Execute(action Action, rlm realm) // executes logic associated with the action (rlm is threaded for cross-calls)
 }
 ```
 
@@ -379,8 +391,8 @@ func NewPostAction(title, content string) daokit.Action {
 }
 
 func NewPostHandler(blog *Blog) daokit.ActionHandler {
-	// def: daoKit.NewActionHandler(kind: String, payload: func(interface{}))
-	return daokit.NewActionHandler(ActionNewPostKind, func(payload interface{}) {
+	// def: daoKit.NewActionHandler(kind: String, executor: func(interface{}, realm))
+	return daokit.NewActionHandler(ActionNewPostKind, func(payload interface{}, _ realm) {
 		action, ok := payload.(*ActionNewPost)
 		if !ok {
 			panic(errors.New("invalid action type"))
@@ -393,7 +405,7 @@ func NewPostHandler(blog *Blog) daokit.ActionHandler {
 4. Register the resource
 ```go
 resource := daokit.Resource{
-    Condition: daocond.NewRoleCount(1, "CEO", daoPrivate.Members.HasRole),
+    Condition: daocond.RoleCount(1, "CEO", daoPrivate.Members.HasRole),
     Handler: blog.NewPostHandler(blog),
 }
 daoPrivate.Core.Resources.Set(&resource)
@@ -421,7 +433,7 @@ type Extension interface {
 }
 
 type ExtensionInfo struct {
-    Path      string // Unique extension identifier (e.g., "gno.land/p/demo/basedao.MembersView")
+    Path      string // Unique extension identifier (e.g., "gno.land/p/samcrew/basedao.MembersView")
     Version   string // Extension version (e.g., "1", "2.0", etc.)
     QueryPath string // Path for external queries to access this extension's data
     Private   bool   // If true, extension is only accessible from the same realm
@@ -432,7 +444,7 @@ type ExtensionInfo struct {
 
 ```go
 // Get a specific extension by path
-ext := dao.Extension("gno.land/p/demo/basedao.MembersView")
+ext := dao.Extension("gno.land/p/samcrew/basedao.MembersView", cur)
 
 // List all available extensions
 extList := dao.ExtensionsList()
@@ -454,12 +466,13 @@ if extIndex != nil {
     fmt.Printf("First extension: %s\n", extIndex.Path)
 }
 
-// Use your extension
-ext, ok := extIndex.(*MembersViewExtension)
+// Use your extension. Get(i) returns an *ExtensionInfo — metadata, not the
+// extension itself — so fetch the extension by path and assert the interface.
+ext, ok := dao.Extension(extIndex.Path, cur).(basedao.MembersViewExtension)
 if !ok {
     panic("Invalid extension type")
 }
-ext.IsMember()
+ext.IsMember("g1user...")
 ```
 
 ## 7.3 Creating Custom Extensions
@@ -500,7 +513,7 @@ removed, ok := daoPrivate.Core.Extensions.Remove("gno.land/p/mydao/custom.Custom
 ### Using Your Custom Extension
 
 ```go
-ext := dao.Extension("gno.land/p/mydao/custom.CustomView")
+ext := dao.Extension("gno.land/p/mydao/custom.CustomView", cur)
 if ext == nil {
     panic("Extension not found")
 }
@@ -518,10 +531,10 @@ message := customExt.SayHello("Alice")
 Built-in [`basedao.MembersViewExtension`](./gno/p/basedao/README.md#7-membership-extension) allows external packages to check DAO membership from any realm:
 
 ```go
-const MembersViewExtensionPath = "gno.land/p/demo/basedao.MembersView"
+const MembersViewExtensionPath = "gno.land/p/samcrew/basedao.MembersView"
 
 // Check if someone is a DAO member
-ext := basedao.MustGetMembersViewExtension(dao)
+ext := basedao.MustGetMembersViewExtension(dao, cur)
 isMember := ext.IsMember("g1user...")
 ```
 

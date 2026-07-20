@@ -6,10 +6,17 @@ type MembersViewExtension interface {
 	IsMember(memberId string) bool
 }
 
-const MembersViewExtensionPath = "gno.land/p/demo/basedao.MembersView"
+// The extension registry key. It names this package, so it has to match the
+// path this package is published at — third-party lookups are pinned to this
+// literal once published, and it named gno.land/p/demo/basedao, which does not
+// exist.
+const MembersViewExtensionPath = "gno.land/p/samcrew/basedao.MembersView"
 
-func MustGetMembersViewExtension(dao daokit.DAO) MembersViewExtension {
-	ext := dao.Extension(MembersViewExtensionPath)
+// The realm is threaded because daokit.DAO.Extension takes one. This extension
+// is public, so any realm may fetch it and the realm is not checked — pass your
+// own cur.
+func MustGetMembersViewExtension(dao daokit.DAO, rlm realm) MembersViewExtension {
+	ext := dao.Extension(MembersViewExtensionPath, rlm)
 	if ext == nil {
 		panic("no such extension: " + MembersViewExtensionPath)
 	}

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math"
 
-	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/ufmt/v0"
 )
 
 type roleThresholdCond struct {
@@ -56,7 +56,7 @@ func (c *roleThresholdCond) Render() string {
 // Example output: "60% of admin members with role admin must vote yes\n\nYes: 1/2 = 50%"
 func (c *roleThresholdCond) RenderWithVotes(ballot Ballot) string {
 	s := ""
-	s += ufmt.Sprintf("%g%% of %s members with role %s must vote yes\n\n", c.threshold*100, c.role)
+	s += ufmt.Sprintf("%g%% of %s members with role %s must vote yes\n\n", c.threshold*100, c.role, c.role)
 	s += ufmt.Sprintf("Yes: %d/%d = %g%%\n\n", c.totalVote(ballot, VoteYes), c.usersRoleCountFn(c.role), c.voteRatio(ballot, VoteYes)*100)
 	s += ufmt.Sprintf("No: %d/%d = %g%%\n\n", c.totalVote(ballot, VoteNo), c.usersRoleCountFn(c.role), c.voteRatio(ballot, VoteNo)*100)
 	s += ufmt.Sprintf("Abstain: %d/%d = %g%%\n\n", c.totalVote(ballot, VoteAbstain), c.usersRoleCountFn(c.role), c.voteRatio(ballot, VoteAbstain)*100)
@@ -66,7 +66,17 @@ func (c *roleThresholdCond) RenderWithVotes(ballot Ballot) string {
 var _ Condition = (*roleThresholdCond)(nil)
 
 func (c *roleThresholdCond) voteRatio(ballot Ballot, vote Vote) float64 {
-	return float64(c.totalVote(ballot, vote)) / float64(c.usersRoleCountFn(c.role))
+	// The role can reachably have zero holders while the DAO still has members
+	// (RemoveRoleFromMember, RemoveRole, or removing the last holder), so the
+	// minimum-member guard does not cover this. gno's float64 divide has no
+	// zero guard, so 0/0 would yield NaN and leak into Eval, Signal and Render.
+	// Zero must read as 0.0, never 1.0 — a vacuous-truth reading would let a
+	// proposal pass with nobody entitled to vote on it.
+	roleCount := c.usersRoleCountFn(c.role)
+	if roleCount == 0 {
+		return 0
+	}
+	return float64(c.totalVote(ballot, vote)) / float64(roleCount)
 }
 
 func (c *roleThresholdCond) totalVote(ballot Ballot, vote Vote) uint32 {

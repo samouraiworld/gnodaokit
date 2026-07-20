@@ -9,7 +9,7 @@ import (
 // Proposal function to add a new member in the DAO
 // To execute this function, you must use a MsgRun `gnokey maketx run“
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
-func main() {
+func main(cur realm) {
 	// Create payload for adding a new member with finance officer role
 	payload := basedao.ActionAddMember{
 		Address: "g1nqsjex9aguqy062wdrryvvg9u6dn6e9u44dmkm",
@@ -32,6 +32,6 @@ func main() {
 	println("Action String:", proposal.Action.String())
 
 	// Submit the proposal to our DAO
-	simple_dao.Propose(cross, proposal)
+	simple_dao.Propose(cross(cur), proposal)
 
 }

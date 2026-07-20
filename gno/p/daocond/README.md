@@ -35,12 +35,12 @@ type Ballot interface {
 ### Vote Types
 
 ```go
-type Vote int
+type Vote string
 
 const (
-    VoteAbstain Vote = iota  // Neutral vote
-    VoteNo                   // Against the proposal
-    VoteYes                  // In favor of the proposal
+    VoteYes     Vote = "yes"     // In favor of the proposal
+    VoteNo      Vote = "no"      // Against the proposal
+    VoteAbstain Vote = "abstain" // Neutral vote
 )
 ```
 
@@ -65,7 +65,7 @@ func RoleCount(count uint64, role string, hasRoleFn func(string, string) bool) C
 memberMajority := daocond.MembersThreshold(0.6, store.IsMember, store.MembersCount)
 
 // Require 50% of contributor  
-adminApproval := daocond.RoleThreshold(0.5, "contributor", store.HasRole, store.RoleCount)
+adminApproval := daocond.RoleThreshold(0.5, "contributor", store.HasRole, store.CountMembersWithRole)
 
 // Require at least 2 core-contributor
 treasurerApproval := daocond.RoleCount(2, "core-contributor", store.HasRole)
@@ -87,14 +87,14 @@ func Or(conditions ...Condition) Condition {...}
 ```go
 // Require BOTH admin majority AND treasurer approval
 strictGovernance := daocond.And(
-    daocond.RoleThreshold(0.5, "contributor", store.HasRole, store.RoleCount),
+    daocond.RoleThreshold(0.5, "contributor", store.HasRole, store.CountMembersWithRole),
     daocond.RoleCount(1, "treasurer", store.HasRole),
 )
 
 // Require EITHER treasurer majority OR unanimous core-contributor approval
 flexibleGovernance := daocond.Or(
-    daocond.RoleThreshold(0.5, "treasurer", store.HasRole, store.RoleCount),
-    daocond.RoleThreshold(1.0, "core-contributor", store.HasRole, store.RoleCount),
+    daocond.RoleThreshold(0.5, "treasurer", store.HasRole, store.CountMembersWithRole),
+    daocond.RoleThreshold(1.0, "core-contributor", store.HasRole, store.CountMembersWithRole),
 )
 ```
 
@@ -160,7 +160,7 @@ governance := daocond.And(
     // AND either CTO approval OR finance team majority
     daocond.Or(
         daocond.RoleCount(1, "CTO", store.HasRole),
-        daocond.RoleThreshold(0.5, "finance", store.HasRole, store.RoleCount),
+        daocond.RoleThreshold(0.5, "finance", store.HasRole, store.CountMembersWithRole),
     ),
 )
 ```

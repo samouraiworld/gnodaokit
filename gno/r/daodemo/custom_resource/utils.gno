@@ -3,7 +3,7 @@ package custom_resource
 import (
 	"gno.land/p/mason/md"
 	"gno.land/p/moul/txlink"
-	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/ufmt/v0"
 	"gno.land/p/samcrew/daokit"
 )
 
@@ -35,7 +35,12 @@ func initBlogProposals() {
 // Bypass limitation by adding yourself to the DAO.
 // It is necessary to be part of the DAO to create a Proposal.
 func AddMember(cur realm) {
-	id := daoPrivate.CallerID()
+	// Safe here only because cur is THIS realm's own, minted by this crossing
+	// function. CallerID is not the entry-point gate: copied somewhere that
+	// passes a realm it received from elsewhere, this becomes the donation bug
+	// the DAO entry points exist to refuse. If you need the gate, go through
+	// Propose/Vote/Execute.
+	id := daoPrivate.CallerID(daoPrivate, cur)
 	daoPrivate.Members.AddMember(id, make([]string, 0))
 }
 
