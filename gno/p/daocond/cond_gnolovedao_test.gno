@@ -250,7 +250,15 @@ func TestEval(t *testing.T) {
 			abstainT3:    true,
 			threshold:    0.6,
 			expectedYes:  7.0 / 10.0,
-			panic:        true, // a user with T3 when T3 is abstaining should panic
+			// Was `panic: true`, documenting that a T3 holder voting while T3
+			// abstains blew up the tally. That made the proposal permanently
+			// unevaluable — every later Eval/Signal/Render panicked — which on an
+			// immutable publish is unrecoverable, and it is reachable by an
+			// ordinary member's ordinary vote. A voter outside the condition's
+			// roles now carries zero power instead. Note expectedYes below is
+			// 7/10, i.e. exactly the tally with the T3 votes excluded: this is
+			// the behaviour the case was always written for.
+			panic: false,
 		},
 	}
 

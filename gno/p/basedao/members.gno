@@ -208,6 +208,12 @@ func (m *MembersStore) RemoveMember(member string) {
 		panic("member does not exist")
 	}
 
+	// A zero-member DAO is unrecoverable: assertCallerIsMember rejects every
+	// entry point, so not even AddMember can be proposed again.
+	if m.MembersCount() <= 1 {
+		panic("cannot remove the last member")
+	}
+
 	memberRolesRaw, ok := m.Members.Get(member)
 	if !ok {
 		panic("should not happen")
