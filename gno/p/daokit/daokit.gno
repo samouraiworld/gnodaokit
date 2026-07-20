@@ -80,7 +80,7 @@ func (d *Core) Vote(voterID string, proposalID uint64, vote daocond.Vote) {
 		panic("proposal is not open")
 	}
 
-	proposal.Ballot.Vote(voterID, daocond.Vote(vote))
+	proposal.Ballot.Vote(voterID, vote)
 }
 
 // Executes a proposal if it meets the required voting conditions.

@@ -44,7 +44,7 @@ func (d *DAOPrivate) ProposalDetailView(idu uint64) string {
 	proposal.UpdateStatus()
 	if proposal.Status == daokit.ProposalStatusOpen {
 		s += ufmt.Sprintf("## Status - Open 🟡\n\n")
-		s += md.Link("Approve this proposal 🗳️", txlink.Call("Vote", "proposalID", strconv.FormatUint(idu, 10), "vote", daocond.VoteYes)) + "\n\n"
+		s += md.Link("Approve this proposal 🗳️", txlink.Call("Vote", "proposalID", strconv.FormatUint(idu, 10), "vote", string(daocond.VoteYes))) + "\n\n"
 	} else if proposal.Status == daokit.ProposalStatusPassed {
 		s += ufmt.Sprintf("## Status - Passed 🟢\n\n")
 		s += md.Link("Execute this proposal 🗳️", txlink.Call("Execute", "proposalID", strconv.FormatUint(idu, 10))) + "\n\n"
