@@ -124,3 +124,19 @@ func TestAPublicExtensionIsReadableByAnyRealm(cur realm, t *testing.T) {
 	urequire.True(t, dao.ReadPublicExtension(cross(cur)), "own realm")
 	urequire.True(t, attacker.ReadPublicExtension(cross(cur)), "any other realm")
 }
+
+// InstantExecute is same-realm only, and that is deliberate.
+//
+// Every step threads the caller's realm, and each entry point requires its own,
+// so handing it a DAO belonging to another realm is refused. Before the gate
+// existed this appeared to work — by making the foreign DAO act under the
+// caller's identity, which is the donation shape itself.
+//
+// A parent DAO drives a child by going through the child REALM's crossing
+// function, so the child mints its own realm and sees the parent as its caller.
+func TestInstantExecuteIsSameRealmOnly(cur realm, t *testing.T) {
+	urequire.AbortsWithMessage(t, cur, realmMismatch, func() {
+		daokit.InstantExecute(dao.Handle(), addDistinctMemberReq(
+			"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40g4"), cur)
+	})
+}

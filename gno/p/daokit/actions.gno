@@ -133,6 +133,10 @@ func NewInstantExecuteHandler() ActionHandler {
 	})
 }
 
+// SAME REALM ONLY, for the reason on InstantExecute: the handler forwards the
+// EXECUTING DAO's realm, so dao must be hosted by the same realm. A child DAO in
+// another realm is refused — reach it through that realm's crossing function
+// instead.
 func NewInstantExecuteAction(dao DAO, req ProposalRequest) Action {
 	return NewAction(ActionInstantExecuteKind, &actionInstantExecute{dao: dao, req: req})
 }

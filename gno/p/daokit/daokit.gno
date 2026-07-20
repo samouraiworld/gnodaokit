@@ -47,7 +47,21 @@ type SetImplemFn = func(implem DAO)
 
 // Creates, votes yes, and immediately executes a proposal in one operation.
 // Useful when you have enough permission to execute an action directly.
-// Examples: migrations, adding members
+// Examples: migrations, adding members.
+//
+// SAME REALM ONLY. Every step threads rlm, and each entry point requires it to
+// be the receiving DAO's own — so d must be a DAO hosted by the realm calling
+// this. Handing it a DAO belonging to another realm is refused.
+//
+// That refusal is the point. Driving a foreign DAO by passing it your realm is
+// the donation shape: it makes the DAO act under YOUR identity, and it is what a
+// caller holding the handle could previously do to any DAO. It appeared to work
+// only because nothing checked.
+//
+// A parent DAO can still drive a child. Reach the child through the child
+// REALM's own crossing function — child.Propose(cross(cur), req) — so the child
+// mints its own realm and sees the parent as its caller. Make the parent a
+// member of the child; the child then authorises it like any other member.
 func InstantExecute(d DAO, req ProposalRequest, rlm realm) uint64 {
 	id := d.Propose(req, rlm)
 	d.Vote(id, daocond.VoteYes, rlm)
