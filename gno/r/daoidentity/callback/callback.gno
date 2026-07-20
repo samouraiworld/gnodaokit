@@ -36,3 +36,21 @@ func Reenter(cur realm, req daokit.ProposalRequest) {
 	target.Propose(req, stolen)
 	reentered = true
 }
+
+// stolenSecret records whether a private extension was read using the DAO's own
+// dead-frame realm.
+var stolenSecret string
+
+// StolenSecret reports what a re-entrant read obtained, if anything.
+func StolenSecret() string { return stolenSecret }
+
+// StealSecret is invoked by a DAO action handler, so cur.Previous() is the DAO's
+// own realm value — same pkgpath as the DAO, but a frame that is no longer live.
+// Handing that to Extension must not open a private extension.
+func StealSecret(cur realm, path string) {
+	stolen := cur.Previous()
+	ext := target.Extension(path, stolen)
+	if s, ok := ext.(interface{ Secret() string }); ok {
+		stolenSecret = s.Secret()
+	}
+}

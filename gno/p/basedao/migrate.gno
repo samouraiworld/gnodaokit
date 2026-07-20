@@ -43,10 +43,15 @@ func NewChangeDAOImplementationHandler(dao *DAOPrivate, setImplem daokit.SetImpl
 
 // The label is required and appears in the proposal a member votes on.
 //
-// Without it every migration renders as the same fixed sentence, so a voter
-// sees nothing distinguishing a routine upgrade from a takeover. A function
-// value cannot be rendered, so the caller has to say what it is — name the
-// version, the commit, or the change.
+// Without it every migration renders as the same fixed sentence, so a voter sees
+// nothing distinguishing a routine upgrade from a takeover. A function value
+// cannot be rendered, so the caller has to say what it is — name the version,
+// the commit, or the change.
+//
+// It is NOT a safety control. Whoever writes the migration writes the label, so
+// a takeover can ship as "routine security patch". It exists so an honest
+// proposal can be told apart from another honest proposal, and so a voter has
+// something to check the code against. Read the migration.
 func NewChangeDAOImplementationAction(label string, migrate MigrateFn) daokit.Action {
 	if label == "" {
 		panic("migration label must not be empty")

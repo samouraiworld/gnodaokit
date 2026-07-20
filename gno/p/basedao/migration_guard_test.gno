@@ -109,3 +109,95 @@ func TestMigrationNeverWeakensARoleGatedCondition(cur realm, t *testing.T) {
 		"so the migration must refuse it too — anything the ordinary condition "+
 			"refuses, a takeover must refuse")
 }
+
+// The defaulted migration threshold is pinned, not merely "higher than
+// ordinary". Ten members distinguish 0.8 from 0.7; five cannot, because both
+// round to the same count.
+func TestTheDefaultMigrationThresholdIsEightyPercent(cur realm, t *testing.T) {
+	var ms []Member
+	addrs := []string{}
+	for i := 0; i < 10; i++ {
+		a := "g1member" + string(rune('a'+i)) + "0000000000000000000000000000000"
+		addrs = append(addrs, a)
+		ms = append(ms, Member{a, nil})
+	}
+	members := NewMembersStore(nil, ms)
+	conf := &Config{
+		Name: "d", Description: "d", Members: members,
+		GetProfileString: func(addr address, field, def string) string { return "" },
+		SetImplemFn:      func(daokit.DAO) {},
+	}
+	testing.SetOriginCaller(alice)
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/testing/thresholddao"))
+	_, d := New(conf, cur)
+
+	migration := d.Core.Resources.Get(ActionChangeDAOImplementationKind).Condition
+
+	seven := daocond.NewBallot()
+	for _, a := range addrs[:7] {
+		seven.Vote(a, daocond.VoteYes)
+	}
+	urequire.False(t, migration.Eval(seven), "70% must not carry a migration")
+
+	eight := daocond.NewBallot()
+	for _, a := range addrs[:8] {
+		eight.Vote(a, daocond.VoteYes)
+	}
+	urequire.True(t, migration.Eval(eight), "80% must")
+}
+
+// A DAO that chose its own governance keeps it for migration too.
+//
+// Nothing here can strengthen an opaque Condition. Conjoining a members
+// threshold onto role-based governance can demand a majority such a DAO never
+// assembles — and migration is the one rule that cannot be repaired afterwards,
+// since changing it requires a migration. Matching the DAO's own bar is the only
+// default that cannot brick it.
+func TestCallerChosenGovernanceIsNotOverriddenForMigration(cur realm, t *testing.T) {
+	members := NewMembersStore(
+		[]RoleInfo{{Name: "admin", Description: "a", Color: "#000"}},
+		[]Member{
+			{alice.String(), []string{"admin"}},
+			{bob.String(), nil}, {carol.String(), nil}, {dave.String(), nil},
+		},
+	)
+	conf := &Config{
+		Name: "d", Description: "d", Members: members,
+		// Role-only governance: the admin decides, member count is irrelevant.
+		InitialCondition: daocond.RoleCount(1, "admin", members.HasRole),
+		GetProfileString: func(addr address, field, def string) string { return "" },
+		SetImplemFn:      func(daokit.DAO) {},
+	}
+	testing.SetOriginCaller(alice)
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/testing/rolegovdao"))
+	_, d := New(conf, cur)
+
+	adminAlone := daocond.NewBallot()
+	adminAlone.Vote(alice.String(), daocond.VoteYes)
+
+	urequire.True(t, d.Core.Resources.Get(ActionAddMemberKind).Condition.Eval(adminAlone),
+		"the admin carries an ordinary action")
+	urequire.True(t, d.Core.Resources.Get(ActionChangeDAOImplementationKind).Condition.Eval(adminAlone),
+		"and must still be able to migrate — a migration rule this DAO cannot "+
+			"meet is unrepairable, because repairing it needs a migration")
+}
+
+// New must not write derived defaults into the caller's Config.
+//
+// The migration condition closes over the member store, so a Config reused for a
+// second DAO would otherwise hand it a condition evaluating the FIRST DAO's
+// membership.
+func TestNewDoesNotContaminateAReusedConfig(cur realm, t *testing.T) {
+	conf := &Config{
+		Name: "d", Description: "d",
+		Members:          NewMembersStore(nil, []Member{{alice.String(), nil}}),
+		GetProfileString: func(addr address, field, def string) string { return "" },
+		SetImplemFn:      func(daokit.DAO) {},
+	}
+	testing.SetOriginCaller(alice)
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/testing/reuse1"))
+	New(conf, cur)
+
+	urequire.True(t, conf.MigrationCondition == nil,
+		"New must leave the caller's MigrationCondition alone")
+}

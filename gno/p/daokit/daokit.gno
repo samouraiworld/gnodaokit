@@ -92,8 +92,11 @@ func (d *Core) Vote(voterID string, proposalID uint64, vote daocond.Vote) {
 		panic("proposal not found")
 	}
 
-	if proposal.Status != ProposalStatusOpen {
-		panic("proposal is not open")
+	// Same terminal state as Execute: a ballot stays open right up until the
+	// proposal executes, so support can still be withdrawn after the condition
+	// is first met. Anything narrower would let a proposal be locked in.
+	if proposal.Status == ProposalStatusExecuted {
+		panic("proposal is already executed")
 	}
 
 	proposal.Ballot.Vote(voterID, vote)
@@ -123,8 +126,14 @@ func (d *Core) Execute(proposalID uint64, rlm realm) {
 	// Marked BEFORE the handler runs, not after. The handler crosses out of the
 	// DAO, so a callee can re-enter here within the same transaction; marking
 	// afterwards would let it execute the same proposal again. The old code was
-	// protected from this only incidentally, by the "must be Open" test above —
-	// removing that test without moving this line would have opened it.
+	// protected from this only incidentally, by a "must be Open" test that also
+	// made rendering able to brick a proposal.
+	//
+	// The cost is that Execute is NOT retry-safe. gno's recover() does not roll
+	// back realm state, so a host realm that recovers around a failing Execute
+	// keeps the marker and burns the proposal permanently. Do not recover around
+	// it: let the transaction abort, which reverts the marker with everything
+	// else. Marking afterwards would trade this for re-entrancy, which is worse.
 	proposal.Status = ProposalStatusExecuted
 	proposal.ExecutedAt = time.Now()
 

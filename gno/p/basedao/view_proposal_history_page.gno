@@ -26,8 +26,10 @@ func (d *DAOPrivate) ProposalHistoryHeaderView() string {
 func (d *DAOPrivate) ProposalHistoryView(path string) string {
 	inactiveProposals := d.Core.Proposals.GetProposals(
 		func(p daokit.Proposal) bool {
-			st := p.DisplayStatus()
-			return st != daokit.ProposalStatusOpen && st != daokit.ProposalStatusPassed
+			// Raw status, for the reason in view_proposals_page.gno: this is
+			// exactly "already executed", and the display status would cost a
+			// second condition evaluation per proposal.
+			return p.Status != daokit.ProposalStatusOpen && p.Status != daokit.ProposalStatusPassed
 		},
 	)
 	s := ""

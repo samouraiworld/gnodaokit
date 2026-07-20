@@ -130,11 +130,17 @@ type Config struct {
 	// state, so it is a takeover in the general case — it should not be as easy
 	// as adding a member.
 	//
-	// Defaults to InitialCondition AND an 80% member majority, so it is strictly
-	// harder than every ordinary action in every dimension. Set it explicitly to
-	// choose something else — but note that anything not conjoined with
-	// InitialCondition can end up WEAKER along a dimension InitialCondition
-	// covers, which is the trap this default exists to avoid.
+	// If you leave InitialCondition to its default, this defaults to an 80%
+	// member majority — the same dimension, raised.
+	//
+	// If you SET InitialCondition, this defaults to it unchanged, and you should
+	// set this too. A Condition is opaque, so nothing here can strengthen yours:
+	// conjoining a members threshold onto role-based governance can demand a
+	// majority such a DAO never assembles, and migration is the one rule that
+	// cannot be repaired afterwards — changing it requires a migration. Whatever
+	// you choose, make it at least as hard as InitialCondition along every
+	// dimension; a condition that merely replaces yours can be WEAKER where it
+	// matters.
 	MigrationCondition daocond.Condition
 	RenderFn          RenderFn          // Rendering function for Gnoweb
 	CallerID          CallerIDFn        // Resolves the immediate caller from the DAO's threaded realm; defaults to defaultCallerID
@@ -195,6 +201,9 @@ func New(conf *Config, rlm realm) (daokit.DAO, *DAOPrivate) {
 	}
 
 	if !conf.NoDefaultHandlers {
+		// Whether the DAO chose its own governance decides how far the migration
+		// default may go, below. Captured before the default is filled in.
+		governanceIsCallerChosen := conf.InitialCondition != nil
 		if conf.InitialCondition == nil {
 			conf.InitialCondition = daocond.MembersThreshold(0.6, members.IsMember, members.MembersCount)
 		}
@@ -218,23 +227,38 @@ func New(conf *Config, rlm realm) (daokit.DAO, *DAOPrivate) {
 				conf.MigrationParamsFn = func() []any { return nil }
 			}
 
-			if conf.MigrationCondition == nil {
-				// Conjoined with the DAO's ordinary condition, never replacing
-				// it. A Condition is opaque, so there is no way to "raise" one —
-				// and substituting a members threshold for a role-gated
-				// condition would DROP the role gate, making a takeover easier
-				// than adding a member rather than harder. Measured: with
-				// And(MembersThreshold(0.4), RoleCount(1,"officer")), a ballot
-				// that fails the ordinary action passed a bare 0.8 migration.
-				conf.MigrationCondition = daocond.And(
-					conf.InitialCondition,
-					daocond.MembersThreshold(0.8, members.IsMember, members.MembersCount),
-				)
+			// Held locally rather than written back into conf: New must not
+			// mutate its caller's Config, and this closure captures THIS DAO's
+			// member store — reusing one Config for a second DAO would otherwise
+			// give it a migration condition evaluating the first one's members.
+			migrationCondition := conf.MigrationCondition
+			if migrationCondition == nil {
+				if governanceIsCallerChosen {
+					// The DAO designed its own governance, and a Condition is
+					// opaque, so there is no way to strengthen it from here. A
+					// members threshold is not a strengthening: conjoined with
+					// role-based governance it can demand a member majority that
+					// role-governed DAOs never assemble, and migration is the one
+					// rule that cannot be repaired afterwards — changing it needs
+					// a migration. Substituting one is worse still: against
+					// And(MembersThreshold(0.4), RoleCount(1,"officer")) a ballot
+					// that fails an ordinary action passed a bare 0.8 migration,
+					// making a takeover CHEAPER than adding a member.
+					//
+					// So: match the DAO's own bar, and say plainly that a
+					// takeover deserves a higher one. Set MigrationCondition.
+					migrationCondition = conf.InitialCondition
+				} else {
+					// Default governance, so a members threshold is the same
+					// dimension the DAO is already judged on and raising it is a
+					// genuine strengthening: 80% against the default 60%.
+					migrationCondition = daocond.MembersThreshold(0.8, members.IsMember, members.MembersCount)
+				}
 			}
 
 			dao.Core.Resources.Set(&daokit.Resource{
 				Handler:     NewChangeDAOImplementationHandler(dao, setImplemFn, conf.MigrationParamsFn),
-				Condition:   conf.MigrationCondition,
+				Condition:   migrationCondition,
 				DisplayName: "Change DAO Implementation",
 				Description: "Replaces the DAO implementation. The migration receives the DAO's live realm and private state.",
 			})

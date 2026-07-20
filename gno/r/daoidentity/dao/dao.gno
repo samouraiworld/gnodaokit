@@ -29,6 +29,10 @@ const (
 	// the built-in EditProfile action does.
 	ActionCrossOut = "gno.land/r/samcrew/daoidentity/dao.CrossOut"
 
+	// ActionStealSecret crosses out to a callee and lets it try to read this
+	// DAO's private extension with the realm it was handed.
+	ActionStealSecret = "gno.land/r/samcrew/daoidentity/dao.StealSecret"
+
 	// ActionReenter is an action whose handler calls back into this realm's own
 	// Execute, which is the one re-entrancy shape the realm gate cannot refuse:
 	// the realm is genuinely this one's, and genuinely live.
@@ -129,6 +133,15 @@ func init(cur realm) {
 	// A private extension, to show the gate does real work.
 	daoPrivate.Core.Extensions.Set(&secretExtension{})
 
+	daoPrivate.Core.Resources.Set(&daokit.Resource{
+		Handler: daokit.NewActionHandler(ActionStealSecret, func(payload interface{}, rlm realm) {
+			callback.StealSecret(cross(rlm), SecretPath)
+		}),
+		Condition:   cond,
+		DisplayName: "Steal Secret",
+		Description: "Hands a callee this DAO's realm and lets it try the private extension.",
+	})
+
 	callback.SetTarget(cross(cur), localDAO)
 }
 
@@ -180,15 +193,19 @@ func ReadPublicExtension(cur realm) bool {
 	return ext != nil
 }
 
-// PersistStatus writes the status implied by the current votes, which is what
-// UpdateStatus is for. A realm may legitimately do this.
-func PersistStatus(id uint64) {
-	daoPrivate.Core.Proposals.GetProposal(id).UpdateStatus()
-}
-
 // ProposerOf reports the identity the DAO resolved for a proposal's creator.
 func ProposerOf(id uint64) string {
 	return daoPrivate.Core.Proposals.GetProposal(id).ProposerID
+}
+
+// NewStealSecretRequest builds a proposal whose execution hands a callee this
+// DAO's realm and has it attempt the private extension.
+func NewStealSecretRequest() daokit.ProposalRequest {
+	return daokit.ProposalRequest{
+		Title:       "steal secret",
+		Description: "a callee tries the private extension with a dead-frame realm",
+		Action:      daokit.NewAction(ActionStealSecret, nil),
+	}
 }
 
 // NewCrossOutRequest builds a proposal whose execution crosses out of the DAO.

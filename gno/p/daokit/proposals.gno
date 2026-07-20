@@ -98,6 +98,12 @@ func (p *ProposalsStore) GetProposals(filter func(Proposal) bool) *ProposalsStor
 
 // Reports the status a proposal should be displayed as, without writing it.
 //
+// Status is only ever WRITTEN by Execute, so a stored proposal is Open until it
+// is Executed and Passed exists purely as a computed display state. That is
+// deliberate: an exported way to persist Passed used to exist, and it made the
+// stored status disagree with the votes — a proposal whose support was later
+// withdrawn still read Passed, and Vote refused it while Execute accepted it.
+//
 // Reading must never move a proposal. Render is on the cross-realm DAO
 // interface, so anything it touches is reachable by any realm holding the
 // handle: this used to be UpdateStatus, called on every proposal walked, and a
@@ -107,16 +113,6 @@ func (p *Proposal) DisplayStatus() ProposalStatus {
 		return ProposalStatusPassed
 	}
 	return p.Status
-}
-
-// Persists the status implied by the current votes.
-//
-// Nothing in this package needs it: Execute evaluates the condition itself, and
-// the render paths use DisplayStatus. It remains because persisting the passed
-// state is a legitimate thing for a realm to want. Do not call it from a read
-// path — it writes.
-func (p *Proposal) UpdateStatus() {
-	p.Status = p.DisplayStatus()
 }
 
 // Returns all proposals as a JSON string.

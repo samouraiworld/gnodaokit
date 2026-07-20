@@ -9,6 +9,7 @@ import (
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
 	"gno.land/r/samcrew/daoidentity/attacker"
+	"gno.land/r/samcrew/daoidentity/callback"
 	"gno.land/r/samcrew/daoidentity/dao"
 )
 
@@ -82,24 +83,37 @@ func TestAProposalCannotReenterItsOwnExecution(cur realm, t *testing.T) {
 	urequire.False(t, dao.ReenterSucceeded, "the re-entrant Execute must not have returned")
 }
 
-// A proposal whose Passed status has been persisted must still execute.
+// A ballot stays open until the proposal executes.
 //
-// Executed is the only status that disqualifies a proposal. Making Open the
-// requirement instead turns the status into a second gate on top of the
-// condition, and anything that can move the status can then deny execution —
-// which is exactly how rendering bricked proposals. UpdateStatus is exported and
-// writes Open -> Passed, so this is reachable without any read path at all.
-func TestAPersistedPassedProposalStillExecutes(cur realm, t *testing.T) {
+// Vote and Execute share one terminal state, Executed. Anything narrower locks a
+// proposal in: support could no longer be withdrawn once the condition was first
+// met, while execution remained available. That is what an exported way to
+// persist Passed produced, which is why the stored status is now only ever
+// written by Execute.
+func TestSupportCanBeWithdrawnUntilExecution(cur realm, t *testing.T) {
 	id := dao.Propose(cross(cur), addDistinctMemberReq("g1v9kxjcm9ta047h6lta047h6lta047h6lzd40g3"))
 	dao.Vote(cross(cur), id, daocond.VoteYes)
+	urequire.Equal(t, "Open", dao.StatusOf(id))
 
-	dao.PersistStatus(id)
-	urequire.Equal(t, "Passed", dao.StatusOf(id), "the status really is persisted")
+	// The condition is met, but the ballot is still live: change the vote.
+	urequire.NotAborts(t, cur, func() {
+		dao.Vote(cross(cur), id, daocond.VoteNo)
+	})
+	urequire.AbortsWithMessage(t, cur, "proposal condition is not met", func() {
+		dao.Execute(cross(cur), id)
+	})
 
+	// And back again.
+	dao.Vote(cross(cur), id, daocond.VoteYes)
 	urequire.NotAborts(t, cur, func() {
 		dao.Execute(cross(cur), id)
 	})
 	urequire.Equal(t, "Executed", dao.StatusOf(id))
+
+	// Once executed, the ballot closes too.
+	urequire.AbortsWithMessage(t, cur, "proposal is already executed", func() {
+		dao.Vote(cross(cur), id, daocond.VoteNo)
+	})
 }
 
 // A private extension is readable only by the DAO's own realm.
@@ -139,4 +153,23 @@ func TestInstantExecuteIsSameRealmOnly(cur realm, t *testing.T) {
 		daokit.InstantExecute(dao.Handle(), addDistinctMemberReq(
 			"g1v9kxjcm9ta047h6lta047h6lta047h6lzd40g4"), cur)
 	})
+}
+
+// The private-extension gate needs BOTH halves, and only IsCurrent() catches
+// this one.
+//
+// A realm the DAO crosses out into receives the DAO's own realm value as its
+// cur.Previous(). That value carries the DAO's pkgpath, so a gate comparing
+// pkgpaths alone hands it the private extension — verified: with the check
+// replaced by a pkgpath comparison, this callee read the secret. It is not the
+// live crossing frame's cur, so IsCurrent() refuses it.
+func TestAPrivateExtensionResistsADeadFrameRealm(cur realm, t *testing.T) {
+	id := dao.Propose(cross(cur), dao.NewStealSecretRequest())
+	dao.Vote(cross(cur), id, daocond.VoteYes)
+
+	urequire.AbortsWithMessage(t, cur, realmMismatch, func() {
+		dao.Execute(cross(cur), id)
+	})
+	urequire.Equal(t, "", callback.StolenSecret(),
+		"the private extension must never have been opened")
 }
