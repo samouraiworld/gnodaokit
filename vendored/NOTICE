@@ -1,0 +1,33 @@
+Third-party source vendored into this repository
+================================================
+
+Everything under `vendored/`, except where noted below, is redistributed
+verbatim from:
+
+    Project:  gnolang/gno
+    Source:   https://github.com/gnolang/gno  (examples/)
+    Commit:   2c7f1abe324e8fa6fac6dc71a36635cc4e92a0be
+    Licence:  GNO Network General Public License — see vendored/LICENSE.md
+
+`LICENSE.md` in this directory is upstream's, copied verbatim from that same
+commit. Per its own terms it "covers all of the files in this directory and any
+subdirectory, except where otherwise specified", which includes `examples/`.
+
+Two vendored packages carry their own upstream licence files, preserved in
+place: `gno.land/p/onbloc/json/LICENSE` and `gno.land/p/nt/cford32/v0/LICENSE`.
+
+The commit above is the `GNOVERSION` pinned in the repository `Makefile`. CI
+re-derives this claim on every run (`.github/workflows/vendored-provenance.yml`)
+and fails if any vendored file differs from that commit, in either direction, so
+this notice cannot silently fall out of date.
+
+Not from gnolang/gno
+--------------------
+
+    gno.land/p/samcrew/avl/
+
+is a FORK, not upstream, and is excluded from the provenance comparison. It is
+byte-identical to `deps/avl` in `samouraiworld/samcrew-deployer`, which carries
+its own guard pinning it to upstream `f3d5a5d13`. It exists because topaz-1's
+stdlib `p/nt/avl/v0` exposes a single-value `Get` while this codebase calls the
+two-value form. See `vendored/README.md`.

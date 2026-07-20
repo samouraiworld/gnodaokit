@@ -11,7 +11,7 @@ jobs:
   gno-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Golang with cache
         uses: magnetikonline/action-golang-cache@v5
@@ -24,15 +24,25 @@ jobs:
       # silently gone back to fetching from a mutable testnet, which is what kept CI
       # red from 2026-06-04. Fail loudly rather than depend on the network again.
       - name: Lint gno (and assert the build is hermetic)
+        env:
+          # A warm module cache short-circuits the fetch BEFORE the "downloading"
+          # line is printed, which would silently disable the check below. Force a
+          # cold cache so the guard always has something to observe.
+          GNOHOME: ${{ runner.temp }}/gnohome-lint
         run: |
           set -o pipefail
-          make lint 2>&1 | tee /tmp/lint.out
+          # Capture the status rather than letting errexit abort here: on a real
+          # failure we still want to report WHY, and the missing-package advice
+          # below is written for exactly the case where make lint fails.
+          rc=0
+          make lint 2>&1 | tee /tmp/lint.out || rc=$?
           if grep -q 'gno: downloading' /tmp/lint.out; then
             echo "ERROR: the build fetched dependencies from the network:"
             grep 'gno: downloading' /tmp/lint.out
             echo "Add the missing packages to vendored/ (see vendored/README.md)."
             exit 1
           fi
+          exit $rc
 
       - name: gno mod tidy
         run: make gno-mod-tidy

@@ -42,9 +42,29 @@ topaz-1's stdlib `p/nt/avl/v0` exposes a **single-value** `Get`, while this code
 **green build compiled against an ABI the target chain does not have** — a false green in exactly
 the place the gate exists to prevent one. So the fork is vendored for that role.
 
-The one remaining `gno.land/p/nt/avl/v0` import, in `gno/p/basedao/utils.gno`, is deliberate:
-`svg.Canvas.Style` is a `*nt/avl/v0.Tree`, so the stdlib ABI must be matched exactly at that
-boundary. It only calls `NewTree()`, never `Get`, so it carries no arity exposure.
+### ⚠️ A green build here does not by itself prove "publishable on topaz-1"
+
+`GNOVERSION` is **not** topaz-1's ref. The chain runs `fc4052651`; the `Makefile` pins `2c7f1abe`.
+Roughly 15 vendored packages therefore differ from what the chain actually hosts — **including
+`p/nt/avl/v0`, whose on-chain `Get` is single-value while the vendored copy is two-value.**
+
+Do not read the vendored tree as a mirror of topaz-1. It is version-matched to the **compiler**, and
+that is all the provenance job proves.
+
+What makes it safe today is narrower and worth stating exactly: gnodaokit crosses the stdlib-avl
+boundary in exactly one place — `ntavl` in `gno/p/basedao/utils.gno`, because `svg.Canvas.Style` is
+a `*nt/avl/v0.Tree` — and it calls only `NewTree()`, whose signature is identical in both. A single
+new `ntavl.Get()` call would compile green here and fail `AddPackage` on-chain.
+
+CI enforces precisely that invariant (`vendored-provenance.yml`, "The stdlib-avl boundary must stay
+limited to NewTree"). Widening the boundary, or bumping `GNOVERSION`, means re-checking the exported
+surface of every skewed package against the chain — not just re-running the build.
+
+### Sequencing
+
+`p/samcrew/avl` (and its `pager`/`rotree`) exist on **no chain yet** — the deployer publishes them
+first in the ceremony. So a green build here still cannot deploy gnodaokit to topaz-1 until that
+dependency step has run.
 
 ## Regenerating
 
