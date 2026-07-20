@@ -103,13 +103,27 @@ func (c *gnolovDaoCondThreshold) voteRatio(ballot Ballot, vote Vote) float64 {
 	return total / totalPower
 }
 
+// Returns the voter's tier role, or "" when they hold none of this condition's
+// roles.
+//
+// This used to panic. Core.Vote gates on membership only, never on holding a
+// tier role, so a member without one can reach the ballot — as can any member
+// when the condition is built over a subset of the DAO's roles. The panic was
+// raised from inside the ballot walk, so a single such vote made every later
+// Eval, Signal and Render on that proposal panic. On an immutable publish that
+// is permanent, triggered by an ordinary member casting an ordinary vote.
+//
+// A voter with no tier role simply carries no voting power: "" is absent from
+// votingPowersByTier, so the lookup yields 0.0 and they contribute nothing. That
+// is also what the existing test matrix already expects — the "T3 abstaining"
+// case asserts 7/10, which is precisely the tally with the T3 votes excluded.
 func (c *gnolovDaoCondThreshold) getUserRole(userID string) string {
 	for _, role := range c.roles {
 		if c.hasRoleFn(userID, role) {
 			return role
 		}
 	}
-	panic("No role found for user")
+	return ""
 }
 
 func (c *gnolovDaoCondThreshold) computeVotingPowers() (map[string]float64, float64) {
