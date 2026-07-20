@@ -6,14 +6,29 @@ import (
 	"gno.land/p/samcrew/daocond"
 )
 
+// Every entry point threads the DAO realm's own realm value.
+//
+// It serves two purposes. Execute forwards it to the action handlers, which
+// cross out under it, so the implementation must refuse any realm that is not
+// its own — otherwise a caller holding this handle could make the DAO act under
+// the CALLER's identity. And because the realm is then known to be the DAO's,
+// rlm.Previous() names the DAO's immediate caller, which a stack walk cannot do:
+// reached through this handle there is no DAO realm frame on the stack at all,
+// so a walk reports the signing account instead.
+//
+// An implementation must require the realm to be BOTH its own by pkgpath and
+// current: every realm the DAO crosses out into receives the DAO's own realm as
+// its cur.Previous() and can hand it back within the same transaction, and only
+// IsCurrent() tells that apart from the live one.
+//
+// The realm is deliberately never the first parameter: a function whose first
+// parameter is a realm is read as crossing, which /p/ packages may not declare.
 type DAO interface {
 	// Creates a new proposal and returns its ID.
-	Propose(req ProposalRequest) uint64
+	Propose(req ProposalRequest, rlm realm) uint64
 	// Casts a vote on a specific proposal.
-	Vote(id uint64, vote daocond.Vote)
+	Vote(id uint64, vote daocond.Vote, rlm realm)
 	// Executes a proposal if it meets the required conditions.
-	// The rlm realm is threaded so action handlers can perform
-	// cross-realm calls (e.g. editing the DAO profile).
 	Execute(id uint64, rlm realm)
 
 	// Generates a web interface representation for the given path.
@@ -32,8 +47,8 @@ type SetImplemFn = func(implem DAO)
 // Useful when you have enough permission to execute an action directly.
 // Examples: migrations, adding members
 func InstantExecute(d DAO, req ProposalRequest, rlm realm) uint64 {
-	id := d.Propose(req)
-	d.Vote(id, daocond.VoteYes)
+	id := d.Propose(req, rlm)
+	d.Vote(id, daocond.VoteYes, rlm)
 	d.Execute(id, rlm)
 	return id
 }

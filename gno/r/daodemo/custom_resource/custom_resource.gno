@@ -32,11 +32,11 @@ func NewPostAction(title, content string) daokit.Action {
 
 func NewPostHandler(blog *Blog) daokit.ActionHandler {
 	// def: daoKit.NewActionHandler(kind: String, payload: func(interface{}))
-	return daokit.NewActionHandler(ActionNewPostKind, func(payload interface{}, _ realm) {
+	return daokit.NewActionHandler(ActionNewPostKind, func(payload interface{}, rlm realm) {
 		action, ok := payload.(*ActionNewPost)
 		if !ok {
 			panic(errors.New("invalid action type"))
 		}
-		blog.NewPost(action.Title, action.Content)
+		blog.NewPost(action.Title, action.Content, rlm)
 	})
 }

@@ -15,12 +15,15 @@ type Blog struct {
 	Post []Post
 }
 
-func (a *Blog) NewPost(title string, content string) {
+// The realm is threaded in from the action handler, which receives the DAO's
+// own. It is last because the VM reads a leading realm parameter as a crossing
+// function, and receivers do not exempt a method from that rule.
+func (a *Blog) NewPost(title string, content string, rlm realm) {
 	newPost := Post{
 		Title:   title,
 		Content: content,
 		Created: time.Now(),
-		Creator: daoPrivate.CallerID(),
+		Creator: daoPrivate.CallerID(daoPrivate, rlm),
 	}
 	a.Post = append(a.Post, newPost)
 }
