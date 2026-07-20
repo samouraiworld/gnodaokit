@@ -34,3 +34,4 @@ func IsPackage(id string) bool {
 func IsUser(id string) bool {
 	return !IsPackage(id)
 }
+

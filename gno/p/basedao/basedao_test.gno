@@ -135,7 +135,7 @@ func TestPropose(cur realm, t *testing.T) {
 			func() {
 				testing.SetOriginCaller(test.input.proposer)
 			}()
-			id := tdao.dao.Propose(test.input.proposalReq)
+			id := tdao.dao.Propose(test.input.proposalReq, cur)
 
 			urequire.False(t, *tdao.mockHandlerCalled, "execute should not be called")
 
@@ -164,7 +164,7 @@ func TestVote(cur realm, t *testing.T) {
 	}
 	tdao := newTestingDAO(cur, t, 0.6, members)
 
-	tdao.dao.Propose(tdao.mockProposalRequest)
+	tdao.dao.Propose(tdao.mockProposalRequest, cur)
 
 	type testVoteInput struct {
 		proposalID uint64
@@ -243,7 +243,7 @@ func TestVote(cur realm, t *testing.T) {
 				func() {
 					testing.SetOriginCaller(test.input.voter)
 				}()
-				tdao.dao.Vote(test.input.proposalID, test.input.vote)
+				tdao.dao.Vote(test.input.proposalID, test.input.vote, cur)
 
 			}
 
@@ -272,7 +272,7 @@ func TestExecuteProposal(cur realm, t *testing.T) {
 	}
 	tdao := newTestingDAO(cur, t, 0.6, members)
 
-	tdao.dao.Propose(tdao.mockProposalRequest)
+	tdao.dao.Propose(tdao.mockProposalRequest, cur)
 
 	type testExecuteInput struct {
 		proposalID uint64
@@ -353,7 +353,7 @@ func TestExecuteProposal(cur realm, t *testing.T) {
 				func() {
 					testing.SetOriginCaller(test.input.voter)
 				}()
-				tdao.dao.Vote(test.input.proposalID, "yes")
+				tdao.dao.Vote(test.input.proposalID, "yes", cur)
 
 			}
 
@@ -438,7 +438,7 @@ func TestInstantExecute(cur realm, t *testing.T) {
 			func() {
 				testing.SetOriginCaller(test.input.executor)
 			}()
-			tdao.dao.Propose(test.input.proposalReq)
+			tdao.dao.Propose(test.input.proposalReq, cur)
 		})
 	}
 }

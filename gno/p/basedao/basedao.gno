@@ -9,7 +9,6 @@ import (
 	"gno.land/p/nt/mux/v0"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
-	"gno.land/p/samcrew/realmid"
 )
 
 type daoPublic struct {
@@ -35,16 +34,16 @@ func (d *daoPublic) ExtensionsList() daokit.ExtensionsList {
 	return d.impl.Core.Extensions.List()
 }
 
-func (d *daoPublic) Propose(req daokit.ProposalRequest) uint64 {
-	return d.impl.Propose(req)
+func (d *daoPublic) Propose(req daokit.ProposalRequest, rlm realm) uint64 {
+	return d.impl.Propose(req, rlm)
 }
 
 func (d *daoPublic) Execute(id uint64, rlm realm) {
 	d.impl.Execute(id, rlm)
 }
 
-func (d *daoPublic) Vote(id uint64, vote daocond.Vote) {
-	d.impl.Vote(id, vote)
+func (d *daoPublic) Vote(id uint64, vote daocond.Vote, rlm realm) {
+	d.impl.Vote(id, vote, rlm)
 }
 
 func (d *daoPublic) Render(path string) string {
@@ -66,7 +65,17 @@ type DAOPrivate struct {
 
 // Function type that returns the identifier of the current caller.
 // Used to identify who is making calls to DAO functions.
-type CallerIDFn func() string
+// CallerIDFn resolves the identity of the DAO's immediate caller.
+//
+// It receives the DAO realm's own threaded realm, so the implementation can use
+// rlm.Previous() — which is statically scoped to that crossing function and
+// cannot lie about who called it. It deliberately does NOT stack-walk: a walk
+// finds whichever realm was outermost-crossing in the chain, so in an
+// EOA -> intermediary -> DAO call it names the EOA rather than the intermediary.
+// The realm is deliberately the SECOND parameter: a function whose first
+// parameter is a realm is read as crossing, and /p/ packages may not declare
+// crossing functions.
+type CallerIDFn func(dao *DAOPrivate, rlm realm) string
 
 type Config struct {
 	// Basic DAO information
@@ -93,7 +102,7 @@ type Config struct {
 	SetImplemFn       SetImplemRaw      // Function called when DAO implementation changes via governance
 	MigrationParamsFn MigrationParamsFn // Function providing parameters for DAO upgrades
 	RenderFn          RenderFn          // Rendering function for Gnoweb
-	CallerID          CallerIDFn        // Custom function to identify the current caller, defaults to realmid.Previous
+	CallerID          CallerIDFn        // Resolves the immediate caller from the DAO's threaded realm; defaults to defaultCallerID
 
 	// Internal configuration
 	PrivateVarName string // Name of the private DAO variable for member querying extensions
@@ -117,7 +126,7 @@ func New(conf *Config, rlm realm) (daokit.DAO, *DAOPrivate) {
 	}
 
 	if conf.CallerID == nil {
-		conf.CallerID = realmid.Previous
+		conf.CallerID = defaultCallerID
 	}
 
 	core := daokit.NewCore()
@@ -222,27 +231,64 @@ func New(conf *Config, rlm realm) (daokit.DAO, *DAOPrivate) {
 	return pubdao, dao
 }
 
-func (d *DAOPrivate) Vote(proposalID uint64, vote daocond.Vote) {
+func (d *DAOPrivate) Vote(proposalID uint64, vote daocond.Vote, rlm realm) {
 	if len(vote) > 16 {
 		panic("invalid vote")
 	}
 
-	voterID := d.assertCallerIsMember()
+	d.assertRealmIsOwn(rlm.PkgPath())
+	voterID := d.assertCallerIsMember(d.CallerID(d, rlm))
 	d.Core.Vote(voterID, proposalID, vote)
 }
 
 func (d *DAOPrivate) Execute(proposalID uint64, rlm realm) {
-	_ = d.assertCallerIsMember()
+	d.assertRealmIsOwn(rlm.PkgPath())
+	_ = d.assertCallerIsMember(d.CallerID(d, rlm))
 	d.Core.Execute(proposalID, rlm)
 }
 
-func (d *DAOPrivate) Propose(req daokit.ProposalRequest) uint64 {
-	proposerID := d.assertCallerIsMember()
+func (d *DAOPrivate) Propose(req daokit.ProposalRequest, rlm realm) uint64 {
+	d.assertRealmIsOwn(rlm.PkgPath())
+	proposerID := d.assertCallerIsMember(d.CallerID(d, rlm))
 	return d.Core.Propose(proposerID, req)
 }
 
-func (d *DAOPrivate) assertCallerIsMember() string {
-	id := d.CallerID()
+// The realm threaded into an entry point must be the DAO's own.
+//
+// Execute forwards this realm to the action handlers, which cross out under it,
+// so whoever supplies it decides the identity the DAO acts as. Left unchecked, a
+// third realm holding the DAO value could pass its own realm and have the DAO
+// write to that realm's profile — or, through MigrateFn, reach anywhere the
+// caller controls. Realm values are unforgeable and cannot be persisted across
+// transactions, so a caller can only ever pass its own; requiring it to equal
+// the DAO's own realm therefore closes the donation path outright.
+//
+// It also underpins caller identity: once the realm is known to be the DAO's,
+// rlm.Previous() is by construction the DAO's immediate caller.
+// Resolves the DAO's immediate caller from the DAO's own threaded realm.
+// rlm.Previous() is statically scoped to the DAO realm's crossing function, so
+// unlike a stack walk it cannot be shifted by how deep the call chain is.
+func defaultCallerID(dao *DAOPrivate, rlm realm) string {
+	p := rlm.Previous()
+	if p.IsUser() {
+		return p.Address().String()
+	}
+	return p.PkgPath()
+}
+
+func (d *DAOPrivate) assertRealmIsOwn(pkgPath string) {
+	if pkgPath != d.Realm.PkgPath() {
+		panic("realm mismatch: the DAO may only act as " + d.Realm.PkgPath())
+	}
+}
+
+func (d *DAOPrivate) assertCallerIsMember(id string) string {
+	// An empty id is never a real caller, and the store can hold one: Members is
+	// an exported avl.Tree, so a same-realm write or a MigrateFn can seed "" past
+	// the AddMember guard. Reject it here, where every entry point passes.
+	if id == "" {
+		panic(errors.New("caller id is empty"))
+	}
 	if !d.Members.IsMember(id) {
 		panic(errors.New("caller is not a member"))
 	}

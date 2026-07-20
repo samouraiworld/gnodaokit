@@ -102,7 +102,7 @@ func ProposeAddMember(cur realm, address address, roles string) {
 			Roles:   rs,
 		}),
 	}
-	localDAO.Propose(req)
+	localDAO.Propose(req, cur)
 }
 
 func renderDemo() string {

@@ -52,12 +52,12 @@ func init(cur realm) {
 // To execute this function, you must use a MsgRun (maketx run)
 // See why it is necessary in Gno Documentation: https://docs.gno.land/users/interact-with-gnokey#run
 func Propose(cur realm, req daokit.ProposalRequest) {
-	localDAO.Propose(req)
+	localDAO.Propose(req, cur)
 }
 
 // Vote allows DAO members to cast their vote on a specific proposal
 func Vote(cur realm, proposalID uint64, vote daocond.Vote) {
-	localDAO.Vote(proposalID, vote)
+	localDAO.Vote(proposalID, vote, cur)
 }
 
 // Execute triggers the implementation of a proposal's actions
