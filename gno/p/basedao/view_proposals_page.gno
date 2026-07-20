@@ -26,6 +26,11 @@ func (d *DAOPrivate) ProposalsHeaderView() string {
 func (d *DAOPrivate) ProposalsView(path string) string {
 	activeProposals := d.Core.Proposals.GetProposals(
 		func(p daokit.Proposal) bool {
+			// Raw status, not DisplayStatus: only Execute writes Status, so a
+			// stored proposal is Open until Executed and this is exactly
+			// "not yet executed". Computing the display status here would
+			// evaluate every proposal's condition a second time — the table
+			// below already does it for the ones that survive the filter.
 			return p.Status == daokit.ProposalStatusOpen || p.Status == daokit.ProposalStatusPassed
 		},
 	)

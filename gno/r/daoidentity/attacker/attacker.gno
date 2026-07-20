@@ -9,6 +9,7 @@
 package attacker
 
 import (
+	"gno.land/p/samcrew/basedao"
 	"gno.land/p/samcrew/daocond"
 	"gno.land/p/samcrew/daokit"
 	"gno.land/r/samcrew/daoidentity/dao"
@@ -30,4 +31,15 @@ func Vote(cur realm, id uint64, vote daocond.Vote) {
 // caller controls.
 func Execute(cur realm, id uint64) {
 	dao.Handle().Execute(id, cur)
+}
+
+// ReadSecret tries to fetch the DAO's PRIVATE extension with this realm's own
+// realm. Only the DAO realm may.
+func ReadSecret(cur realm) {
+	dao.Handle().Extension(dao.SecretPath, cur)
+}
+
+// ReadPublicExtension fetches a PUBLIC extension, which any realm may do.
+func ReadPublicExtension(cur realm) bool {
+	return dao.Handle().Extension(basedao.MembersViewExtensionPath, cur) != nil
 }

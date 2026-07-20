@@ -34,8 +34,10 @@ type DAO interface {
 	// Generates a web interface representation for the given path.
 	Render(path string) string
 
-	// Gets an extension by path, returns nil if not found.
-	Extension(path string) Extension
+	// Gets an extension by path, returns nil if not found. A PRIVATE extension
+	// additionally requires the DAO realm's own live realm, on the same terms
+	// as the entry points above; a public one ignores it.
+	Extension(path string, rlm realm) Extension
 	// Lists all available extensions.
 	ExtensionsList() ExtensionsList
 }
@@ -45,7 +47,21 @@ type SetImplemFn = func(implem DAO)
 
 // Creates, votes yes, and immediately executes a proposal in one operation.
 // Useful when you have enough permission to execute an action directly.
-// Examples: migrations, adding members
+// Examples: migrations, adding members.
+//
+// SAME REALM ONLY. Every step threads rlm, and each entry point requires it to
+// be the receiving DAO's own — so d must be a DAO hosted by the realm calling
+// this. Handing it a DAO belonging to another realm is refused.
+//
+// That refusal is the point. Driving a foreign DAO by passing it your realm is
+// the donation shape: it makes the DAO act under YOUR identity, and it is what a
+// caller holding the handle could previously do to any DAO. It appeared to work
+// only because nothing checked.
+//
+// A parent DAO can still drive a child. Reach the child through the child
+// REALM's own crossing function — child.Propose(cross(cur), req) — so the child
+// mints its own realm and sees the parent as its caller. Make the parent a
+// member of the child; the child then authorises it like any other member.
 func InstantExecute(d DAO, req ProposalRequest, rlm realm) uint64 {
 	id := d.Propose(req, rlm)
 	d.Vote(id, daocond.VoteYes, rlm)
@@ -76,8 +92,11 @@ func (d *Core) Vote(voterID string, proposalID uint64, vote daocond.Vote) {
 		panic("proposal not found")
 	}
 
-	if proposal.Status != ProposalStatusOpen {
-		panic("proposal is not open")
+	// Same terminal state as Execute: a ballot stays open right up until the
+	// proposal executes, so support can still be withdrawn after the condition
+	// is first met. Anything narrower would let a proposal be locked in.
+	if proposal.Status == ProposalStatusExecuted {
+		panic("proposal is already executed")
 	}
 
 	proposal.Ballot.Vote(voterID, vote)
@@ -90,22 +109,35 @@ func (d *Core) Execute(proposalID uint64, rlm realm) {
 		panic("proposal not found")
 	}
 
-	if proposal.Status != ProposalStatusOpen {
-		panic("proposal is not open")
+	// Executed is the only status that disqualifies a proposal. It used to be
+	// "anything but Open", which made the status a second, weaker gate on top of
+	// the condition — and any realm holding the DAO handle could trip it by
+	// rendering, since the read paths wrote Open -> Passed as they walked.
+	// Whether a proposal may execute is decided by its condition, below, and
+	// nothing else.
+	if proposal.Status == ProposalStatusExecuted {
+		panic("proposal is already executed")
 	}
 
 	if !proposal.Condition.Eval(proposal.Ballot) {
 		panic("proposal condition is not met")
 	}
 
-	proposal.UpdateStatus()
-	if proposal.Status != ProposalStatusPassed {
-		panic("proposal does not meet the condition(s) or is already closed/executed")
-	}
-
-	d.Resources.Get(proposal.Action.Type()).Handler.Execute(proposal.Action, rlm)
+	// Marked BEFORE the handler runs, not after. The handler crosses out of the
+	// DAO, so a callee can re-enter here within the same transaction; marking
+	// afterwards would let it execute the same proposal again. The old code was
+	// protected from this only incidentally, by a "must be Open" test that also
+	// made rendering able to brick a proposal.
+	//
+	// The cost is that Execute is NOT retry-safe. gno's recover() does not roll
+	// back realm state, so a host realm that recovers around a failing Execute
+	// keeps the marker and burns the proposal permanently. Do not recover around
+	// it: let the transaction abort, which reverts the marker with everything
+	// else. Marking afterwards would trade this for re-entrancy, which is worse.
 	proposal.Status = ProposalStatusExecuted
 	proposal.ExecutedAt = time.Now()
+
+	d.Resources.Get(proposal.Action.Type()).Handler.Execute(proposal.Action, rlm)
 }
 
 // Creates a new proposal for voting and returns its ID.

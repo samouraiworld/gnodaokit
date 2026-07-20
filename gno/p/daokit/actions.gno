@@ -13,6 +13,20 @@ import (
 )
 
 // Interface storing Action's data.
+//
+// SECURITY: String() is what a member reads before voting, and for an action
+// built with NewAction it is the PAYLOAD's own rendering — supplied by whoever
+// created the proposal. It is not trustworthy on its own.
+//
+// Two things keep it honest. Type() must be truthful or the wrong handler is
+// looked up and its type assertion fails, so the action's KIND cannot be
+// disguised; and the proposal view renders the Resource's registered
+// DisplayName, Description and Condition beside it, which come from the DAO's
+// own registry keyed by Type(), not from the proposal. A member therefore always
+// sees what KIND of action this is from a trusted source.
+//
+// What String() can still misrepresent is the payload's DETAIL — and only if the
+// handler lets a hostile payload through. See NewActionHandler.
 type Action interface {
 	// Returns human-readable description of the action.
 	String() string
@@ -59,6 +73,24 @@ func (g *genericAction) Type() string {
 	return g.kind
 }
 
+// SECURITY: the executor MUST type-assert the payload to a CONCRETE type, never
+// to an interface.
+//
+// The concrete assertion is what makes the action's own rendering safe to show a
+// voter: a hostile proposer can submit any payload, but one of the wrong type is
+// rejected before the executor sees it, and one of the right type renders
+// through that type's own String(). Assert to an interface instead and any
+// conforming type passes — including one whose String() understates what its
+// data does, so the proposal reads as something milder than it executes.
+//
+// Stronger still, and what the destructive built-ins do: make the payload type
+// UNEXPORTED and expose only a constructor, so a proposer cannot build one at
+// all. basedao's ChangeDAOImplementation and daokit's InstantExecute both do.
+//
+// Moving rendering onto the handler would remove this footgun rather than
+// document it, since the handler is registered by the DAO and the payload is
+// not — gnodaokit#13. That changes ActionHandler, so it belongs to a version
+// boundary rather than a patch.
 func NewActionHandler(kind string, executor func(interface{}, realm)) ActionHandler {
 	return &genericActionHandler{kind: kind, executor: executor}
 }
@@ -133,6 +165,10 @@ func NewInstantExecuteHandler() ActionHandler {
 	})
 }
 
+// SAME REALM ONLY, for the reason on InstantExecute: the handler forwards the
+// EXECUTING DAO's realm, so dao must be hosted by the same realm. A child DAO in
+// another realm is refused — reach it through that realm's crossing function
+// instead.
 func NewInstantExecuteAction(dao DAO, req ProposalRequest) Action {
 	return NewAction(ActionInstantExecuteKind, &actionInstantExecute{dao: dao, req: req})
 }

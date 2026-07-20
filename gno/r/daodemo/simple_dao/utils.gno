@@ -80,6 +80,11 @@ func initProposals(cur realm, nb int) {
 // Bypass limitation by adding yourself to the DAO.
 // It is necessary to be part of the DAO to create a Proposal.
 func AddMember(cur realm) {
+	// Safe here only because cur is THIS realm's own, minted by this crossing
+	// function. CallerID is not the entry-point gate: copied somewhere that
+	// passes a realm it received from elsewhere, this becomes the donation bug
+	// the DAO entry points exist to refuse. If you need the gate, go through
+	// Propose/Vote/Execute.
 	id := daoPrivate.CallerID(daoPrivate, cur)
 	daoPrivate.Members.AddMember(id, make([]string, 0))
 }

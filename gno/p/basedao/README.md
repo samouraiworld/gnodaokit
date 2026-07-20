@@ -365,7 +365,7 @@ func migrateTo2_0(prev *basedao.DAOPrivate, params []any, rlm realm) daokit.DAO 
 }
 
 // 2. Create and submit upgrade proposal
-action := basedao.NewChangeDAOImplementationAction(migrateTo2_0)
+action := basedao.NewChangeDAOImplementationAction("v2.0 — adds audit capabilities", migrateTo2_0)
 proposal := daokit.ProposalRequest{
     Title:       "Upgrade to DAO v2.0",
     Description: "Adds auditor role and enhanced governance",
@@ -404,7 +404,7 @@ Allows other packages and realms to check if an address is a member of your DAO.
 import "gno.land/p/samcrew/basedao"
 
 // Check if someone is a DAO member
-ext := basedao.MustGetMembersViewExtension(dao)
+ext := basedao.MustGetMembersViewExtension(dao, cur)
 if ext.IsMember("g1user...") {
     // User is a member
 }
@@ -433,7 +433,7 @@ func Post(cur realm, title, content string) {
         caller = prev.Address().String()
     }
 
-    ext := basedao.MustGetMembersViewExtension(dao.Handle())
+    ext := basedao.MustGetMembersViewExtension(dao.Handle(), cur)
     if !ext.IsMember(caller) {
         panic("Only DAO members can post")
     }

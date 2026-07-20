@@ -19,17 +19,37 @@ type SetImplemRaw func(newDAO daokit.DAO)
 
 type RenderFn func(path string, dao *DAOPrivate) string
 
-func (d *daoPublic) Extension(path string) daokit.Extension {
+func (d *daoPublic) Extension(path string, rlm realm) daokit.Extension {
 	ext, ok := d.impl.Core.Extensions.Get(path)
 	if !ok {
 		return nil
 	}
-	if ext.Info().Private && unsafe.CurrentRealm().PkgPath() != d.impl.Realm.PkgPath() {
-		panic("attempt to get private extension outside of DAO realm")
+	// Only private extensions are gated; a public one is readable by anyone and
+	// ignores the realm entirely.
+	//
+	// This used to ask unsafe.CurrentRealm(), which is a stack walk and answers
+	// a different question: "is a DAO frame the innermost live one", not "is my
+	// caller the DAO". It was wrong in both directions. Too lax, because
+	// anything the DAO invoked WITHOUT crossing inherited the DAO's realm —
+	// including a proposer-authored ExecuteLambda callback, which could read a
+	// private extension. And too strict, because a DAO-realm helper that is not
+	// itself a crossing function had no frame of its own for the walk to find.
+	//
+	// Requiring the DAO's own live realm answers the intended question directly.
+	// It also closes the lambda case by construction rather than by check: a
+	// callback that receives no realm cannot produce one, and realm values
+	// cannot be persisted or forged.
+	if ext.Info().Private {
+		assertRealmIsOwn(d.impl, rlm)
 	}
 	return ext
 }
 
+// Not gated, deliberately. It exposes ExtensionInfo — paths and versions — and
+// not extension values, so it grants no capability; and realm state is
+// world-readable over ABCI anyway, so gating it would suggest a confidentiality
+// this cannot provide. Getting the VALUE of a private extension goes through
+// Extension, which is gated.
 func (d *daoPublic) ExtensionsList() daokit.ExtensionsList {
 	return d.impl.Core.Extensions.List()
 }
@@ -105,6 +125,23 @@ type Config struct {
 	// Advanced customization hooks
 	SetImplemFn       SetImplemRaw      // Function called when DAO implementation changes via governance
 	MigrationParamsFn MigrationParamsFn // Function providing parameters for DAO upgrades
+	// Condition for replacing the DAO's implementation. A passing migration
+	// hands proposer-authored code the DAO's live realm and its full private
+	// state, so it is a takeover in the general case — it should not be as easy
+	// as adding a member.
+	//
+	// If you leave InitialCondition to its default, this defaults to an 80%
+	// member majority — the same dimension, raised.
+	//
+	// If you SET InitialCondition, this defaults to it unchanged, and you should
+	// set this too. A Condition is opaque, so nothing here can strengthen yours:
+	// conjoining a members threshold onto role-based governance can demand a
+	// majority such a DAO never assembles, and migration is the one rule that
+	// cannot be repaired afterwards — changing it requires a migration. Whatever
+	// you choose, make it at least as hard as InitialCondition along every
+	// dimension; a condition that merely replaces yours can be WEAKER where it
+	// matters.
+	MigrationCondition daocond.Condition
 	RenderFn          RenderFn          // Rendering function for Gnoweb
 	CallerID          CallerIDFn        // Resolves the immediate caller from the DAO's threaded realm; defaults to defaultCallerID
 
@@ -164,6 +201,9 @@ func New(conf *Config, rlm realm) (daokit.DAO, *DAOPrivate) {
 	}
 
 	if !conf.NoDefaultHandlers {
+		// Whether the DAO chose its own governance decides how far the migration
+		// default may go, below. Captured before the default is filled in.
+		governanceIsCallerChosen := conf.InitialCondition != nil
 		if conf.InitialCondition == nil {
 			conf.InitialCondition = daocond.MembersThreshold(0.6, members.IsMember, members.MembersCount)
 		}
@@ -187,11 +227,40 @@ func New(conf *Config, rlm realm) (daokit.DAO, *DAOPrivate) {
 				conf.MigrationParamsFn = func() []any { return nil }
 			}
 
+			// Held locally rather than written back into conf: New must not
+			// mutate its caller's Config, and this closure captures THIS DAO's
+			// member store — reusing one Config for a second DAO would otherwise
+			// give it a migration condition evaluating the first one's members.
+			migrationCondition := conf.MigrationCondition
+			if migrationCondition == nil {
+				if governanceIsCallerChosen {
+					// The DAO designed its own governance, and a Condition is
+					// opaque, so there is no way to strengthen it from here. A
+					// members threshold is not a strengthening: conjoined with
+					// role-based governance it can demand a member majority that
+					// role-governed DAOs never assemble, and migration is the one
+					// rule that cannot be repaired afterwards — changing it needs
+					// a migration. Substituting one is worse still: against
+					// And(MembersThreshold(0.4), RoleCount(1,"officer")) a ballot
+					// that fails an ordinary action passed a bare 0.8 migration,
+					// making a takeover CHEAPER than adding a member.
+					//
+					// So: match the DAO's own bar, and say plainly that a
+					// takeover deserves a higher one. Set MigrationCondition.
+					migrationCondition = conf.InitialCondition
+				} else {
+					// Default governance, so a members threshold is the same
+					// dimension the DAO is already judged on and raising it is a
+					// genuine strengthening: 80% against the default 60%.
+					migrationCondition = daocond.MembersThreshold(0.8, members.IsMember, members.MembersCount)
+				}
+			}
+
 			dao.Core.Resources.Set(&daokit.Resource{
 				Handler:     NewChangeDAOImplementationHandler(dao, setImplemFn, conf.MigrationParamsFn),
-				Condition:   conf.InitialCondition,
+				Condition:   migrationCondition,
 				DisplayName: "Change DAO Implementation",
-				Description: "Change the underlying DAO implementation.",
+				Description: "Replaces the DAO implementation. The migration receives the DAO's live realm and private state.",
 			})
 		}
 
