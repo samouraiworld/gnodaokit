@@ -4,7 +4,7 @@ import (
 	"gno.land/p/demo/svg"
 	"gno.land/p/moul/md"
 	"gno.land/p/nt/ufmt/v0"
-	"gno.land/p/samcrew/avl"
+	"gno.land/p/nt/avl/v0"
 )
 
 func (d *DAOPrivate) RoleDetailPageView(path string, name string) string {

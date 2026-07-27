@@ -4,7 +4,7 @@ import (
 	"chain"
 
 	"gno.land/p/onbloc/json"
-	"gno.land/p/samcrew/avl"
+	"gno.land/p/nt/avl/v0"
 )
 
 type MembersStore struct {
@@ -44,11 +44,7 @@ func NewMembersStore(initialRoles []RoleInfo, initialMembers []Member) *MembersS
 }
 
 func (m *MembersStore) HasRole(member string, role string) bool {
-	rolesRaw, ok := m.Members.Get(member)
-	if !ok {
-		return false
-	}
-	roles, ok := rolesRaw.(*avl.Tree)
+	roles, ok := m.Members.Get(member).(*avl.Tree)
 	if !ok {
 		return false
 	}
@@ -60,13 +56,9 @@ func (m *MembersStore) IsMember(member string) bool {
 }
 
 func (m *MembersStore) RoleInfo(role string) RoleInfo {
-	roleDataRaw, ok := m.Roles.Get(role)
+	roleData, ok := m.Roles.Get(role).(*Role)
 	if !ok {
 		panic("role does not exist")
-	}
-	roleData, ok := roleDataRaw.(*Role)
-	if !ok {
-		panic("a value of memberstore.roles is not a Role, should not happen")
 	}
 	return RoleInfo{
 		Name:        roleData.Name,
@@ -100,11 +92,7 @@ func (m *MembersStore) GetRoles() []string {
 }
 
 func (m *MembersStore) GetMemberRoles(member string) []string {
-	rolesRaw, ok := m.Members.Get(member)
-	if !ok {
-		return []string{}
-	}
-	roles, ok := rolesRaw.(*avl.Tree)
+	roles, ok := m.Members.Get(member).(*avl.Tree)
 	if !ok {
 		return []string{}
 	}
@@ -119,11 +107,7 @@ func (m *MembersStore) GetMemberRoles(member string) []string {
 }
 
 func (m *MembersStore) CountMemberRoles(member string) int {
-	rolesRaw, ok := m.Members.Get(member)
-	if !ok {
-		return 0
-	}
-	roles, ok := rolesRaw.(*avl.Tree)
+	roles, ok := m.Members.Get(member).(*avl.Tree)
 	if !ok {
 		return 0
 	}
@@ -131,11 +115,7 @@ func (m *MembersStore) CountMemberRoles(member string) int {
 }
 
 func (m *MembersStore) GetMembersWithRole(role string) []string {
-	roleDataRaw, ok := m.Roles.Get(role)
-	if !ok {
-		return []string{}
-	}
-	roleData, ok := roleDataRaw.(*Role)
+	roleData, ok := m.Roles.Get(role).(*Role)
 	if !ok {
 		return []string{}
 	}
@@ -196,8 +176,7 @@ func (m *MembersStore) AddMember(member string, roles []string) {
 			panic("role: " + role + " does not exist")
 		}
 		membersRoles.Set(role, struct{}{})
-		roleDataRaw, _ := m.Roles.Get(role)
-		roleData := roleDataRaw.(*Role)
+		roleData := m.Roles.Get(role).(*Role)
 		roleData.Members.Set(member, struct{}{})
 	}
 	m.Members.Set(member, membersRoles)
@@ -218,23 +197,20 @@ func (m *MembersStore) RemoveMember(member string) {
 		panic("cannot remove the last member")
 	}
 
-	memberRolesRaw, ok := m.Members.Get(member)
+	memberRoles, ok := m.Members.Get(member).(*avl.Tree)
 	if !ok {
 		panic("should not happen")
 	}
-	memberRoles, ok := memberRolesRaw.(*avl.Tree)
-	if !ok {
-		panic("a value of memberstore.members is not an avl.Tree, should not happen")
-	}
 
 	memberRoles.Iterate("", "", func(key string, value interface{}) bool {
-		roleRaw, ok := m.Roles.Get(key)
+		role, ok := m.Roles.Get(key).(*Role)
 		if !ok {
+			// Get returns nil for an absent key, so the assertion also covers
+			// a present entry of the wrong type. Only the latter is a bug.
+			if m.Roles.Has(key) {
+				panic("a value of memberstore.roles is not a Role, should not happen")
+			}
 			return false
-		}
-		role, ok := roleRaw.(*Role)
-		if !ok {
-			panic("a value of memberstore.roles is not a Role, should not happen")
 		}
 		role.Members.Remove(member)
 		return false
@@ -270,23 +246,18 @@ func (m *MembersStore) AddRole(role RoleInfo) {
 }
 
 func (m *MembersStore) RemoveRole(role string) {
-	roleDataRaw, ok := m.Roles.Get(role)
+	roleData, ok := m.Roles.Get(role).(*Role)
 	if !ok {
 		panic("role does not exist")
 	}
-	roleData, ok := roleDataRaw.(*Role)
-	if !ok {
-		panic("a value of memberstore.roles is not a Role, should not happen")
-	}
 
 	roleData.Members.Iterate("", "", func(key string, value interface{}) bool {
-		memberRaw, ok := m.Members.Get(key)
+		member, ok := m.Members.Get(key).(*avl.Tree)
 		if !ok {
+			if m.Members.Has(key) {
+				panic("a value of memberstore.members is not an avl.Tree, should not happen")
+			}
 			return false
-		}
-		member, ok := memberRaw.(*avl.Tree)
-		if !ok {
-			panic("a value of memberstore.members is not an avl.Tree, should not happen")
 		}
 		member.Remove(role)
 		return false
@@ -305,22 +276,14 @@ func (m *MembersStore) AddRoleToMember(member string, role string) {
 		panic("member already has the role")
 	}
 
-	memberRolesRaw, ok := m.Members.Get(member)
+	memberRoles, ok := m.Members.Get(member).(*avl.Tree)
 	if !ok {
 		panic("should not happen")
-	}
-	memberRoles, ok := memberRolesRaw.(*avl.Tree)
-	if !ok {
-		panic("a value of memberstore.members is not an avl.Tree, should not happen")
 	}
 
-	roleDataRaw, ok := m.Roles.Get(role)
+	roleData, ok := m.Roles.Get(role).(*Role)
 	if !ok {
 		panic("should not happen")
-	}
-	roleData, ok := roleDataRaw.(*Role)
-	if !ok {
-		panic("a value of memberstore.roles is not a Role, should not happen")
 	}
 
 	roleData.Members.Set(member, struct{}{})
@@ -338,22 +301,14 @@ func (m *MembersStore) RemoveRoleFromMember(member string, role string) {
 		panic("member does not have the role")
 	}
 
-	memberRolesRaw, ok := m.Members.Get(member)
+	memberRoles, ok := m.Members.Get(member).(*avl.Tree)
 	if !ok {
 		panic("should not happen")
-	}
-	memberRoles, ok := memberRolesRaw.(*avl.Tree)
-	if !ok {
-		panic("a value of memberstore.members is not an avl.Tree, should not happen")
 	}
 
-	roleDataRaw, ok := m.Roles.Get(role)
+	roleData, ok := m.Roles.Get(role).(*Role)
 	if !ok {
 		panic("should not happen")
-	}
-	roleData, ok := roleDataRaw.(*Role)
-	if !ok {
-		panic("a value of memberstore.roles is not a Role, should not happen")
 	}
 
 	memberRoles.Remove(role)

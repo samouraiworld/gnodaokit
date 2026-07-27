@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/nt/urequire/v0"
-	"gno.land/p/samcrew/avl"
+	"gno.land/p/nt/avl/v0"
 )
 
 // An empty role name is destructive, not merely useless: RenderWithRolesLinks
