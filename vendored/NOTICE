@@ -6,7 +6,7 @@ verbatim from:
 
     Project:  gnolang/gno
     Source:   https://github.com/gnolang/gno  (examples/)
-    Commit:   2c7f1abe324e8fa6fac6dc71a36635cc4e92a0be
+    Commit:   fc40526511474e40b8a66419f5ba28255085bc08
     Licence:  GNO Network General Public License — see vendored/LICENSE.md
 
 `LICENSE.md` in this directory is upstream's, copied verbatim from that same
@@ -21,13 +21,5 @@ re-derives this claim on every run (`.github/workflows/vendored-provenance.yml`)
 and fails if any vendored file differs from that commit, in either direction, so
 this notice cannot silently fall out of date.
 
-Not from gnolang/gno
---------------------
-
-    gno.land/p/samcrew/avl/
-
-is a FORK, not upstream, and is excluded from the provenance comparison. It is
-byte-identical to `deps/avl` in `samouraiworld/samcrew-deployer`, which carries
-its own guard pinning it to upstream `f3d5a5d13`. It exists because topaz-1's
-stdlib `p/nt/avl/v0` exposes a single-value `Get` while this codebase calls the
-two-value form. See `vendored/README.md`.
+Every source file here is upstream. Only this directory's own README.md, NOTICE
+and LICENSE.md are excluded from the provenance comparison.

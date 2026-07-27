@@ -1,7 +1,7 @@
 package daocond
 
 import (
-	"gno.land/p/samcrew/avl"
+	"gno.land/p/nt/avl/v0"
 )
 
 type BallotAVL struct {
@@ -20,11 +20,14 @@ func (b *BallotAVL) Vote(voter string, vote Vote) {
 
 // Gets the vote from a specific voter, returns VoteAbstain if no vote recorded.
 func (b *BallotAVL) Get(voter string) Vote {
-	vote, ok := b.tree.Get(voter)
+	vote, ok := b.tree.Get(voter).(Vote)
 	if !ok {
+		if b.tree.Has(voter) {
+			panic("a value of the ballot tree is not a Vote, should not happen")
+		}
 		return VoteAbstain
 	}
-	return vote.(Vote)
+	return vote
 }
 
 // Returns the total number of votes cast.

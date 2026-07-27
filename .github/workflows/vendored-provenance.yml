@@ -74,11 +74,6 @@ jobs:
           while IFS= read -r f; do
             rel="${f#vendored/}"
             case "$rel" in
-              # The fork is deliberately NOT upstream: topaz-1's stdlib avl Get is
-              # single-value while this codebase calls the two-value form. Its own
-              # provenance is guarded in samouraiworld/samcrew-deployer against
-              # upstream f3d5a5d13. See vendored/README.md.
-              gno.land/p/samcrew/avl/*) skipped=$((skipped + 1)); continue ;;
               # Our own documentation and attribution, not upstream source.
               README.md|NOTICE|LICENSE.md) skipped=$((skipped + 1)); continue ;;
             esac
@@ -107,7 +102,6 @@ jobs:
           missing=0
           while IFS= read -r pkgdir; do
             rel="${pkgdir#vendored/}"
-            case "$rel" in gno.land/p/samcrew/avl*) continue ;; esac
             [[ -d "/tmp/gno/examples/$rel" ]] || continue
             # Only compare directories we actually vendored as PACKAGES. Walking
             # intermediate namespace dirs (gno.land, gno.land/p, gno.land/r) would
@@ -125,53 +119,9 @@ jobs:
             done < <(find "/tmp/gno/examples/$rel" -maxdepth 1 -type f)
           done < <(find vendored -type d)
 
-          echo "checked $checked file(s), skipped $skipped (fork + docs), drift $drift, deleted $missing"
+          echo "checked $checked file(s), skipped $skipped (docs), drift $drift, deleted $missing"
           if [[ $drift -gt 0 || $missing -gt 0 ]]; then
             echo "ERROR: vendored/ has drifted from gno@$GNO_REF"
             echo "Either regenerate vendored/ (see vendored/README.md) or revert the edit."
             exit 1
           fi
-
-      # Keeps the two avl roles from being confused.
-      #
-      # The stdlib p/nt/avl/v0 is here only because svg.Canvas.Style is a
-      # *nt/avl/v0.Tree; the data-structure role belongs to the p/samcrew/avl fork,
-      # whose Get is two-value. GNOVERSION is now topaz-1's own ref, so the vendored
-      # stdlib copy matches the chain and a misuse fails the build directly — this
-      # gate exists to say WHY it failed, and to keep the boundary from widening by
-      # accident. When the pin was older than the chain, this was the only thing
-      # standing between a green build and a failed AddPackage.
-      - name: The stdlib-avl boundary must stay limited to NewTree
-        run: |
-          set -euo pipefail
-          uses="$(grep -rhoE 'ntavl\.[A-Za-z_]+' gno/ --include='*.gno' | sort -u)"
-          if [[ -z "$uses" ]]; then
-            echo "no ntavl usage found — the alias was removed, which is fine"
-            exit 0
-          fi
-          echo "ntavl usage: $uses"
-          unexpected="$(printf '%s\n' "$uses" | grep -vx 'ntavl.NewTree' || true)"
-          if [[ -n "$unexpected" ]]; then
-            echo "ERROR: gnodaokit uses the stdlib avl beyond NewTree:"
-            printf '%s\n' "$unexpected"
-            echo "The stdlib avl is vendored only for the svg.Canvas.Style ABI; its Get"
-            echo "is single-value on topaz-1 and here. Use gno.land/p/samcrew/avl for"
-            echo "data structures — that is the fork with the two-value Get."
-            exit 1
-          fi
-          echo "stdlib avl boundary is limited to NewTree, as required"
-
-      - name: The fork must expose the two-value Get this codebase calls
-        run: |
-          set -euo pipefail
-          tree="vendored/gno.land/p/samcrew/avl/tree.gno"
-          if [[ ! -f "$tree" ]]; then
-            echo "ERROR: the vendored p/samcrew/avl fork is missing"
-            exit 1
-          fi
-          if ! grep -qE 'func \(tree \*Tree\) Get\(key string\) \(value any, exists bool\)' "$tree"; then
-            echo "ERROR: vendored p/samcrew/avl no longer exposes the two-value Get:"
-            grep -nE 'func \(tree \*Tree\) Get\(' "$tree" || true
-            exit 1
-          fi
-          echo "p/samcrew/avl exposes the two-value Get, as this codebase requires"

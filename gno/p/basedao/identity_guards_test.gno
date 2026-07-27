@@ -3,7 +3,7 @@ package basedao
 import (
 	"testing"
 
-	"gno.land/p/samcrew/avl"
+	"gno.land/p/nt/avl/v0"
 
 	"gno.land/p/nt/urequire/v0"
 )

@@ -5,7 +5,7 @@ package daokit
 // Example: "transfer" action requires 3 member votes for execution.
 
 import (
-	"gno.land/p/samcrew/avl"
+	"gno.land/p/nt/avl/v0"
 	"gno.land/p/samcrew/daocond"
 )
 
@@ -28,11 +28,15 @@ func NewResourcesStore() *ResourcesStore {
 
 // Retrieves a resource by its handler type name.
 func (r *ResourcesStore) Get(name string) *Resource {
-	value, ok := r.Tree.Get(name)
+	res, ok := r.Tree.Get(name).(*Resource)
 	if !ok {
+		// Get returns nil for an absent key, so the assertion also covers a
+		// present entry of the wrong type. Only the latter is a bug.
+		if r.Tree.Has(name) {
+			panic("a value of ResourcesStore.Tree is not a *Resource, should not happen")
+		}
 		return nil
 	}
-	res := value.(*Resource)
 	return res
 }
 

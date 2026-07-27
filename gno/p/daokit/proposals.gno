@@ -12,7 +12,7 @@ import (
 
 	"gno.land/p/nt/seqid/v0"
 	"gno.land/p/onbloc/json"
-	"gno.land/p/samcrew/avl"
+	"gno.land/p/nt/avl/v0"
 	"gno.land/p/samcrew/daocond"
 )
 
@@ -72,11 +72,14 @@ func NewProposalsStore() *ProposalsStore {
 }
 
 func (p *ProposalsStore) GetProposal(id uint64) *Proposal {
-	value, ok := p.Tree.Get(seqid.ID(id).String())
+	key := seqid.ID(id).String()
+	proposal, ok := p.Tree.Get(key).(*Proposal)
 	if !ok {
+		if p.Tree.Has(key) {
+			panic("a value of ProposalsStore.Tree is not a *Proposal, should not happen")
+		}
 		return nil
 	}
-	proposal := value.(*Proposal)
 	return proposal
 }
 
